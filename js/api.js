@@ -1,0 +1,193 @@
+// api.js - Firebase API functions
+import { firebaseConfig } from './config.js';
+
+class FirebaseAPI {
+    constructor() {
+        this.database = null;
+        this.isConnected = false;
+        this.connectionListeners = [];
+    }
+
+    // Initialize Firebase
+    async init() {
+        try {
+            firebase.initializeApp(firebaseConfig);
+            this.database = firebase.database();
+            console.log('Firebase initialized successfully');
+            
+            // Monitor connection status
+            this.database.ref('.info/connected').on('value', (snapshot) => {
+                this.isConnected = snapshot.val() === true;
+                if (this.isConnected) {
+                    console.log('✅ Connected to Firebase!');
+                    this.connectionListeners.forEach(callback => callback(true));
+                } else {
+                    console.error('❌ Failed to connect to Firebase');
+                    this.connectionListeners.forEach(callback => callback(false));
+                }
+            });
+            
+            return true;
+        } catch (error) {
+            console.error('Firebase initialization error:', error);
+            throw new Error('Failed to initialize Firebase: ' + error.message);
+        }
+    }
+
+    // Add connection status listener
+    onConnectionChange(callback) {
+        this.connectionListeners.push(callback);
+        // Immediately call with current status if already initialized
+        if (this.database) {
+            callback(this.isConnected);
+        }
+    }
+
+    // Test Firebase connection
+    async testConnection() {
+        try {
+            await this.database.ref('test').once('value');
+            console.log('✅ Firebase test successful');
+            return true;
+        } catch (error) {
+            console.error('❌ Firebase test failed:', error);
+            throw error;
+        }
+    }
+
+    // Meetup CRUD operations
+    async createMeetup(key, meetupData) {
+        try {
+            await this.database.ref('meetups/' + key).set({
+                title: `Meetup ${key}`,
+                created: firebase.database.ServerValue.TIMESTAMP,
+                duration: meetupData.duration || 60,
+                participants: {},
+                messages: {},
+                proposals: {},
+                ...meetupData
+            });
+            return key;
+        } catch (error) {
+            console.error('Error creating meetup:', error);
+            throw new Error('Error creating meetup. Please try again.');
+        }
+    }
+
+    async getMeetup(key) {
+        try {
+            const snapshot = await this.database.ref('meetups/' + key).once('value');
+            return snapshot.exists() ? snapshot.val() : null;
+        } catch (error) {
+            console.error('Error getting meetup:', error);
+            throw error;
+        }
+    }
+
+    async updateMeetupDuration(key, duration) {
+        try {
+            await this.database.ref('meetups/' + key + '/duration').set(duration);
+        } catch (error) {
+            console.error('Error updating duration:', error);
+            throw error;
+        }
+    }
+
+    // Participant operations
+    async addParticipant(meetupKey, participantId, participantData) {
+        try {
+            await this.database.ref('meetups/' + meetupKey + '/participants/' + participantId).set({
+                name: participantData.name,
+                joined: firebase.database.ServerValue.TIMESTAMP,
+                ...participantData
+            });
+            return participantId;
+        } catch (error) {
+            console.error('Error adding participant:', error);
+            throw new Error('Error joining meetup. Please try again.');
+        }
+    }
+
+    // Listen to participants changes
+    onParticipantsChange(meetupKey, callback) {
+        return this.database.ref('meetups/' + meetupKey + '/participants').on('value', (snapshot) => {
+            const participants = snapshot.val() || {};
+            callback(participants);
+        });
+    }
+
+    // Proposal operations
+    async addProposal(meetupKey, proposalId, proposalData) {
+        try {
+            await this.database.ref('meetups/' + meetupKey + '/proposals/' + proposalId).set({
+                participantId: proposalData.participantId || 'anonymous',
+                dateTime: proposalData.dateTime,
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                responses: {}
+            });
+            return proposalId;
+        } catch (error) {
+            console.error('Error adding proposal:', error);
+            throw new Error('Error proposing date. Please try again.');
+        }
+    }
+
+    async respondToProposal(meetupKey, proposalId, participantId, response) {
+        try {
+            await this.database.ref('meetups/' + meetupKey + '/proposals/' + proposalId + '/responses/' + participantId).set({
+                response: response,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            });
+        } catch (error) {
+            console.error('Error responding to proposal:', error);
+            throw new Error('Error responding to proposal: ' + error.message);
+        }
+    }
+
+    // Listen to proposals changes
+    onProposalsChange(meetupKey, callback) {
+        return this.database.ref('meetups/' + meetupKey + '/proposals').on('value', (snapshot) => {
+            const proposals = snapshot.val() || {};
+            callback(proposals);
+        });
+    }
+
+    // Message operations
+    async addMessage(meetupKey, messageId, messageData) {
+        try {
+            await this.database.ref('meetups/' + meetupKey + '/messages/' + messageId).set({
+                participantId: messageData.participantId,
+                message: messageData.message,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            });
+        } catch (error) {
+            console.error('Error sending message:', error);
+            throw new Error('Error sending message: ' + error.message);
+        }
+    }
+
+    // Listen to messages changes
+    onMessagesChange(meetupKey, callback) {
+        return this.database.ref('meetups/' + meetupKey + '/messages').on('value', (snapshot) => {
+            const messages = snapshot.val() || {};
+            callback(messages);
+        });
+    }
+
+    // Clean up listeners
+    off(ref, eventType, callback) {
+        if (this.database) {
+            this.database.ref(ref).off(eventType, callback);
+        }
+    }
+
+    // Clean up all listeners for a meetup
+    cleanupMeetupListeners(meetupKey) {
+        if (this.database) {
+            this.database.ref('meetups/' + meetupKey).off();
+        }
+    }
+}
+
+// Export singleton instance
+export const firebaseAPI = new FirebaseAPI();
