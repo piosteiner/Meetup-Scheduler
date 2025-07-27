@@ -465,6 +465,38 @@ body {
     outline-offset: 2px;
 }
 
+/* Make datetime input fully clickable */
+input[type="datetime-local"] {
+    position: relative;
+    cursor: pointer;
+}
+
+input[type="datetime-local"]::-webkit-datetime-edit {
+    cursor: pointer;
+}
+
+input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper {
+    cursor: pointer;
+}
+
+input[type="datetime-local"]::-webkit-datetime-edit-text {
+    cursor: pointer;
+}
+
+input[type="datetime-local"]::-webkit-datetime-edit-month-field,
+input[type="datetime-local"]::-webkit-datetime-edit-day-field,
+input[type="datetime-local"]::-webkit-datetime-edit-year-field,
+input[type="datetime-local"]::-webkit-datetime-edit-hour-field,
+input[type="datetime-local"]::-webkit-datetime-edit-minute-field {
+    cursor: pointer;
+}
+
+/* Ensure the calendar icon is visible and clickable */
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 1;
+}
+
 /* Print Styles */
 @media print {
     .no-print {
