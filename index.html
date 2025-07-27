@@ -3,775 +3,445 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Schedule Coordinator</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-        }
-
-        .main-content {
-            padding: 40px;
-        }
-
-        .section {
-            margin-bottom: 40px;
-            padding: 30px;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-            border: 1px solid rgba(0, 0, 0, 0.05);
-        }
-
-        .section h2 {
-            color: #333;
-            margin-bottom: 20px;
-            font-size: 1.6rem;
-            position: relative;
-        }
-
-        .section h2::after {
-            content: '';
-            position: absolute;
-            bottom: -5px;
-            left: 0;
-            width: 50px;
-            height: 3px;
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            border-radius: 2px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #555;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e1e5e9;
-            border-radius: 10px;
-            font-size: 16px;
-            transition: all 0.3s ease;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: #4facfe;
-            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
-        }
-
-        .btn {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-right: 10px;
-            margin-bottom: 10px;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(79, 172, 254, 0.4);
-        }
-
-        .btn-secondary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-
-        .btn-danger {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
-        }
-
-        .schedule-grid {
-            overflow-x: auto;
-            margin-top: 20px;
-        }
-
-        .grid-table {
-            min-width: 800px;
-            border-collapse: collapse;
-            width: 100%;
-            background: white;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .grid-table th, .grid-table td {
-            padding: 15px 12px;
-            text-align: center;
-            border: 1px solid #e1e8f0;
-            position: relative;
-        }
-
-        .grid-table th {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            color: white;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        .time-slot {
-            background: #f8f9fa;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            user-select: none;
-        }
-
-        .time-slot:hover {
-            background: #e9ecef;
-            transform: scale(1.02);
-        }
-
-        .time-slot.available {
-            background: #d4edda !important;
-            color: #155724;
-        }
-
-        .time-slot.maybe {
-            background: #fff3cd !important;
-            color: #856404;
-        }
-
-        .time-slot.unavailable {
-            background: #f8d7da !important;
-            color: #721c24;
-        }
-
-        .availability-count {
-            position: absolute;
-            top: 2px;
-            right: 2px;
-            background: rgba(0, 0, 0, 0.1);
-            color: #333;
-            font-size: 10px;
-            padding: 2px 5px;
-            border-radius: 10px;
-            font-weight: bold;
-        }
-
-        .participant-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .participant-tag {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .participant-tag .remove-btn {
-            background: rgba(255, 255, 255, 0.3);
-            border: none;
-            color: white;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .current-user-indicator {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 25px;
-            font-weight: 600;
-            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
-            z-index: 1000;
-        }
-
-        .legend {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-        }
-
-        .legend-color {
-            width: 20px;
-            height: 20px;
-            border-radius: 4px;
-            border: 1px solid #ddd;
-        }
-
-        .best-times {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 20px;
-        }
-
-        .best-times h3 {
-            margin-bottom: 15px;
-            font-size: 1.3rem;
-        }
-
-        .best-time-item {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .add-time-slots {
-            display: grid;
-            grid-template-columns: 1fr 1fr auto;
-            gap: 15px;
-            align-items: end;
-            margin-bottom: 20px;
-        }
-
-        .time-slots-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .time-slot-tag {
-            background: #f8f9fa;
-            padding: 8px 12px;
-            border-radius: 8px;
-            border: 1px solid #dee2e6;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .time-slot-tag .remove-btn {
-            background: #dc3545;
-            color: white;
-            border: none;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 10px;
-        }
-
-        @media (max-width: 768px) {
-            .main-content {
-                padding: 20px;
-            }
-            
-            .add-time-slots {
-                grid-template-columns: 1fr;
-            }
-            
-            .current-user-indicator {
-                position: static;
-                margin-bottom: 20px;
-                text-align: center;
-            }
-        }
-    </style>
+    <title>Piogino Meetup</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-data-connect-compat.js"></script>
 </head>
-<body>
-    <div class="current-user-indicator" id="currentUserIndicator">
-        👤 Current User: <span id="currentUserName">Select a participant</span>
-    </div>
-
-    <div class="container">
-        <div class="header">
-            <h1>📅 Schedule Coordinator</h1>
-            <p>Find the perfect time when everyone is available - just like Doodle!</p>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div id="app" class="flex items-center justify-center min-h-screen p-4">
+        <!-- Loading Screen -->
+        <div id="loadingScreen" class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md text-center">
+            <div class="animate-spin w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p class="text-gray-600">Loading...</p>
         </div>
 
-        <div class="main-content">
-            <!-- Setup Section -->
-            <div class="section">
-                <h2>🎯 Event Setup</h2>
-                <div class="form-group">
-                    <label for="eventTitle">Event Title</label>
-                    <input type="text" id="eventTitle" placeholder="Team Meeting, Birthday Party, etc." value="Team Meeting">
+        <!-- Home Screen -->
+        <div id="homeScreen" class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md hidden">
+            <div class="text-center mb-8">
+                <div class="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
                 </div>
-                
-                <div class="form-group">
-                    <label for="participantName">Add Participants</label>
-                    <input type="text" id="participantName" placeholder="Enter participant name and press Enter">
-                </div>
-                <div class="participant-list" id="participantList"></div>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">Piogino Meetup</h1>
+                <p class="text-gray-600">Create or join a meetup</p>
             </div>
 
-            <!-- Time Slots Section -->
-            <div class="section">
-                <h2>⏰ Proposed Time Slots</h2>
-                <div class="add-time-slots">
-                    <div class="form-group">
-                        <label for="timeDate">Date</label>
-                        <input type="date" id="timeDate">
+            <div class="space-y-4">
+                <button onclick="createMeetup()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 px-6 rounded-xl transition-colors duration-200 flex items-center justify-center space-x-3">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    <span>Create New Meetup</span>
+                </button>
+
+                <div class="relative">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-gray-300"></div>
                     </div>
-                    <div class="form-group">
-                        <label for="timeSlot">Time</label>
-                        <input type="time" id="timeSlot">
+                    <div class="relative flex justify-center text-sm">
+                        <span class="px-2 bg-white text-gray-500">or</span>
                     </div>
-                    <button class="btn" onclick="addTimeSlot()">Add Slot</button>
                 </div>
-                <div class="time-slots-list" id="timeSlotsList"></div>
+
+                <div class="space-y-3">
+                    <input type="text" id="keyInput" placeholder="Enter meetup key" maxlength="8" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors duration-200 text-center font-mono text-lg uppercase"
+                           onkeypress="if(event.key==='Enter') joinMeetup()">
+                    <button onclick="joinMeetup()" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors duration-200 flex items-center justify-center space-x-3">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-3a1 1 0 011-1h2.586l6.243-6.243C11.978 9.59 12.501 9 13 9s1.022.59 1.171.757z"></path>
+                        </svg>
+                        <span>Join Meetup</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Created Screen -->
+        <div id="createdScreen" class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md text-center hidden">
+            <div class="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+            </div>
+            
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">Meetup Created!</h2>
+            <p class="text-gray-600 mb-6">Share this key with participants</p>
+            
+            <div class="bg-gray-50 rounded-xl p-6 mb-6">
+                <div id="generatedKey" class="font-mono text-3xl font-bold text-gray-900 mb-4 tracking-wider"></div>
+                <button onclick="copyLink()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 mx-auto">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                    </svg>
+                    <span>Copy Link</span>
+                </button>
             </div>
 
-            <!-- Availability Grid -->
-            <div class="section">
-                <h2>📊 Availability Grid</h2>
-                <p>Select a participant and click on time slots to mark their availability</p>
-                
-                <div class="legend">
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: #d4edda;"></div>
-                        <span>Available</span>
+            <button onclick="goToMeetup()" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors duration-200">
+                Continue to Meetup
+            </button>
+        </div>
+
+        <!-- Meetup Screen -->
+        <div id="meetupScreen" class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-4xl hidden">
+            <div class="text-center mb-8">
+                <h2 class="text-2xl font-bold text-gray-900 mb-2">Meetup: <span id="currentMeetupKey"></span></h2>
+                <p class="text-gray-600">Participants: <span id="participantCount">0</span></p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- Participants Section -->
+                <div class="bg-gray-50 rounded-xl p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Participants</h3>
+                    
+                    <!-- Join Form -->
+                    <div id="joinForm" class="mb-6">
+                        <div class="flex space-x-3">
+                            <input type="text" id="nameInput" placeholder="Enter your name" 
+                                   class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                                   onkeypress="if(event.key==='Enter') joinAsMember()">
+                            <button onclick="joinAsMember()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg transition-colors duration-200">
+                                Join
+                            </button>
+                        </div>
                     </div>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: #fff3cd;"></div>
-                        <span>Maybe</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: #f8d7da;"></div>
-                        <span>Not Available</span>
+
+                    <!-- Participants List -->
+                    <div id="participantsList" class="space-y-2 max-h-64 overflow-y-auto">
+                        <p class="text-gray-500 text-center">No participants yet</p>
                     </div>
                 </div>
 
-                <div class="participant-list">
-                    <div id="participantButtons"></div>
-                </div>
+                <!-- Messages Section -->
+                <div class="bg-gray-50 rounded-xl p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Messages</h3>
+                    
+                    <!-- Messages List -->
+                    <div id="messagesList" class="space-y-3 mb-4 max-h-64 overflow-y-auto">
+                        <p class="text-gray-500 text-center">No messages yet</p>
+                    </div>
 
-                <div class="schedule-grid">
-                    <table class="grid-table" id="availabilityGrid">
-                        <thead>
-                            <tr>
-                                <th>Time Slot</th>
-                                <th>Available Count</th>
-                            </tr>
-                        </thead>
-                        <tbody id="gridBody">
-                        </tbody>
-                    </table>
+                    <!-- Send Message Form -->
+                    <div id="messageForm" class="hidden">
+                        <div class="flex space-x-3">
+                            <input type="text" id="messageInput" placeholder="Type a message..." 
+                                   class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                                   onkeypress="if(event.key==='Enter') sendMessage()">
+                            <button onclick="sendMessage()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors duration-200">
+                                Send
+                            </button>
+                        </div>
+                    </div>
                 </div>
+            </div>
 
-                <div class="best-times" id="bestTimes" style="display: none;">
-                    <h3>🏆 Best Available Times</h3>
-                    <div id="bestTimesList"></div>
-                </div>
+            <div class="mt-6 text-center">
+                <button onclick="goHome()" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-colors duration-200">
+                    ← Back to Home
+                </button>
             </div>
         </div>
     </div>
 
     <script>
-        let participants = [];
-        let timeSlots = [];
-        let availability = {}; // {participantName: {timeSlotId: 'available'|'maybe'|'unavailable'}}
-        let currentUser = null;
+        // Firebase configuration - REPLACE WITH YOUR CONFIG
+        const firebaseConfig = {
+            apiKey: "your-api-key",
+            authDomain: "your-project.firebaseapp.com",
+            projectId: "your-project-id",
+            // Add your Firebase Data Connect config here
+        };
 
-        // Initialize with sample data
-        function initializeSampleData() {
-            addParticipant('Alice Johnson');
-            addParticipant('Bob Smith');
-            addParticipant('Carol Davis');
-            addParticipant('David Wilson');
-            
-            // Add some sample time slots
-            const today = new Date();
-            const tomorrow = new Date(today);
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            const dayAfter = new Date(today);
-            dayAfter.setDate(dayAfter.getDate() + 2);
-            
-            addTimeSlotDirect(formatDate(tomorrow), '10:00');
-            addTimeSlotDirect(formatDate(tomorrow), '14:00');
-            addTimeSlotDirect(formatDate(tomorrow), '16:00');
-            addTimeSlotDirect(formatDate(dayAfter), '09:00');
-            addTimeSlotDirect(formatDate(dayAfter), '11:00');
-            
-            // Set current user to first participant
-            setCurrentUser('Alice Johnson');
-            
-            // Add some sample availability
-            setAvailability('Alice Johnson', 0, 'available');
-            setAvailability('Alice Johnson', 1, 'maybe');
-            setAvailability('Alice Johnson', 3, 'available');
-            
-            setAvailability('Bob Smith', 0, 'available');
-            setAvailability('Bob Smith', 2, 'available');
-            setAvailability('Bob Smith', 4, 'maybe');
-            
-            setAvailability('Carol Davis', 1, 'available');
-            setAvailability('Carol Davis', 2, 'unavailable');
-            setAvailability('Carol Davis', 3, 'available');
-            
-            updateGrid();
-            calculateBestTimes();
-        }
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        let dataConnect;
+        let currentMeetupKey = '';
+        let currentParticipantId = null;
 
-        function formatDate(date) {
-            return date.toISOString().split('T')[0];
-        }
-
-        // Participant management
-        document.getElementById('participantName').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter' && this.value.trim()) {
-                addParticipant(this.value.trim());
-                this.value = '';
-            }
-        });
-
-        function addParticipant(name) {
-            if (!participants.includes(name)) {
-                participants.push(name);
-                availability[name] = {};
-                updateParticipantList();
-                updateParticipantButtons();
-                updateGrid();
-            }
-        }
-
-        function removeParticipant(name) {
-            const index = participants.indexOf(name);
-            if (index > -1) {
-                participants.splice(index, 1);
-                delete availability[name];
-                if (currentUser === name) {
-                    currentUser = participants.length > 0 ? participants[0] : null;
-                    updateCurrentUserIndicator();
+        // Initialize Data Connect
+        async function initializeApp() {
+            try {
+                dataConnect = firebase.dataConnect();
+                
+                // Check URL parameters on page load
+                const urlParams = new URLSearchParams(window.location.search);
+                const keyFromUrl = urlParams.get('key');
+                if (keyFromUrl) {
+                    currentMeetupKey = keyFromUrl.toUpperCase();
+                    await loadMeetupData();
+                    showMeetupScreen();
+                } else {
+                    showHomeScreen();
                 }
-                updateParticipantList();
-                updateParticipantButtons();
-                updateGrid();
-                calculateBestTimes();
+            } catch (error) {
+                console.error('Failed to initialize:', error);
+                alert('Failed to connect to Firebase. Please check your configuration.');
+                showHomeScreen();
             }
         }
 
-        function updateParticipantList() {
-            const list = document.getElementById('participantList');
-            list.innerHTML = '';
-            participants.forEach(participant => {
-                const tag = document.createElement('div');
-                tag.className = 'participant-tag';
-                tag.innerHTML = `
-                    ${participant}
-                    <button class="remove-btn" onclick="removeParticipant('${participant}')">×</button>
-                `;
-                list.appendChild(tag);
-            });
-        }
-
-        function updateParticipantButtons() {
-            const container = document.getElementById('participantButtons');
-            container.innerHTML = '';
-            participants.forEach(participant => {
-                const btn = document.createElement('button');
-                btn.className = 'btn' + (participant === currentUser ? ' btn-secondary' : '');
-                btn.textContent = participant;
-                btn.onclick = () => setCurrentUser(participant);
-                container.appendChild(btn);
-            });
-        }
-
-        function setCurrentUser(participant) {
-            currentUser = participant;
-            updateCurrentUserIndicator();
-            updateParticipantButtons();
-        }
-
-        function updateCurrentUserIndicator() {
-            document.getElementById('currentUserName').textContent = currentUser || 'None selected';
-        }
-
-        // Time slot management
-        function addTimeSlot() {
-            const date = document.getElementById('timeDate').value;
-            const time = document.getElementById('timeSlot').value;
-            
-            if (!date || !time) {
-                alert('Please select both date and time!');
-                return;
+        function generateMeetupKey() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let result = '';
+            for (let i = 0; i < 8; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
             }
-            
-            addTimeSlotDirect(date, time);
-            
-            // Clear inputs
-            document.getElementById('timeDate').value = '';
-            document.getElementById('timeSlot').value = '';
+            return result;
         }
 
-        function addTimeSlotDirect(date, time) {
-            const dateObj = new Date(date + 'T' + time);
-            const formattedDateTime = dateObj.toLocaleDateString('en-US', {
-                weekday: 'short',
-                month: 'short',
-                day: 'numeric'
-            }) + ' at ' + dateObj.toLocaleTimeString('en-US', {
-                hour: 'numeric',
-                minute: '2-digit',
-                hour12: true
-            });
-            
-            const timeSlot = {
-                id: timeSlots.length,
-                date: date,
-                time: time,
-                display: formattedDateTime,
-                datetime: dateObj
-            };
-            
-            timeSlots.push(timeSlot);
-            updateTimeSlotsList();
-            updateGrid();
-        }
-
-        function removeTimeSlot(index) {
-            timeSlots.splice(index, 1);
-            // Update IDs
-            timeSlots.forEach((slot, i) => slot.id = i);
-            
-            // Clean up availability data
-            Object.keys(availability).forEach(participant => {
-                const newAvailability = {};
-                Object.keys(availability[participant]).forEach(slotId => {
-                    const id = parseInt(slotId);
-                    if (id < index) {
-                        newAvailability[id] = availability[participant][slotId];
-                    } else if (id > index) {
-                        newAvailability[id - 1] = availability[participant][slotId];
-                    }
-                });
-                availability[participant] = newAvailability;
-            });
-            
-            updateTimeSlotsList();
-            updateGrid();
-            calculateBestTimes();
-        }
-
-        function updateTimeSlotsList() {
-            const list = document.getElementById('timeSlotsList');
-            list.innerHTML = '';
-            timeSlots.forEach((slot, index) => {
-                const tag = document.createElement('div');
-                tag.className = 'time-slot-tag';
-                tag.innerHTML = `
-                    ${slot.display}
-                    <button class="remove-btn" onclick="removeTimeSlot(${index})">×</button>
-                `;
-                list.appendChild(tag);
-            });
-        }
-
-        // Availability management
-        function toggleAvailability(participantName, timeSlotId) {
-            if (!currentUser) {
-                alert('Please select a participant first!');
-                return;
-            }
-            
-            const current = availability[currentUser][timeSlotId];
-            let next;
-            
-            if (!current || current === 'unavailable') {
-                next = 'available';
-            } else if (current === 'available') {
-                next = 'maybe';
-            } else {
-                next = 'unavailable';
-            }
-            
-            setAvailability(currentUser, timeSlotId, next);
-            updateGrid();
-            calculateBestTimes();
-        }
-
-        function setAvailability(participantName, timeSlotId, status) {
-            if (!availability[participantName]) {
-                availability[participantName] = {};
-            }
-            availability[participantName][timeSlotId] = status;
-        }
-
-        function updateGrid() {
-            const tbody = document.getElementById('gridBody');
-            tbody.innerHTML = '';
-            
-            if (timeSlots.length === 0) {
-                const row = document.createElement('tr');
-                row.innerHTML = '<td colspan="100%">No time slots added yet. Add some time slots above to get started!</td>';
-                tbody.appendChild(row);
-                return;
-            }
-            
-            // Create header row with participants
-            const headerRow = document.createElement('tr');
-            headerRow.innerHTML = '<th>Time Slot</th>' + 
-                participants.map(p => `<th>${p}</th>`).join('') +
-                '<th>Total Available</th>';
-            tbody.appendChild(headerRow);
-            
-            // Create rows for each time slot
-            timeSlots.forEach(slot => {
-                const row = document.createElement('tr');
+        async function createMeetup() {
+            try {
+                const newKey = generateMeetupKey();
                 
-                // Time slot column
-                const timeCell = document.createElement('td');
-                timeCell.innerHTML = `<strong>${slot.display}</strong>`;
-                timeCell.style.background = '#f8f9fa';
-                row.appendChild(timeCell);
-                
-                // Participant columns
-                participants.forEach(participant => {
-                    const cell = document.createElement('td');
-                    const status = availability[participant][slot.id];
-                    
-                    cell.className = 'time-slot';
-                    if (status) {
-                        cell.classList.add(status);
-                    }
-                    
-                    let symbol = '?';
-                    if (status === 'available') symbol = '✓';
-                    else if (status === 'maybe') symbol = '?';
-                    else if (status === 'unavailable') symbol = '✗';
-                    
-                    cell.textContent = symbol;
-                    cell.onclick = () => {
-                        if (currentUser === participant) {
-                            toggleAvailability(participant, slot.id);
-                        } else {
-                            setCurrentUser(participant);
+                // Call your Firebase Data Connect mutation
+                const result = await dataConnect.executeMutation({
+                    query: `
+                        mutation CreateMeetup($meetup_key: String!, $title: String) {
+                            createMeetup(meetup_key: $meetup_key, title: $title) {
+                                id
+                                meetup_key
+                                title
+                            }
                         }
-                    };
-                    
-                    row.appendChild(cell);
+                    `,
+                    variables: {
+                        meetup_key: newKey,
+                        title: `Meetup ${newKey}`
+                    }
                 });
-                
-                // Total available column
-                const totalCell = document.createElement('td');
-                const availableCount = participants.filter(p => 
-                    availability[p][slot.id] === 'available'
-                ).length;
-                const maybeCount = participants.filter(p => 
-                    availability[p][slot.id] === 'maybe'
-                ).length;
-                
-                totalCell.innerHTML = `<strong>${availableCount}</strong>` + 
-                    (maybeCount > 0 ? ` (+${maybeCount} maybe)` : '');
-                totalCell.style.background = availableCount > participants.length / 2 ? '#d4edda' : '#f8f9fa';
-                row.appendChild(totalCell);
-                
-                tbody.appendChild(row);
-            });
-        }
 
-        function calculateBestTimes() {
-            if (timeSlots.length === 0 || participants.length === 0) {
-                document.getElementById('bestTimes').style.display = 'none';
-                return;
+                currentMeetupKey = newKey;
+                document.getElementById('generatedKey').textContent = newKey;
+                const newUrl = `${window.location.origin}${window.location.pathname}?key=${newKey}`;
+                window.history.pushState({}, '', newUrl);
+                showCreatedScreen();
+
+            } catch (error) {
+                console.error('Error creating meetup:', error);
+                alert('Error creating meetup. Please try again.');
             }
-            
-            const scores = timeSlots.map(slot => {
-                const availableCount = participants.filter(p => 
-                    availability[p][slot.id] === 'available'
-                ).length;
-                const maybeCount = participants.filter(p => 
-                    availability[p][slot.id] === 'maybe'
-                ).length;
-                
-                return {
-                    slot: slot,
-                    available: availableCount,
-                    maybe: maybeCount,
-                    score: availableCount + (maybeCount * 0.5)
-                };
-            });
-            
-            scores.sort((a, b) => b.score - a.score);
-            
-            const bestTimesList = document.getElementById('bestTimesList');
-            bestTimesList.innerHTML = '';
-            
-            scores.slice(0, 3).forEach((item, index) => {
-                if (item.score > 0) {
-                    const div = document.createElement('div');
-                    div.className = 'best-time-item';
-                    div.innerHTML = `
-                        <span>${item.slot.display}</span>
-                        <span>${item.available} available${item.maybe > 0 ? `, ${item.maybe} maybe` : ''}</span>
-                    `;
-                    bestTimesList.appendChild(div);
-                }
-            });
-            
-            document.getElementById('bestTimes').style.display = scores[0].score > 0 ? 'block' : 'none';
         }
 
-        // Initialize the application
-        initializeSampleData();
+        async function joinMeetup() {
+            const key = document.getElementById('keyInput').value.trim().toUpperCase();
+            if (key) {
+                try {
+                    // Check if meetup exists
+                    const exists = await dataConnect.executeQuery({
+                        query: `
+                            query MeetupExists($meetup_key: String!) {
+                                meetupExists(meetup_key: $meetup_key)
+                            }
+                        `,
+                        variables: { meetup_key: key }
+                    });
+
+                    if (exists.data.meetupExists) {
+                        currentMeetupKey = key;
+                        const newUrl = `${window.location.origin}${window.location.pathname}?key=${key}`;
+                        window.history.pushState({}, '', newUrl);
+                        await loadMeetupData();
+                        showMeetupScreen();
+                    } else {
+                        alert('Meetup not found. Please check the key.');
+                    }
+                } catch (error) {
+                    console.error('Error joining meetup:', error);
+                    alert('Error joining meetup. Please try again.');
+                }
+            }
+        }
+
+        async function joinAsMember() {
+            const name = document.getElementById('nameInput').value.trim();
+            if (name && currentMeetupKey) {
+                try {
+                    const result = await dataConnect.executeMutation({
+                        query: `
+                            mutation JoinMeetup($meetup_key: String!, $name: String!) {
+                                joinMeetup(meetup_key: $meetup_key, name: $name) {
+                                    id
+                                    name
+                                }
+                            }
+                        `,
+                        variables: {
+                            meetup_key: currentMeetupKey,
+                            name: name
+                        }
+                    });
+
+                    currentParticipantId = result.data.joinMeetup.id;
+                    document.getElementById('nameInput').value = '';
+                    document.getElementById('joinForm').style.display = 'none';
+                    document.getElementById('messageForm').classList.remove('hidden');
+                    
+                    await loadMeetupData();
+                } catch (error) {
+                    console.error('Error joining meetup:', error);
+                    alert('Error joining meetup. Please try again.');
+                }
+            }
+        }
+
+        async function sendMessage() {
+            const message = document.getElementById('messageInput').value.trim();
+            if (message && currentParticipantId && currentMeetupKey) {
+                try {
+                    await dataConnect.executeMutation({
+                        query: `
+                            mutation SendMessage($meetup_key: String!, $participant_id: Int!, $message: String!) {
+                                sendMessage(meetup_key: $meetup_key, participant_id: $participant_id, message: $message) {
+                                    id
+                                    message
+                                }
+                            }
+                        `,
+                        variables: {
+                            meetup_key: currentMeetupKey,
+                            participant_id: currentParticipantId,
+                            message: message
+                        }
+                    });
+
+                    document.getElementById('messageInput').value = '';
+                    await loadMeetupData();
+                } catch (error) {
+                    console.error('Error sending message:', error);
+                    alert('Error sending message. Please try again.');
+                }
+            }
+        }
+
+        async function loadMeetupData() {
+            if (currentMeetupKey && dataConnect) {
+                try {
+                    document.getElementById('currentMeetupKey').textContent = currentMeetupKey;
+
+                    // Load participants
+                    const participantsResult = await dataConnect.executeQuery({
+                        query: `
+                            query GetMeetupParticipants($meetup_key: String!) {
+                                getMeetupParticipants(meetup_key: $meetup_key) {
+                                    id
+                                    name
+                                    is_organizer
+                                }
+                            }
+                        `,
+                        variables: { meetup_key: currentMeetupKey }
+                    });
+
+                    const participants = participantsResult.data.getMeetupParticipants || [];
+                    const participantsList = document.getElementById('participantsList');
+                    const participantCount = document.getElementById('participantCount');
+                    
+                    participantCount.textContent = participants.length;
+                    
+                    if (participants.length === 0) {
+                        participantsList.innerHTML = '<p class="text-gray-500 text-center">No participants yet</p>';
+                    } else {
+                        participantsList.innerHTML = participants
+                            .map(p => `
+                                <div class="bg-white p-3 rounded-lg shadow-sm flex items-center justify-between">
+                                    <span>${p.name}</span>
+                                    ${p.is_organizer ? '<span class="text-xs bg-indigo-100 text-indigo-600 px-2 py-1 rounded">Organizer</span>' : ''}
+                                </div>
+                            `).join('');
+                    }
+
+                    // Load messages
+                    const messagesResult = await dataConnect.executeQuery({
+                        query: `
+                            query GetMeetupMessages($meetup_key: String!) {
+                                getMeetupMessages(meetup_key: $meetup_key) {
+                                    id
+                                    message
+                                    participant_name
+                                    sent_at
+                                }
+                            }
+                        `,
+                        variables: { meetup_key: currentMeetupKey }
+                    });
+
+                    const messages = messagesResult.data.getMeetupMessages || [];
+                    const messagesList = document.getElementById('messagesList');
+                    
+                    if (messages.length === 0) {
+                        messagesList.innerHTML = '<p class="text-gray-500 text-center">No messages yet</p>';
+                    } else {
+                        messagesList.innerHTML = messages
+                            .map(msg => `
+                                <div class="bg-white p-3 rounded-lg shadow-sm">
+                                    <div class="font-semibold text-sm text-gray-600">${msg.participant_name}</div>
+                                    <div class="text-gray-900">${msg.message}</div>
+                                </div>
+                            `).join('');
+                        
+                        // Scroll to bottom
+                        messagesList.scrollTop = messagesList.scrollHeight;
+                    }
+
+                } catch (error) {
+                    console.error('Error loading meetup data:', error);
+                }
+            }
+        }
+
+        function copyLink() {
+            const link = `${window.location.origin}${window.location.pathname}?key=${currentMeetupKey}`;
+            navigator.clipboard.writeText(link).then(() => {
+                alert('Link copied to clipboard!');
+            });
+        }
+
+        function showLoadingScreen() {
+            document.getElementById('loadingScreen').classList.remove('hidden');
+            document.getElementById('homeScreen').classList.add('hidden');
+            document.getElementById('createdScreen').classList.add('hidden');
+            document.getElementById('meetupScreen').classList.add('hidden');
+        }
+
+        function showHomeScreen() {
+            document.getElementById('loadingScreen').classList.add('hidden');
+            document.getElementById('homeScreen').classList.remove('hidden');
+            document.getElementById('createdScreen').classList.add('hidden');
+            document.getElementById('meetupScreen').classList.add('hidden');
+        }
+
+        function showCreatedScreen() {
+            document.getElementById('loadingScreen').classList.add('hidden');
+            document.getElementById('homeScreen').classList.add('hidden');
+            document.getElementById('createdScreen').classList.remove('hidden');
+            document.getElementById('meetupScreen').classList.add('hidden');
+        }
+
+        function showMeetupScreen() {
+            document.getElementById('loadingScreen').classList.add('hidden');
+            document.getElementById('homeScreen').classList.add('hidden');
+            document.getElementById('createdScreen').classList.add('hidden');
+            document.getElementById('meetupScreen').classList.remove('hidden');
+        }
+
+        function goToMeetup() {
+            showMeetupScreen();
+            loadMeetupData();
+        }
+
+        function goHome() {
+            currentMeetupKey = '';
+            currentParticipantId = null;
+            window.history.pushState({}, '', window.location.pathname);
+            showHomeScreen();
+        }
+
+        // Initialize the app
+        window.onload = initializeApp;
     </script>
 </body>
 </html>
