@@ -141,6 +141,7 @@ class UIComponents {
                     this.renderParticipantResponseSection(proposalId, selectedParticipantName, selectedResponse) :
                     this.renderNoParticipantSelected()
                 }
+                ${this.renderDeleteButton(proposalId, proposerName)}
             </div>
         `;
     }
@@ -215,12 +216,45 @@ class UIComponents {
         return classes[response] || 'bg-gray-100 text-gray-700';
     }
 
+    // Render delete button for proposals
+    renderDeleteButton(proposalId, proposerName) {
+        return `
+            <div class="mt-3 pt-3 border-t border-gray-200">
+                <button onclick="window.app.deleteProposal('${proposalId}', '${proposerName}')" 
+                        class="text-red-600 hover:text-red-800 text-xs font-medium transition-colors duration-200">
+                    🗑️ Delete this proposal
+                </button>
+            </div>
+        `;
+    }
+
+    // Render deleted proposal message
+    renderDeletedProposalMessage(deletedProposal) {
+        const deletedDate = new Date(deletedProposal.deletedAt).toLocaleString();
+        const originalDate = window.Utils.formatDate(new Date(deletedProposal.originalDateTime));
+        const originalTime = window.Utils.formatTime(new Date(deletedProposal.originalDateTime));
+        
+        return `
+            <div class="bg-red-50 border border-red-200 rounded-lg p-3 text-sm">
+                <div class="text-red-800 font-medium">❌ Deleted Proposal</div>
+                <div class="text-red-600">
+                    ${originalDate} at ${originalTime} (proposed by ${deletedProposal.proposerName})
+                </div>
+                <div class="text-red-500 text-xs mt-1">Deleted on ${deletedDate}</div>
+            </div>
+        `;
+    }
+
     // Render message
     renderMessage(messageId, message, allParticipants) {
         const senderName = allParticipants[message.participantId]?.name || 'Unknown';
+        const timestamp = message.timestamp ? new Date(message.timestamp).toLocaleString() : '';
         return `
             <div class="bg-white p-3 rounded-lg shadow-sm">
-                <div class="font-semibold text-sm text-gray-600">${senderName}</div>
+                <div class="flex items-center justify-between mb-1">
+                    <div class="font-semibold text-sm text-gray-600">${senderName}</div>
+                    <div class="text-xs text-gray-400">${timestamp}</div>
+                </div>
                 <div class="text-gray-900">${this.escapeHtml(message.message)}</div>
             </div>
         `;
@@ -240,7 +274,7 @@ class UIComponents {
     }
 
     // Render proposals list
-    renderProposalsList(proposals, allParticipants, selectedParticipantId, meetingDuration) {
+    renderProposalsList(proposals, allParticipants, selectedParticipantId, meetingDuration, deletedProposals = {}) {
         const proposalArray = Object.entries(proposals)
             .sort((a, b) => {
                 const dateA = new Date(a[1].dateTime);
@@ -248,15 +282,30 @@ class UIComponents {
                 return dateA - dateB;
             });
         
-        if (proposalArray.length === 0) {
-            return '<p class="text-gray-500 text-center col-span-full">No proposals yet</p>';
+        const deletedArray = Object.entries(deletedProposals)
+            .sort((a, b) => (b[1].deletedAt || 0) - (a[1].deletedAt || 0));
+        
+        let html = '';
+        
+        if (proposalArray.length === 0 && deletedArray.length === 0) {
+            html = '<p class="text-gray-500 text-center col-span-full">No proposals yet</p>';
+        } else {
+            // Active proposals
+            html += proposalArray
+                .map(([proposalId, proposal]) => 
+                    this.renderProposalCard(proposalId, proposal, allParticipants, selectedParticipantId, meetingDuration)
+                )
+                .join('');
+            
+            // Deleted proposals
+            html += deletedArray
+                .map(([deletedId, deletedProposal]) => 
+                    this.renderDeletedProposalMessage(deletedProposal)
+                )
+                .join('');
         }
-
-        return proposalArray
-            .map(([proposalId, proposal]) => 
-                this.renderProposalCard(proposalId, proposal, allParticipants, selectedParticipantId, meetingDuration)
-            )
-            .join('');
+        
+        return html;
     }
 
     // Utility: Escape HTML

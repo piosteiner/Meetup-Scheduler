@@ -8,6 +8,7 @@ class MeetupApp {
         this.allParticipants = {};
         this.meetingDuration = window.MeetupConfig.app.defaultMeetingDuration;
         this.listeners = new Map(); // Track Firebase listeners for cleanup
+        this.currentProposals = {}; // Store current proposals for deleted proposals listener
     }
 
     // Initialize the application
@@ -271,6 +272,55 @@ class MeetupApp {
         }
     }
 
+    // Delete proposal with confirmation
+    async deleteProposal(proposalId, proposerName) {
+        try {
+            const confirmation = prompt('To delete this proposal, type DELETE in capital letters:');
+            
+            if (confirmation !== 'DELETE') {
+                if (confirmation !== null) { // User didn't cancel
+                    window.uiComponents.showNotification('Deletion cancelled. You must type "DELETE" exactly.', 'warning');
+                }
+                return;
+            }
+            
+            if (!this.currentMeetupKey) {
+                window.uiComponents.showNotification('No meetup selected', 'error');
+                return;
+            }
+            
+            // Get the proposal data before deleting
+            const proposalSnapshot = await window.firebaseAPI.database.ref('meetups/' + this.currentMeetupKey + '/proposals/' + proposalId).once('value');
+            const proposalData = proposalSnapshot.val();
+            
+            if (!proposalData) {
+                window.uiComponents.showNotification('Proposal not found', 'error');
+                return;
+            }
+            
+            // Move to deleted proposals
+            const deletedProposalData = {
+                ...proposalData,
+                proposerName: proposerName,
+                originalDateTime: proposalData.dateTime,
+                deletedAt: firebase.database.ServerValue.TIMESTAMP
+            };
+            
+            // Add to deleted proposals and remove from active proposals
+            await Promise.all([
+                window.firebaseAPI.database.ref('meetups/' + this.currentMeetupKey + '/deletedProposals/' + proposalId).set(deletedProposalData),
+                window.firebaseAPI.database.ref('meetups/' + this.currentMeetupKey + '/proposals/' + proposalId).remove()
+            ]);
+            
+            window.uiComponents.showNotification('Proposal deleted successfully', 'success');
+            console.log('✅ Proposal deleted:', proposalId);
+            
+        } catch (error) {
+            console.error('❌ Error deleting proposal:', error);
+            window.uiComponents.showNotification('Error deleting proposal: ' + error.message, 'error');
+        }
+    }
+
     // Send message
     async sendMessage() {
         try {
@@ -414,6 +464,14 @@ class MeetupApp {
             this.updateProposalsUI(proposals);
         });
         this.listeners.set('proposals', proposalsListener);
+
+        // Deleted proposals listener
+        const deletedProposalsListener = window.firebaseAPI.database.ref('meetups/' + this.currentMeetupKey + '/deletedProposals').on('value', (snapshot) => {
+            const deletedProposals = snapshot.val() || {};
+            console.log('🗑️ Deleted proposals updated:', Object.keys(deletedProposals).length, 'deleted');
+            this.updateProposalsUI(this.currentProposals || {}, deletedProposals);
+        });
+        this.listeners.set('deletedProposals', deletedProposalsListener);
     }
 
     // Update participants UI
@@ -445,12 +503,14 @@ class MeetupApp {
     }
 
     // Update proposals UI
-    updateProposalsUI(proposals) {
+    updateProposalsUI(proposals, deletedProposals = {}) {
+        this.currentProposals = proposals; // Store for deleted proposals listener
         const proposalsList = window.uiComponents.renderProposalsList(
             proposals, 
             this.allParticipants, 
             this.selectedParticipantId, 
-            this.meetingDuration
+            this.meetingDuration,
+            deletedProposals
         );
         window.uiComponents.updateHTML('proposalsList', proposalsList);
     }
@@ -495,6 +555,7 @@ window.sendMessage = () => window.app?.sendMessage();
 window.copyLink = () => window.app?.copyLink();
 window.goToMeetup = () => window.app?.goToMeetup();
 window.goHome = () => window.app?.goHome();
+window.deleteProposal = (proposalId, proposerName) => window.app?.deleteProposal(proposalId, proposerName);
 
 // Initialize app when DOM is loaded
 document.addEventListener('DOMContentLoaded', async () => {
