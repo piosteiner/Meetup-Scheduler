@@ -5,20 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Piogino Meetup</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-data-connect-compat.js"></script>
+    <!-- Firebase SDK - Using the correct versions for Realtime Database -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
     <div id="app" class="flex items-center justify-center min-h-screen p-4">
-        <!-- Loading Screen -->
-        <div id="loadingScreen" class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md text-center">
-            <div class="animate-spin w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p class="text-gray-600">Loading...</p>
-        </div>
-
         <!-- Home Screen -->
-        <div id="homeScreen" class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md hidden">
+        <div id="homeScreen" class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
             <div class="text-center mb-8">
                 <div class="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                     <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -148,41 +142,35 @@
     </div>
 
     <script>
-        // Firebase configuration - REPLACE WITH YOUR CONFIG
+        // Your Firebase configuration
         const firebaseConfig = {
-            apiKey: "your-api-key",
-            authDomain: "your-project.firebaseapp.com",
-            projectId: "your-project-id",
-            // Add your Firebase Data Connect config here
+            apiKey: "AIzaSyBeaBtfeqhiDA5GrYwZBNwtN4J8l5yszCk",
+            authDomain: "meetup-app-9f1ff.firebaseapp.com",
+            databaseURL: "https://meetup-app-9f1ff-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "meetup-app-9f1ff",
+            storageBucket: "meetup-app-9f1ff.firebasestorage.app",
+            messagingSenderId: "1093344835630",
+            appId: "1:1093344835630:web:fbb75663598de6747147bf",
+            measurementId: "G-22ZZMHZDLD"
         };
 
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
-        let dataConnect;
+        const database = firebase.database();
+
         let currentMeetupKey = '';
         let currentParticipantId = null;
 
-        // Initialize Data Connect
-        async function initializeApp() {
-            try {
-                dataConnect = firebase.dataConnect();
-                
-                // Check URL parameters on page load
-                const urlParams = new URLSearchParams(window.location.search);
-                const keyFromUrl = urlParams.get('key');
-                if (keyFromUrl) {
-                    currentMeetupKey = keyFromUrl.toUpperCase();
-                    await loadMeetupData();
-                    showMeetupScreen();
-                } else {
-                    showHomeScreen();
-                }
-            } catch (error) {
-                console.error('Failed to initialize:', error);
-                alert('Failed to connect to Firebase. Please check your configuration.');
-                showHomeScreen();
+        // Check URL parameters on page load
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const keyFromUrl = urlParams.get('key');
+            if (keyFromUrl) {
+                currentMeetupKey = keyFromUrl.toUpperCase();
+                showMeetupScreen();
+                loadMeetupData();
             }
-        }
+        };
 
         function generateMeetupKey() {
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -193,203 +181,136 @@
             return result;
         }
 
-        async function createMeetup() {
-            try {
-                const newKey = generateMeetupKey();
-                
-                // Call your Firebase Data Connect mutation
-                const result = await dataConnect.executeMutation({
-                    query: `
-                        mutation CreateMeetup($meetup_key: String!, $title: String) {
-                            createMeetup(meetup_key: $meetup_key, title: $title) {
-                                id
-                                meetup_key
-                                title
-                            }
-                        }
-                    `,
-                    variables: {
-                        meetup_key: newKey,
-                        title: `Meetup ${newKey}`
-                    }
-                });
-
-                currentMeetupKey = newKey;
+        function createMeetup() {
+            const newKey = generateMeetupKey();
+            currentMeetupKey = newKey;
+            
+            // Create meetup in Firebase
+            database.ref('meetups/' + newKey).set({
+                title: `Meetup ${newKey}`,
+                created: firebase.database.ServerValue.TIMESTAMP,
+                participants: {},
+                messages: {}
+            }).then(() => {
                 document.getElementById('generatedKey').textContent = newKey;
                 const newUrl = `${window.location.origin}${window.location.pathname}?key=${newKey}`;
                 window.history.pushState({}, '', newUrl);
                 showCreatedScreen();
-
-            } catch (error) {
+            }).catch(error => {
                 console.error('Error creating meetup:', error);
                 alert('Error creating meetup. Please try again.');
-            }
+            });
         }
 
-        async function joinMeetup() {
+        function joinMeetup() {
             const key = document.getElementById('keyInput').value.trim().toUpperCase();
             if (key) {
-                try {
-                    // Check if meetup exists
-                    const exists = await dataConnect.executeQuery({
-                        query: `
-                            query MeetupExists($meetup_key: String!) {
-                                meetupExists(meetup_key: $meetup_key)
-                            }
-                        `,
-                        variables: { meetup_key: key }
-                    });
-
-                    if (exists.data.meetupExists) {
-                        currentMeetupKey = key;
+                currentMeetupKey = key;
+                // Check if meetup exists
+                database.ref('meetups/' + key).once('value').then(snapshot => {
+                    if (snapshot.exists()) {
                         const newUrl = `${window.location.origin}${window.location.pathname}?key=${key}`;
                         window.history.pushState({}, '', newUrl);
-                        await loadMeetupData();
                         showMeetupScreen();
+                        loadMeetupData();
                     } else {
                         alert('Meetup not found. Please check the key.');
                     }
-                } catch (error) {
-                    console.error('Error joining meetup:', error);
-                    alert('Error joining meetup. Please try again.');
-                }
+                });
             }
         }
 
-        async function joinAsMember() {
+        function joinAsMember() {
             const name = document.getElementById('nameInput').value.trim();
             if (name && currentMeetupKey) {
-                try {
-                    const result = await dataConnect.executeMutation({
-                        query: `
-                            mutation JoinMeetup($meetup_key: String!, $name: String!) {
-                                joinMeetup(meetup_key: $meetup_key, name: $name) {
-                                    id
-                                    name
-                                }
-                            }
-                        `,
-                        variables: {
-                            meetup_key: currentMeetupKey,
-                            name: name
-                        }
-                    });
-
-                    currentParticipantId = result.data.joinMeetup.id;
+                const participantId = Date.now().toString();
+                currentParticipantId = participantId;
+                
+                database.ref('meetups/' + currentMeetupKey + '/participants/' + participantId).set({
+                    name: name,
+                    joined: firebase.database.ServerValue.TIMESTAMP
+                }).then(() => {
                     document.getElementById('nameInput').value = '';
                     document.getElementById('joinForm').style.display = 'none';
                     document.getElementById('messageForm').classList.remove('hidden');
-                    
-                    await loadMeetupData();
-                } catch (error) {
+                }).catch(error => {
                     console.error('Error joining meetup:', error);
                     alert('Error joining meetup. Please try again.');
-                }
+                });
             }
         }
 
-        async function sendMessage() {
+        function sendMessage() {
             const message = document.getElementById('messageInput').value.trim();
             if (message && currentParticipantId && currentMeetupKey) {
-                try {
-                    await dataConnect.executeMutation({
-                        query: `
-                            mutation SendMessage($meetup_key: String!, $participant_id: Int!, $message: String!) {
-                                sendMessage(meetup_key: $meetup_key, participant_id: $participant_id, message: $message) {
-                                    id
-                                    message
-                                }
-                            }
-                        `,
-                        variables: {
-                            meetup_key: currentMeetupKey,
-                            participant_id: currentParticipantId,
-                            message: message
-                        }
-                    });
-
+                const messageId = Date.now().toString();
+                
+                database.ref('meetups/' + currentMeetupKey + '/messages/' + messageId).set({
+                    participantId: currentParticipantId,
+                    message: message,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                }).then(() => {
                     document.getElementById('messageInput').value = '';
-                    await loadMeetupData();
-                } catch (error) {
+                }).catch(error => {
                     console.error('Error sending message:', error);
                     alert('Error sending message. Please try again.');
-                }
+                });
             }
         }
 
-        async function loadMeetupData() {
-            if (currentMeetupKey && dataConnect) {
-                try {
-                    document.getElementById('currentMeetupKey').textContent = currentMeetupKey;
-
-                    // Load participants
-                    const participantsResult = await dataConnect.executeQuery({
-                        query: `
-                            query GetMeetupParticipants($meetup_key: String!) {
-                                getMeetupParticipants(meetup_key: $meetup_key) {
-                                    id
-                                    name
-                                    is_organizer
-                                }
-                            }
-                        `,
-                        variables: { meetup_key: currentMeetupKey }
-                    });
-
-                    const participants = participantsResult.data.getMeetupParticipants || [];
+        function loadMeetupData() {
+            if (currentMeetupKey) {
+                document.getElementById('currentMeetupKey').textContent = currentMeetupKey;
+                
+                // Listen for participant changes
+                database.ref('meetups/' + currentMeetupKey + '/participants').on('value', snapshot => {
+                    const participants = snapshot.val() || {};
                     const participantsList = document.getElementById('participantsList');
                     const participantCount = document.getElementById('participantCount');
                     
-                    participantCount.textContent = participants.length;
+                    const count = Object.keys(participants).length;
+                    participantCount.textContent = count;
                     
-                    if (participants.length === 0) {
+                    if (count === 0) {
                         participantsList.innerHTML = '<p class="text-gray-500 text-center">No participants yet</p>';
                     } else {
-                        participantsList.innerHTML = participants
-                            .map(p => `
-                                <div class="bg-white p-3 rounded-lg shadow-sm flex items-center justify-between">
-                                    <span>${p.name}</span>
-                                    ${p.is_organizer ? '<span class="text-xs bg-indigo-100 text-indigo-600 px-2 py-1 rounded">Organizer</span>' : ''}
-                                </div>
-                            `).join('');
+                        participantsList.innerHTML = Object.entries(participants)
+                            .map(([id, p]) => `<div class="bg-white p-3 rounded-lg shadow-sm">${p.name}</div>`)
+                            .join('');
                     }
+                });
 
-                    // Load messages
-                    const messagesResult = await dataConnect.executeQuery({
-                        query: `
-                            query GetMeetupMessages($meetup_key: String!) {
-                                getMeetupMessages(meetup_key: $meetup_key) {
-                                    id
-                                    message
-                                    participant_name
-                                    sent_at
-                                }
-                            }
-                        `,
-                        variables: { meetup_key: currentMeetupKey }
-                    });
-
-                    const messages = messagesResult.data.getMeetupMessages || [];
-                    const messagesList = document.getElementById('messagesList');
+                // Listen for message changes
+                database.ref('meetups/' + currentMeetupKey + '/messages').on('value', snapshot => {
+                    const messages = snapshot.val() || {};
+                    const participants = {};
                     
-                    if (messages.length === 0) {
-                        messagesList.innerHTML = '<p class="text-gray-500 text-center">No messages yet</p>';
-                    } else {
-                        messagesList.innerHTML = messages
-                            .map(msg => `
-                                <div class="bg-white p-3 rounded-lg shadow-sm">
-                                    <div class="font-semibold text-sm text-gray-600">${msg.participant_name}</div>
-                                    <div class="text-gray-900">${msg.message}</div>
-                                </div>
-                            `).join('');
+                    // Get participant names
+                    database.ref('meetups/' + currentMeetupKey + '/participants').once('value', pSnapshot => {
+                        const pData = pSnapshot.val() || {};
+                        Object.keys(pData).forEach(id => {
+                            participants[id] = pData[id].name;
+                        });
                         
-                        // Scroll to bottom
-                        messagesList.scrollTop = messagesList.scrollHeight;
-                    }
-
-                } catch (error) {
-                    console.error('Error loading meetup data:', error);
-                }
+                        const messagesList = document.getElementById('messagesList');
+                        const messageArray = Object.entries(messages).sort((a, b) => (a[1].timestamp || 0) - (b[1].timestamp || 0));
+                        
+                        if (messageArray.length === 0) {
+                            messagesList.innerHTML = '<p class="text-gray-500 text-center">No messages yet</p>';
+                        } else {
+                            messagesList.innerHTML = messageArray
+                                .map(([id, msg]) => `
+                                    <div class="bg-white p-3 rounded-lg shadow-sm">
+                                        <div class="font-semibold text-sm text-gray-600">${participants[msg.participantId] || 'Unknown'}</div>
+                                        <div class="text-gray-900">${msg.message}</div>
+                                    </div>
+                                `).join('');
+                            
+                            // Scroll to bottom
+                            messagesList.scrollTop = messagesList.scrollHeight;
+                        }
+                    });
+                });
             }
         }
 
@@ -400,29 +321,19 @@
             });
         }
 
-        function showLoadingScreen() {
-            document.getElementById('loadingScreen').classList.remove('hidden');
-            document.getElementById('homeScreen').classList.add('hidden');
-            document.getElementById('createdScreen').classList.add('hidden');
-            document.getElementById('meetupScreen').classList.add('hidden');
-        }
-
         function showHomeScreen() {
-            document.getElementById('loadingScreen').classList.add('hidden');
             document.getElementById('homeScreen').classList.remove('hidden');
             document.getElementById('createdScreen').classList.add('hidden');
             document.getElementById('meetupScreen').classList.add('hidden');
         }
 
         function showCreatedScreen() {
-            document.getElementById('loadingScreen').classList.add('hidden');
             document.getElementById('homeScreen').classList.add('hidden');
             document.getElementById('createdScreen').classList.remove('hidden');
             document.getElementById('meetupScreen').classList.add('hidden');
         }
 
         function showMeetupScreen() {
-            document.getElementById('loadingScreen').classList.add('hidden');
             document.getElementById('homeScreen').classList.add('hidden');
             document.getElementById('createdScreen').classList.add('hidden');
             document.getElementById('meetupScreen').classList.remove('hidden');
@@ -439,9 +350,6 @@
             window.history.pushState({}, '', window.location.pathname);
             showHomeScreen();
         }
-
-        // Initialize the app
-        window.onload = initializeApp;
     </script>
 </body>
 </html>
