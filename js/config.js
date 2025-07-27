@@ -1,7 +1,7 @@
 // config.js - Configuration file for Piogino Meetup App
 
 // Firebase Configuration
-export const firebaseConfig = {
+const firebaseConfig = {
     apiKey: "AIzaSyBeaBtfeqhiDA5GrYwZBNwtN4J8l5yszCk",
     authDomain: "meetup-app-9f1ff.firebaseapp.com",
     databaseURL: "https://meetup-app-9f1ff-default-rtdb.europe-west1.firebasedatabase.app",
@@ -12,7 +12,7 @@ export const firebaseConfig = {
 };
 
 // Application Configuration
-export const appConfig = {
+const appConfig = {
     // App Information
     name: 'Piogino Meetup',
     version: '1.0.0',
@@ -61,11 +61,8 @@ export const appConfig = {
     }
 };
 
-// Export default duration for easy access
-export const DEFAULT_DURATION = appConfig.defaultMeetingDuration;
-
 // Environment detection
-export const environment = {
+const environment = {
     isDevelopment: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1',
     isProduction: window.location.hostname.includes('piogino.ch'),
     isStaging: window.location.hostname.includes('staging'),
@@ -79,9 +76,16 @@ export const environment = {
     supportsPushAPI: 'PushManager' in window
 };
 
-// Make configurations globally available for backwards compatibility
+// Make configurations globally available
 window.MeetupConfig = {
     firebase: firebaseConfig,
     app: appConfig,
     env: environment
 };
+
+// Also make individual configs available
+window.firebaseConfig = firebaseConfig;
+window.appConfig = appConfig;
+window.environment = environment;
+
+console.log('✅ Config loaded successfully');
