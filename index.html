@@ -150,27 +150,59 @@
             projectId: "meetup-app-9f1ff",
             storageBucket: "meetup-app-9f1ff.firebasestorage.app",
             messagingSenderId: "1093344835630",
-            appId: "1:1093344835630:web:fbb75663598de6747147bf",
-            measurementId: "G-22ZZMHZDLD"
+            appId: "1:1093344835630:web:fbb75663598de6747147bf"
         };
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-
+        let database;
         let currentMeetupKey = '';
         let currentParticipantId = null;
 
-        // Check URL parameters on page load
+        // Initialize Firebase with error handling
+        try {
+            firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            console.log('Firebase initialized successfully');
+        } catch (error) {
+            console.error('Firebase initialization error:', error);
+            alert('Failed to initialize Firebase: ' + error.message);
+        }
+
+        // Check URL parameters and Firebase connection on page load
         window.onload = function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const keyFromUrl = urlParams.get('key');
-            if (keyFromUrl) {
-                currentMeetupKey = keyFromUrl.toUpperCase();
-                showMeetupScreen();
-                loadMeetupData();
-            }
+            console.log('Page loaded, checking Firebase connection...');
+            
+            // Test Firebase connection
+            database.ref('.info/connected').on('value', function(snapshot) {
+                if (snapshot.val() === true) {
+                    console.log('✅ Connected to Firebase!');
+                    
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const keyFromUrl = urlParams.get('key');
+                    if (keyFromUrl) {
+                        currentMeetupKey = keyFromUrl.toUpperCase();
+                        showMeetupScreen();
+                        loadMeetupData();
+                    }
+                } else {
+                    console.error('❌ Failed to connect to Firebase');
+                    // Don't show alert immediately, let's try a simple test first
+                    setTimeout(testFirebaseConnection, 2000);
+                }
+            });
         };
+
+        // Test Firebase connection with a simple read
+        function testFirebaseConnection() {
+            console.log('Testing Firebase connection...');
+            database.ref('test').once('value')
+                .then(snapshot => {
+                    console.log('✅ Firebase test successful');
+                })
+                .catch(error => {
+                    console.error('❌ Firebase test failed:', error);
+                    alert('Failed to connect to Firebase. Error: ' + error.message);
+                });
+        }
 
         function generateMeetupKey() {
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
