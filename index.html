@@ -158,6 +158,9 @@
 
                     <!-- Send Message Form -->
                     <div id="messageForm" class="hidden">
+                        <div id="messageAsParticipant" class="mb-2 text-sm text-gray-600 hidden">
+                            Sending as: <span id="messageParticipantName" class="font-semibold"></span>
+                        </div>
                         <div class="flex space-x-3">
                             <input type="text" id="messageInput" placeholder="Type a message..." 
                                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
@@ -166,6 +169,11 @@
                                 Send
                             </button>
                         </div>
+                    </div>
+
+                    <!-- Message form for non-participants -->
+                    <div id="noParticipantMessage" class="text-center text-gray-500 text-sm py-4">
+                        Select a participant above to send messages
                     </div>
                 </div>
             </div>
@@ -304,7 +312,6 @@
                 }).then(() => {
                     document.getElementById('nameInput').value = '';
                     document.getElementById('joinForm').style.display = 'none';
-                    document.getElementById('messageForm').classList.remove('hidden');
                     
                     // Auto-select the participant that just joined
                     setTimeout(() => {
@@ -328,8 +335,19 @@
             if (selectedParticipantId && selectedName) {
                 document.getElementById('currentSelection').classList.remove('hidden');
                 document.getElementById('selectedParticipantName').textContent = selectedName;
+                
+                // Show message form and update messaging participant
+                document.getElementById('messageForm').classList.remove('hidden');
+                document.getElementById('messageAsParticipant').classList.remove('hidden');
+                document.getElementById('messageParticipantName').textContent = selectedName;
+                document.getElementById('noParticipantMessage').style.display = 'none';
             } else {
                 document.getElementById('currentSelection').classList.add('hidden');
+                
+                // Hide message form when no participant selected
+                document.getElementById('messageForm').classList.add('hidden');
+                document.getElementById('messageAsParticipant').classList.add('hidden');
+                document.getElementById('noParticipantMessage').style.display = 'block';
             }
             
             // Refresh the proposals display to show this participant's responses
@@ -338,20 +356,36 @@
 
         function sendMessage() {
             const message = document.getElementById('messageInput').value.trim();
-            if (message && currentParticipantId && currentMeetupKey) {
-                const messageId = Date.now().toString();
-                
-                database.ref('meetups/' + currentMeetupKey + '/messages/' + messageId).set({
-                    participantId: currentParticipantId,
-                    message: message,
-                    timestamp: firebase.database.ServerValue.TIMESTAMP
-                }).then(() => {
-                    document.getElementById('messageInput').value = '';
-                }).catch(error => {
-                    console.error('Error sending message:', error);
-                    alert('Error sending message. Please try again.');
-                });
+            if (!message) {
+                alert('Please enter a message');
+                return;
             }
+            
+            if (!selectedParticipantId) {
+                alert('Please select a participant first');
+                return;
+            }
+            
+            if (!currentMeetupKey) {
+                alert('No meetup selected');
+                return;
+            }
+            
+            const messageId = Date.now().toString();
+            
+            console.log('Sending message as participant:', selectedParticipantId, allParticipants[selectedParticipantId]?.name);
+            
+            database.ref('meetups/' + currentMeetupKey + '/messages/' + messageId).set({
+                participantId: selectedParticipantId,
+                message: message,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            }).then(() => {
+                document.getElementById('messageInput').value = '';
+                console.log('Message sent successfully');
+            }).catch(error => {
+                console.error('Error sending message:', error);
+                alert('Error sending message: ' + error.message);
+            });
         }
 
         function proposeDateTime() {
@@ -583,7 +617,17 @@
         function goHome() {
             currentMeetupKey = '';
             currentParticipantId = null;
+            selectedParticipantId = null;
+            allParticipants = {};
             window.history.pushState({}, '', window.location.pathname);
+            
+            // Reset all forms and selections
+            document.getElementById('participantSelect').innerHTML = '<option value="">Choose participant...</option>';
+            document.getElementById('currentSelection').classList.add('hidden');
+            document.getElementById('messageForm').classList.add('hidden');
+            document.getElementById('noParticipantMessage').style.display = 'block';
+            document.getElementById('joinForm').style.display = 'block';
+            
             showHomeScreen();
         }
     </script>
