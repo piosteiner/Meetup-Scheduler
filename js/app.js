@@ -212,12 +212,28 @@ class MeetupApp {
 
     // Update meeting duration
     async updateDuration() {
-        this.meetingDuration = parseInt(window.uiComponents.getValue('durationSelect'));
+        const inputValue = parseInt(window.uiComponents.getValue('durationSelect'));
+        
+        // Validate the input
+        if (isNaN(inputValue) || inputValue < 15) {
+            window.uiComponents.showNotification('Duration must be at least 15 minutes', 'warning');
+            window.uiComponents.setValue('durationSelect', this.meetingDuration.toString());
+            return;
+        }
+        
+        if (inputValue > 1440) { // 24 hours
+            window.uiComponents.showNotification('Duration cannot exceed 24 hours (1440 minutes)', 'warning');
+            window.uiComponents.setValue('durationSelect', this.meetingDuration.toString());
+            return;
+        }
+        
+        this.meetingDuration = inputValue;
         console.log('Meeting duration updated to:', this.meetingDuration, 'minutes');
         
         if (this.currentMeetupKey) {
             try {
                 await window.firebaseAPI.updateMeetupDuration(this.currentMeetupKey, this.meetingDuration);
+                window.uiComponents.showNotification(`Duration updated to ${this.meetingDuration} minutes`, 'success');
             } catch (error) {
                 console.error('Error updating duration:', error);
             }
