@@ -21,31 +21,37 @@
         <!-- Home Screen -->
         <div id="homeScreen" class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
             <div class="text-center mb-8">
-                <div class="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 animate-fade-in">
+                <div class="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                     <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
                     </svg>
                 </div>
-                <h1 class="text-3xl font-bold text-gray-900 mb-2 animate-slide-up">Piogino Meetup</h1>
-                <p class="text-gray-600 animate-slide-up-delay">Create or join a meetup</p>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">Piogino Meetup</h1>
+                <p class="text-gray-600">Create or join a meetup</p>
             </div>
 
-            <div class="space-y-4 animate-fade-in-delay">
-                <button id="createMeetupBtn" class="btn-primary w-full flex items-center justify-center space-x-3">
+            <div class="space-y-4">
+                <button onclick="createMeetup()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 px-6 rounded-xl transition-colors duration-200 flex items-center justify-center space-x-3">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                     </svg>
                     <span>Create New Meetup</span>
                 </button>
 
-                <div class="divider">
-                    <span>or</span>
+                <div class="relative">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-gray-300"></div>
+                    </div>
+                    <div class="relative flex justify-center text-sm">
+                        <span class="px-2 bg-white text-gray-500">or</span>
+                    </div>
                 </div>
 
                 <div class="space-y-3">
                     <input type="text" id="keyInput" placeholder="Enter meetup key" maxlength="8" 
-                           class="input-primary text-center font-mono text-lg uppercase">
-                    <button id="joinMeetupBtn" class="btn-secondary w-full flex items-center justify-center space-x-3">
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors duration-200 text-center font-mono text-lg uppercase"
+                           onkeypress="if(event.key==='Enter') joinMeetup()">
+                    <button onclick="joinMeetup()" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors duration-200 flex items-center justify-center space-x-3">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-3a1 1 0 011-1h2.586l6.243-6.243C11.978 9.59 12.501 9 13 9s1.022.59 1.171.757z"></path>
                         </svg>
@@ -56,8 +62,8 @@
         </div>
 
         <!-- Created Screen -->
-        <div id="createdScreen" class="card-enhanced p-8 w-full max-w-md text-center hidden">
-            <div class="success-icon mb-6">
+        <div id="createdScreen" class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md text-center hidden">
+            <div class="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
                 <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                 </svg>
@@ -66,9 +72,9 @@
             <h2 class="text-2xl font-bold text-gray-900 mb-4">Meetup Created!</h2>
             <p class="text-gray-600 mb-6">Share this key with participants</p>
             
-            <div class="key-display mb-6">
+            <div class="bg-gray-50 rounded-xl p-6 mb-6">
                 <div id="generatedKey" class="font-mono text-3xl font-bold text-gray-900 mb-4 tracking-wider"></div>
-                <button id="copyLinkBtn" class="btn-primary flex items-center justify-center space-x-2 mx-auto">
+                <button onclick="copyLink()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 mx-auto">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
                     </svg>
@@ -76,42 +82,46 @@
                 </button>
             </div>
 
-            <button id="goToMeetupBtn" class="btn-success w-full">
+            <button onclick="goToMeetup()" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors duration-200">
                 Continue to Meetup
             </button>
         </div>
 
         <!-- Meetup Screen -->
-        <div id="meetupScreen" class="card-enhanced p-8 w-full max-w-6xl hidden">
+        <div id="meetupScreen" class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-6xl hidden">
             <div class="text-center mb-8">
-                <h2 class="text-2xl font-bold text-gray-900 mb-2">Meetup: <span id="currentMeetupKey" class="text-indigo-600"></span></h2>
-                <p class="text-gray-600">Participants: <span id="participantCount" class="font-semibold">0</span></p>
+                <h2 class="text-2xl font-bold text-gray-900 mb-2">Meetup: <span id="currentMeetupKey"></span></h2>
+                <p class="text-gray-600">Participants: <span id="participantCount">0</span></p>
             </div>
 
             <div class="space-y-6">
                 <!-- Participants Section -->
-                <section class="section-card">
-                    <h3 class="section-title">Participants</h3>
+                <div class="bg-gray-50 rounded-xl p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Participants</h3>
                     
-                    <div class="grid md:grid-cols-3 gap-6 mb-6">
+                    <div class="grid md:grid-cols-3 gap-6">
                         <div>
-                            <label class="input-label">Select Participant:</label>
-                            <select id="participantSelect" class="input-primary">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Select Participant:</label>
+                            <select id="participantSelect" onchange="selectParticipant()" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm">
                                 <option value="">Choose participant...</option>
                             </select>
                         </div>
                         
                         <div id="joinForm">
-                            <label class="input-label">Join Meetup:</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Join Meetup:</label>
                             <div class="flex gap-2">
-                                <input type="text" id="nameInput" placeholder="Enter your name" class="input-primary flex-1">
-                                <button id="joinAsMemberBtn" class="btn-primary whitespace-nowrap">Join</button>
+                                <input type="text" id="nameInput" placeholder="Enter your name" 
+                                       class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
+                                       onkeypress="if(event.key==='Enter') joinAsMember()">
+                                <button onclick="joinAsMember()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 text-sm whitespace-nowrap">
+                                    Join
+                                </button>
                             </div>
                         </div>
 
                         <div>
-                            <label class="input-label">Meeting Duration:</label>
-                            <select id="durationSelect" class="input-primary">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Meeting Duration:</label>
+                            <select id="durationSelect" onchange="updateDuration()" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm">
                                 <option value="30">30 minutes</option>
                                 <option value="60" selected>1 hour</option>
                                 <option value="90">1.5 hours</option>
@@ -123,86 +133,83 @@
                         </div>
                     </div>
 
-                    <div id="currentSelection" class="participant-selection hidden">
-                        <div class="text-sm font-medium text-blue-800">Currently managing:</div>
-                        <div id="selectedParticipantName" class="text-blue-900 font-semibold text-sm"></div>
+                    <div id="currentSelection" class="mt-4 hidden">
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                            <div class="text-sm font-medium text-blue-800">Currently managing:</div>
+                            <div id="selectedParticipantName" class="text-blue-900 font-semibold text-sm"></div>
+                        </div>
                     </div>
 
                     <div class="mt-4">
-                        <h4 class="input-label">All Participants:</h4>
-                        <div id="participantsList" class="participants-grid">
+                        <h4 class="text-sm font-medium text-gray-700 mb-2">All Participants:</h4>
+                        <div id="participantsList" class="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2">
                             <p class="text-gray-500 text-center text-sm col-span-full">No participants yet</p>
                         </div>
                     </div>
-                </section>
+                </div>
 
                 <!-- Scheduling Section -->
-                <section class="section-card">
-                    <h3 class="section-title">Schedule</h3>
+                <div class="bg-gray-50 rounded-xl p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Schedule</h3>
                     
-                    <div id="proposeForm" class="proposal-form hidden">
-                        <h4 class="text-sm font-medium text-gray-700 mb-3">Propose New Date & Time</h4>
-                        <div class="flex flex-col sm:flex-row gap-3">
-                            <input type="datetime-local" id="dateTimeInput" class="input-primary flex-1">
-                            <button id="proposeDateTimeBtn" class="btn-accent whitespace-nowrap">
-                                Propose Date & Time
-                            </button>
+                    <div id="proposeForm" class="mb-6 hidden">
+                        <div class="bg-white p-4 rounded-lg border">
+                            <h4 class="text-sm font-medium text-gray-700 mb-3">Propose New Date & Time</h4>
+                            <div class="flex flex-col sm:flex-row gap-3">
+                                <input type="datetime-local" id="dateTimeInput" 
+                                       class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm">
+                                <button onclick="proposeDateTime()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 text-sm whitespace-nowrap">
+                                    Propose Date & Time
+                                </button>
+                            </div>
                         </div>
                     </div>
 
-                    <div id="proposalsList" class="proposals-grid">
+                    <div id="proposalsList" class="grid lg:grid-cols-2 xl:grid-cols-3 gap-4">
                         <p class="text-gray-500 text-center col-span-full">No proposals yet</p>
                     </div>
-                </section>
+                </div>
 
                 <!-- Messages Section -->
-                <section class="section-card">
-                    <h3 class="section-title">Messages</h3>
+                <div class="bg-gray-50 rounded-xl p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Messages</h3>
                     
-                    <div id="messagesList" class="messages-container">
+                    <div id="messagesList" class="space-y-3 mb-4 max-h-48 overflow-y-auto bg-white rounded-lg p-3 border">
                         <p class="text-gray-500 text-center text-sm">No messages yet</p>
                     </div>
 
-                    <div id="messageForm" class="message-form hidden">
-                        <div id="messageAsParticipant" class="message-sender-info hidden">
+                    <div id="messageForm" class="hidden">
+                        <div id="messageAsParticipant" class="mb-2 text-sm text-gray-600 hidden">
                             Sending as: <span id="messageParticipantName" class="font-semibold"></span>
                         </div>
                         <div class="flex flex-col sm:flex-row gap-3">
-                            <input type="text" id="messageInput" placeholder="Type a message..." class="input-primary flex-1">
-                            <button id="sendMessageBtn" class="btn-success whitespace-nowrap">
+                            <input type="text" id="messageInput" placeholder="Type a message..." 
+                                   class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
+                                   onkeypress="if(event.key==='Enter') sendMessage()">
+                            <button onclick="sendMessage()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 text-sm whitespace-nowrap">
                                 Send Message
                             </button>
                         </div>
                     </div>
 
-                    <div id="noParticipantMessage" class="no-participant-message">
+                    <div id="noParticipantMessage" class="text-center text-gray-500 text-sm py-4">
                         Select a participant above to send messages
                     </div>
-                </section>
+                </div>
             </div>
 
             <div class="mt-6 text-center">
-                <button id="goHomeBtn" class="btn-secondary">
+                <button onclick="goHome()" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-colors duration-200">
                     ← Back to Home
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Notification Container -->
-    <div id="notificationContainer" class="notification-container"></div>
-
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="loading-overlay hidden">
-        <div class="loading-spinner"></div>
-        <p class="loading-text">Loading...</p>
-    </div>
-
-    <!-- JavaScript Files -->
-    <script src="js/config.js"></script>
-    <script src="js/utils.js"></script>
-    <script src="js/api.js"></script>
-    <script src="js/components.js"></script>
-    <script src="js/app.js"></script>
+    <!-- JavaScript Files - Using Type Module -->
+    <script type="module">
+        // Import and initialize the app
+        import './js/app.js';
+    </script>
 </body>
 </html>
