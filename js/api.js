@@ -1,5 +1,4 @@
 // api.js - Firebase API functions
-import { firebaseConfig } from './config.js';
 
 class FirebaseAPI {
     constructor() {
@@ -11,7 +10,7 @@ class FirebaseAPI {
     // Initialize Firebase
     async init() {
         try {
-            firebase.initializeApp(firebaseConfig);
+            firebase.initializeApp(window.MeetupConfig.firebase);
             this.database = firebase.database();
             console.log('Firebase initialized successfully');
             
@@ -189,5 +188,5 @@ class FirebaseAPI {
     }
 }
 
-// Export singleton instance
-export const firebaseAPI = new FirebaseAPI();
+// Create singleton instance
+window.firebaseAPI = new FirebaseAPI();

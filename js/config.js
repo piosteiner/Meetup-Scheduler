@@ -1,7 +1,7 @@
-// Configuration file for Piogino Meetup App
+// config.js - Configuration file for Piogino Meetup App
 
 // Firebase Configuration
-const firebaseConfig = {
+export const firebaseConfig = {
     apiKey: "AIzaSyBeaBtfeqhiDA5GrYwZBNwtN4J8l5yszCk",
     authDomain: "meetup-app-9f1ff.firebaseapp.com",
     databaseURL: "https://meetup-app-9f1ff-default-rtdb.europe-west1.firebasedatabase.app",
@@ -12,7 +12,7 @@ const firebaseConfig = {
 };
 
 // Application Configuration
-const appConfig = {
+export const appConfig = {
     // App Information
     name: 'Piogino Meetup',
     version: '1.0.0',
@@ -58,129 +58,14 @@ const appConfig = {
         hour: '2-digit',
         minute: '2-digit',
         hour12: false // Use 24-hour format
-    },
-    
-    // User interface messages
-    messages: {
-        // Success messages
-        meetupCreated: "Meetup created successfully!",
-        joinedSuccessfully: "Welcome to the meetup!",
-        messageSent: "Message sent!",
-        proposalSaved: "Date proposal added!",
-        responseUpdated: "Your availability has been updated!",
-        linkCopied: "Link copied to clipboard!",
-        
-        // Error messages
-        connectionError: "Unable to connect to the server. Please check your internet connection.",
-        meetupNotFound: "Meetup not found. Please check the key and try again.",
-        nameRequired: "Please enter your name to join the meetup.",
-        participantRequired: "Please select a participant first.",
-        messageRequired: "Please enter a message before sending.",
-        dateTimeRequired: "Please select a date and time for your proposal.",
-        invalidKey: "Invalid meetup key. Keys must be 8 characters long.",
-        maxParticipantsReached: "This meetup has reached its maximum number of participants.",
-        messageTooLong: "Message is too long. Please keep it under 500 characters.",
-        
-        // Loading messages
-        loading: "Loading...",
-        connecting: "Connecting to server...",
-        saving: "Saving...",
-        updating: "Updating...",
-        
-        // Confirmation messages
-        leaveConfirm: "Are you sure you want to leave this meetup?",
-        deleteProposalConfirm: "Are you sure you want to delete this proposal?",
-        clearMessagesConfirm: "Are you sure you want to clear all messages?",
-        
-        // Info messages
-        noParticipants: "No participants yet. Be the first to join!",
-        noProposals: "No date proposals yet. Create the first one!",
-        noMessages: "No messages yet. Start the conversation!",
-        selectParticipant: "Select a participant above to manage their availability and send messages.",
-        
-        // Accessibility messages
-        newMessage: "New message received",
-        participantJoined: "New participant joined",
-        proposalAdded: "New date proposal added"
-    },
-    
-    // Response types for availability
-    responseTypes: {
-        available: {
-            label: "Available",
-            icon: "✓",
-            class: "status-available",
-            color: "#10b981"
-        },
-        maybe: {
-            label: "Maybe",
-            icon: "?",
-            class: "status-maybe",
-            color: "#f59e0b"
-        },
-        unavailable: {
-            label: "Unavailable",
-            icon: "✗",
-            class: "status-unavailable",
-            color: "#ef4444"
-        }
-    },
-    
-    // Theme options
-    themes: {
-        light: "Light",
-        dark: "Dark",
-        auto: "Auto (System)",
-        sepia: "Sepia",
-        'high-contrast': "High Contrast",
-        'blue-light-filter': "Blue Light Filter"
-    },
-    
-    // Feature flags
-    features: {
-        enableThemeSwitch: true,
-        enableNotifications: true,
-        enableSoundEffects: false,
-        enableAnalytics: false,
-        enableExport: true,
-        enableImport: false,
-        enableOfflineMode: false,
-        enableRealTimeTyping: true,
-        enableMessageReactions: false,
-        enableFileUpload: false,
-        enableVideoCall: false,
-        enablePolls: false
-    },
-    
-    // Security settings
-    security: {
-        sanitizeMessages: true,
-        maxLoginAttempts: 3,
-        sessionTimeout: 3600000, // 1 hour in milliseconds
-        requireNameForMessages: true,
-        allowAnonymousProposals: true
-    },
-    
-    // Performance settings
-    performance: {
-        enableVirtualScrolling: false,
-        maxMessagesInMemory: 100,
-        maxProposalsDisplayed: 50,
-        enableLazyLoading: true,
-        enableCompression: false
-    },
-    
-    // Debug settings
-    debug: {
-        enableLogging: true,
-        enableVerboseLogging: false,
-        enablePerformanceMonitoring: false,
-        logLevel: 'info' // 'error', 'warn', 'info', 'debug'
     }
 };
 
+// Export default duration for easy access
+export const DEFAULT_DURATION = appConfig.defaultMeetingDuration;
+
 // Environment detection
-const environment = {
+export const environment = {
     isDevelopment: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1',
     isProduction: window.location.hostname.includes('piogino.ch'),
     isStaging: window.location.hostname.includes('staging'),
@@ -194,42 +79,9 @@ const environment = {
     supportsPushAPI: 'PushManager' in window
 };
 
-// API endpoints (if needed for future enhancements)
-const apiConfig = {
-    baseUrl: environment.isProduction 
-        ? 'https://api.piogino.ch' 
-        : environment.isStaging 
-            ? 'https://staging-api.piogino.ch'
-            : 'http://localhost:3000',
-    
-    endpoints: {
-        meetups: '/api/meetups',
-        participants: '/api/participants',
-        messages: '/api/messages',
-        proposals: '/api/proposals',
-        analytics: '/api/analytics',
-        export: '/api/export'
-    },
-    
-    timeout: 10000, // 10 seconds
-    retryAttempts: 3,
-    retryDelay: 1000 // 1 second
-};
-
-// Export configuration for use in other modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-        firebaseConfig,
-        appConfig,
-        environment,
-        apiConfig
-    };
-}
-
-// Make configurations globally available
+// Make configurations globally available for backwards compatibility
 window.MeetupConfig = {
     firebase: firebaseConfig,
     app: appConfig,
-    env: environment,
-    api: apiConfig
+    env: environment
 };

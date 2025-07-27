@@ -1,5 +1,4 @@
 // components.js - UI components and notifications
-import { formatDate, formatTime, formatDateRange } from './utils.js';
 
 class UIComponents {
     constructor() {
@@ -105,8 +104,8 @@ class UIComponents {
         const startTime = new Date(proposal.dateTime);
         const endTime = new Date(startTime.getTime() + meetingDuration * 60 * 1000);
         
-        const formattedDate = formatDate(startTime);
-        const timeRange = formatDateRange(startTime, endTime);
+        const formattedDate = window.Utils.formatDate(startTime);
+        const timeRange = window.Utils.formatDateRange(startTime, endTime);
         const proposerName = allParticipants[proposal.participantId]?.name || 'Unknown';
         
         const responses = proposal.responses || {};
@@ -118,8 +117,8 @@ class UIComponents {
         const selectedParticipantName = selectedParticipantId ? allParticipants[selectedParticipantId]?.name : 'No one';
         
         const now = new Date();
-        const isToday = startTime.toDateString() === now.toDateString();
-        const isPast = startTime < now;
+        const isToday = window.Utils.isToday(startTime);
+        const isPast = window.Utils.isPast(startTime);
         
         return `
             <div class="bg-white p-4 rounded-lg shadow-sm border ${isPast ? 'opacity-75 border-gray-300' : isToday ? 'border-indigo-300 bg-indigo-50' : 'border-gray-200'}">
@@ -344,5 +343,5 @@ class UIComponents {
     }
 }
 
-// Export singleton instance
-export const uiComponents = new UIComponents();
+// Create singleton instance
+window.uiComponents = new UIComponents();

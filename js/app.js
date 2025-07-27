@@ -1,8 +1,4 @@
 // app.js - Main application logic
-import { generateMeetupKey, getUrlParameter, updateUrl, clearUrl } from './utils.js';
-import { firebaseAPI } from './api.js';
-import { uiComponents } from './components.js';
-import { DEFAULT_DURATION } from './config.js';
 
 class MeetupApp {
     constructor() {
@@ -10,7 +6,7 @@ class MeetupApp {
         this.currentParticipantId = null;
         this.selectedParticipantId = null;
         this.allParticipants = {};
-        this.meetingDuration = DEFAULT_DURATION;
+        this.meetingDuration = window.MeetupConfig.app.defaultMeetingDuration;
         this.listeners = new Map(); // Track Firebase listeners for cleanup
     }
 
@@ -18,18 +14,18 @@ class MeetupApp {
     async init() {
         try {
             // Initialize Firebase
-            await firebaseAPI.init();
+            await window.firebaseAPI.init();
             
             // Set up connection monitoring
-            firebaseAPI.onConnectionChange((connected) => {
+            window.firebaseAPI.onConnectionChange((connected) => {
                 if (!connected) {
-                    uiComponents.showNotification('Connection lost. Retrying...', 'warning');
-                    setTimeout(() => firebaseAPI.testConnection(), 2000);
+                    window.uiComponents.showNotification('Connection lost. Retrying...', 'warning');
+                    setTimeout(() => window.firebaseAPI.testConnection(), 2000);
                 }
             });
 
             // Check URL parameters for direct meetup access
-            const keyFromUrl = getUrlParameter('key');
+            const keyFromUrl = window.Utils.getUrlParameter('key');
             if (keyFromUrl) {
                 this.currentMeetupKey = keyFromUrl.toUpperCase();
                 this.showMeetupScreen();
@@ -39,10 +35,10 @@ class MeetupApp {
             // Set up event listeners
             this.setupEventListeners();
             
-            uiComponents.showNotification('App initialized successfully!', 'success');
+            window.uiComponents.showNotification('App initialized successfully!', 'success');
         } catch (error) {
             console.error('Failed to initialize app:', error);
-            uiComponents.showNotification('Failed to initialize app: ' + error.message, 'error');
+            window.uiComponents.showNotification('Failed to initialize app: ' + error.message, 'error');
         }
     }
 
@@ -67,138 +63,138 @@ class MeetupApp {
 
     // Screen navigation
     showHomeScreen() {
-        uiComponents.hide('createdScreen');
-        uiComponents.hide('meetupScreen');
-        uiComponents.show('homeScreen');
+        window.uiComponents.hide('createdScreen');
+        window.uiComponents.hide('meetupScreen');
+        window.uiComponents.show('homeScreen');
     }
 
     showCreatedScreen() {
-        uiComponents.hide('homeScreen');
-        uiComponents.hide('meetupScreen');
-        uiComponents.show('createdScreen');
+        window.uiComponents.hide('homeScreen');
+        window.uiComponents.hide('meetupScreen');
+        window.uiComponents.show('createdScreen');
     }
 
     showMeetupScreen() {
-        uiComponents.hide('homeScreen');
-        uiComponents.hide('createdScreen');
-        uiComponents.show('meetupScreen');
+        window.uiComponents.hide('homeScreen');
+        window.uiComponents.hide('createdScreen');
+        window.uiComponents.show('meetupScreen');
     }
 
     // Create new meetup
     async createMeetup() {
         try {
             const createBtn = document.querySelector('button[onclick="createMeetup()"]');
-            const originalContent = uiComponents.showLoading(createBtn, 'Creating...');
+            const originalContent = window.uiComponents.showLoading(createBtn, 'Creating...');
 
-            const newKey = generateMeetupKey();
+            const newKey = window.Utils.generateMeetupKey();
             this.currentMeetupKey = newKey;
             
-            await firebaseAPI.createMeetup(newKey, { duration: this.meetingDuration });
+            await window.firebaseAPI.createMeetup(newKey, { duration: this.meetingDuration });
             
-            uiComponents.updateText('generatedKey', newKey);
-            updateUrl(newKey);
+            window.uiComponents.updateText('generatedKey', newKey);
+            window.Utils.updateUrl(newKey);
             this.showCreatedScreen();
             
-            uiComponents.hideLoading(createBtn, originalContent);
-            uiComponents.showNotification('Meetup created successfully!', 'success');
+            window.uiComponents.hideLoading(createBtn, originalContent);
+            window.uiComponents.showNotification('Meetup created successfully!', 'success');
         } catch (error) {
             console.error('Error creating meetup:', error);
-            uiComponents.showNotification(error.message, 'error');
+            window.uiComponents.showNotification(error.message, 'error');
         }
     }
 
     // Join existing meetup
     async joinMeetup() {
         try {
-            const key = uiComponents.getValue('keyInput').trim().toUpperCase();
+            const key = window.uiComponents.getValue('keyInput').trim().toUpperCase();
             if (!key) {
-                uiComponents.showNotification('Please enter a meetup key', 'warning');
+                window.uiComponents.showNotification('Please enter a meetup key', 'warning');
                 return;
             }
 
             const joinBtn = document.querySelector('button[onclick="joinMeetup()"]');
-            const originalContent = uiComponents.showLoading(joinBtn, 'Joining...');
+            const originalContent = window.uiComponents.showLoading(joinBtn, 'Joining...');
 
-            const meetupData = await firebaseAPI.getMeetup(key);
+            const meetupData = await window.firebaseAPI.getMeetup(key);
             
             if (meetupData) {
                 this.currentMeetupKey = key;
-                updateUrl(key);
+                window.Utils.updateUrl(key);
                 this.showMeetupScreen();
                 await this.loadMeetupData();
-                uiComponents.showNotification('Joined meetup successfully!', 'success');
+                window.uiComponents.showNotification('Joined meetup successfully!', 'success');
             } else {
-                uiComponents.showNotification('Meetup not found. Please check the key.', 'error');
+                window.uiComponents.showNotification('Meetup not found. Please check the key.', 'error');
             }
             
-            uiComponents.hideLoading(joinBtn, originalContent);
+            window.uiComponents.hideLoading(joinBtn, originalContent);
         } catch (error) {
             console.error('Error joining meetup:', error);
-            uiComponents.showNotification('Error joining meetup. Please try again.', 'error');
+            window.uiComponents.showNotification('Error joining meetup. Please try again.', 'error');
         }
     }
 
     // Join as participant
     async joinAsMember() {
         try {
-            const name = uiComponents.getValue('nameInput').trim();
+            const name = window.uiComponents.getValue('nameInput').trim();
             if (!name) {
-                uiComponents.showNotification('Please enter your name', 'warning');
+                window.uiComponents.showNotification('Please enter your name', 'warning');
                 return;
             }
 
             if (!this.currentMeetupKey) {
-                uiComponents.showNotification('No meetup selected', 'error');
+                window.uiComponents.showNotification('No meetup selected', 'error');
                 return;
             }
 
             const participantId = Date.now().toString();
             this.currentParticipantId = participantId;
             
-            await firebaseAPI.addParticipant(this.currentMeetupKey, participantId, { name });
+            await window.firebaseAPI.addParticipant(this.currentMeetupKey, participantId, { name });
             
-            uiComponents.setValue('nameInput', '');
-            uiComponents.hide('joinForm');
+            window.uiComponents.setValue('nameInput', '');
+            window.uiComponents.hide('joinForm');
             
             // Auto-select the participant that just joined
             setTimeout(() => {
-                uiComponents.setValue('participantSelect', participantId);
+                window.uiComponents.setValue('participantSelect', participantId);
                 this.selectParticipant();
             }, 500);
 
-            uiComponents.showNotification(`Welcome, ${name}!`, 'success');
+            window.uiComponents.showNotification(`Welcome, ${name}!`, 'success');
         } catch (error) {
             console.error('Error joining as member:', error);
-            uiComponents.showNotification(error.message, 'error');
+            window.uiComponents.showNotification(error.message, 'error');
         }
     }
 
     // Select participant for actions
     selectParticipant() {
-        this.selectedParticipantId = uiComponents.getValue('participantSelect');
+        this.selectedParticipantId = window.uiComponents.getValue('participantSelect');
         const selectedName = this.selectedParticipantId ? this.allParticipants[this.selectedParticipantId]?.name : '';
         
         console.log('Selected participant:', this.selectedParticipantId, selectedName);
         
         if (this.selectedParticipantId && selectedName) {
             // Show current selection
-            uiComponents.show('currentSelection');
-            uiComponents.updateText('selectedParticipantName', selectedName);
+            window.uiComponents.show('currentSelection');
+            window.uiComponents.updateText('selectedParticipantName', selectedName);
             
             // Show message form
-            uiComponents.show('messageForm');
-            uiComponents.show('messageAsParticipant');
-            uiComponents.updateText('messageParticipantName', selectedName);
-            uiComponents.hide('noParticipantMessage');
+            window.uiComponents.show('messageForm');
+            window.uiComponents.show('messageAsParticipant');
+            window.uiComponents.updateText('messageParticipantName', selectedName);
+            window.uiComponents.hide('noParticipantMessage');
             
             // Show propose form
-            uiComponents.show('proposeForm');
+            window.uiComponents.show('proposeForm');
         } else {
             // Hide forms when no participant selected
-            uiComponents.hide('currentSelection');
-            uiComponents.hide('messageForm');
-            uiComponents.hide('messageAsParticipant');
-            uiComponents.show('noParticipantMessage');
+            window.uiComponents.hide('currentSelection');
+            window.uiComponents.hide('messageForm');
+            window.uiComponents.hide('messageAsParticipant');
+            window.uiComponents.show('noParticipantMessage');
         }
         
         // Refresh proposals display
@@ -207,12 +203,12 @@ class MeetupApp {
 
     // Update meeting duration
     async updateDuration() {
-        this.meetingDuration = parseInt(uiComponents.getValue('durationSelect'));
+        this.meetingDuration = parseInt(window.uiComponents.getValue('durationSelect'));
         console.log('Meeting duration updated to:', this.meetingDuration, 'minutes');
         
         if (this.currentMeetupKey) {
             try {
-                await firebaseAPI.updateMeetupDuration(this.currentMeetupKey, this.meetingDuration);
+                await window.firebaseAPI.updateMeetupDuration(this.currentMeetupKey, this.meetingDuration);
             } catch (error) {
                 console.error('Error updating duration:', error);
             }
@@ -224,29 +220,29 @@ class MeetupApp {
     // Propose date and time
     async proposeDateTime() {
         try {
-            const dateTime = uiComponents.getValue('dateTimeInput');
+            const dateTime = window.uiComponents.getValue('dateTimeInput');
             if (!dateTime) {
-                uiComponents.showNotification('Please select a date and time', 'warning');
+                window.uiComponents.showNotification('Please select a date and time', 'warning');
                 return;
             }
             
             if (!this.currentMeetupKey) {
-                uiComponents.showNotification('No meetup selected', 'error');
+                window.uiComponents.showNotification('No meetup selected', 'error');
                 return;
             }
             
             const proposalId = Date.now().toString();
             
-            await firebaseAPI.addProposal(this.currentMeetupKey, proposalId, {
+            await window.firebaseAPI.addProposal(this.currentMeetupKey, proposalId, {
                 participantId: this.currentParticipantId || 'anonymous',
                 dateTime: dateTime
             });
             
-            uiComponents.setValue('dateTimeInput', '');
-            uiComponents.showNotification('Date proposed successfully!', 'success');
+            window.uiComponents.setValue('dateTimeInput', '');
+            window.uiComponents.showNotification('Date proposed successfully!', 'success');
         } catch (error) {
             console.error('Error proposing date:', error);
-            uiComponents.showNotification(error.message, 'error');
+            window.uiComponents.showNotification(error.message, 'error');
         }
     }
 
@@ -254,43 +250,43 @@ class MeetupApp {
     async respondToProposal(proposalId, response) {
         try {
             if (!this.selectedParticipantId) {
-                uiComponents.showNotification('Please select a participant first', 'warning');
+                window.uiComponents.showNotification('Please select a participant first', 'warning');
                 return;
             }
             
             if (!this.currentMeetupKey) {
-                uiComponents.showNotification('No meetup selected', 'error');
+                window.uiComponents.showNotification('No meetup selected', 'error');
                 return;
             }
             
             console.log('Setting response for participant:', this.selectedParticipantId, 'to proposal:', proposalId, 'response:', response);
             
-            await firebaseAPI.respondToProposal(this.currentMeetupKey, proposalId, this.selectedParticipantId, response);
+            await window.firebaseAPI.respondToProposal(this.currentMeetupKey, proposalId, this.selectedParticipantId, response);
             
-            uiComponents.showNotification('Response saved!', 'success');
+            window.uiComponents.showNotification('Response saved!', 'success');
             setTimeout(() => this.refreshProposalsDisplay(), 100);
         } catch (error) {
             console.error('Error responding to proposal:', error);
-            uiComponents.showNotification(error.message, 'error');
+            window.uiComponents.showNotification(error.message, 'error');
         }
     }
 
     // Send message
     async sendMessage() {
         try {
-            const message = uiComponents.getValue('messageInput').trim();
+            const message = window.uiComponents.getValue('messageInput').trim();
             if (!message) {
-                uiComponents.showNotification('Please enter a message', 'warning');
+                window.uiComponents.showNotification('Please enter a message', 'warning');
                 return;
             }
             
             if (!this.selectedParticipantId) {
-                uiComponents.showNotification('Please select a participant first', 'warning');
+                window.uiComponents.showNotification('Please select a participant first', 'warning');
                 return;
             }
             
             if (!this.currentMeetupKey) {
-                uiComponents.showNotification('No meetup selected', 'error');
+                window.uiComponents.showNotification('No meetup selected', 'error');
                 return;
             }
             
@@ -298,16 +294,16 @@ class MeetupApp {
             
             console.log('Sending message as participant:', this.selectedParticipantId, this.allParticipants[this.selectedParticipantId]?.name);
             
-            await firebaseAPI.addMessage(this.currentMeetupKey, messageId, {
+            await window.firebaseAPI.addMessage(this.currentMeetupKey, messageId, {
                 participantId: this.selectedParticipantId,
                 message: message
             });
             
-            uiComponents.setValue('messageInput', '');
-            uiComponents.showNotification('Message sent!', 'success');
+            window.uiComponents.setValue('messageInput', '');
+            window.uiComponents.showNotification('Message sent!', 'success');
         } catch (error) {
             console.error('Error sending message:', error);
-            uiComponents.showNotification(error.message, 'error');
+            window.uiComponents.showNotification(error.message, 'error');
         }
     }
 
@@ -315,11 +311,15 @@ class MeetupApp {
     async copyLink() {
         try {
             const link = `${window.location.origin}${window.location.pathname}?key=${this.currentMeetupKey}`;
-            await navigator.clipboard.writeText(link);
-            uiComponents.showNotification('Link copied to clipboard!', 'success');
+            const success = await window.Utils.copyToClipboard(link);
+            if (success) {
+                window.uiComponents.showNotification('Link copied to clipboard!', 'success');
+            } else {
+                window.uiComponents.showNotification('Failed to copy link', 'error');
+            }
         } catch (error) {
             console.error('Error copying link:', error);
-            uiComponents.showNotification('Failed to copy link', 'error');
+            window.uiComponents.showNotification('Failed to copy link', 'error');
         }
     }
 
@@ -339,33 +339,33 @@ class MeetupApp {
         this.currentParticipantId = null;
         this.selectedParticipantId = null;
         this.allParticipants = {};
-        this.meetingDuration = DEFAULT_DURATION;
+        this.meetingDuration = window.MeetupConfig.app.defaultMeetingDuration;
         
         // Clear URL
-        clearUrl();
+        window.Utils.clearUrl();
         
         // Reset UI
         this.resetUI();
         
         this.showHomeScreen();
-        uiComponents.showNotification('Returned to home', 'info');
+        window.uiComponents.showNotification('Returned to home', 'info');
     }
 
     // Reset UI to initial state
     resetUI() {
-        uiComponents.updateHTML('participantSelect', '<option value="">Choose participant...</option>');
-        uiComponents.setValue('durationSelect', DEFAULT_DURATION.toString());
-        uiComponents.hide('currentSelection');
-        uiComponents.hide('messageForm');
-        uiComponents.show('noParticipantMessage');
-        uiComponents.show('joinForm');
-        uiComponents.hide('proposeForm');
+        window.uiComponents.updateHTML('participantSelect', '<option value="">Choose participant...</option>');
+        window.uiComponents.setValue('durationSelect', window.MeetupConfig.app.defaultMeetingDuration.toString());
+        window.uiComponents.hide('currentSelection');
+        window.uiComponents.hide('messageForm');
+        window.uiComponents.show('noParticipantMessage');
+        window.uiComponents.show('joinForm');
+        window.uiComponents.hide('proposeForm');
         
         // Clear form values
-        uiComponents.setValue('keyInput', '');
-        uiComponents.setValue('nameInput', '');
-        uiComponents.setValue('messageInput', '');
-        uiComponents.setValue('dateTimeInput', '');
+        window.uiComponents.setValue('keyInput', '');
+        window.uiComponents.setValue('nameInput', '');
+        window.uiComponents.setValue('messageInput', '');
+        window.uiComponents.setValue('dateTimeInput', '');
     }
 
     // Load meetup data and set up listeners
@@ -373,13 +373,13 @@ class MeetupApp {
         if (!this.currentMeetupKey) return;
 
         try {
-            uiComponents.updateText('currentMeetupKey', this.currentMeetupKey);
+            window.uiComponents.updateText('currentMeetupKey', this.currentMeetupKey);
             
             // Load meetup settings
-            const meetupData = await firebaseAPI.getMeetup(this.currentMeetupKey);
+            const meetupData = await window.firebaseAPI.getMeetup(this.currentMeetupKey);
             if (meetupData && meetupData.duration) {
                 this.meetingDuration = meetupData.duration;
-                uiComponents.setValue('durationSelect', this.meetingDuration.toString());
+                window.uiComponents.setValue('durationSelect', this.meetingDuration.toString());
             }
             
             // Set up listeners
@@ -387,7 +387,7 @@ class MeetupApp {
             
         } catch (error) {
             console.error('Error loading meetup data:', error);
-            uiComponents.showNotification('Error loading meetup data', 'error');
+            window.uiComponents.showNotification('Error loading meetup data', 'error');
         }
     }
 
@@ -397,20 +397,20 @@ class MeetupApp {
         this.cleanupListeners();
 
         // Participants listener
-        const participantsListener = firebaseAPI.onParticipantsChange(this.currentMeetupKey, (participants) => {
+        const participantsListener = window.firebaseAPI.onParticipantsChange(this.currentMeetupKey, (participants) => {
             this.allParticipants = participants;
             this.updateParticipantsUI(participants);
         });
         this.listeners.set('participants', participantsListener);
 
         // Messages listener
-        const messagesListener = firebaseAPI.onMessagesChange(this.currentMeetupKey, (messages) => {
+        const messagesListener = window.firebaseAPI.onMessagesChange(this.currentMeetupKey, (messages) => {
             this.updateMessagesUI(messages);
         });
         this.listeners.set('messages', messagesListener);
 
         // Proposals listener
-        const proposalsListener = firebaseAPI.onProposalsChange(this.currentMeetupKey, (proposals) => {
+        const proposalsListener = window.firebaseAPI.onProposalsChange(this.currentMeetupKey, (proposals) => {
             this.updateProposalsUI(proposals);
         });
         this.listeners.set('proposals', proposalsListener);
@@ -419,40 +419,40 @@ class MeetupApp {
     // Update participants UI
     updateParticipantsUI(participants) {
         const count = Object.keys(participants).length;
-        uiComponents.updateText('participantCount', count.toString());
+        window.uiComponents.updateText('participantCount', count.toString());
         
         // Update participants list
-        const participantsList = uiComponents.renderParticipantsList(participants);
-        uiComponents.updateHTML('participantsList', participantsList);
+        const participantsList = window.uiComponents.renderParticipantsList(participants);
+        window.uiComponents.updateHTML('participantsList', participantsList);
 
         // Update participant select dropdown
-        const participantOptions = uiComponents.renderParticipantOptions(participants);
-        uiComponents.updateHTML('participantSelect', participantOptions);
+        const participantOptions = window.uiComponents.renderParticipantOptions(participants);
+        window.uiComponents.updateHTML('participantSelect', participantOptions);
 
         // Show propose form if there are participants
         if (count > 0) {
-            uiComponents.show('proposeForm');
+            window.uiComponents.show('proposeForm');
         }
     }
 
     // Update messages UI
     updateMessagesUI(messages) {
-        const messagesList = uiComponents.renderMessagesList(messages, this.allParticipants);
-        uiComponents.updateHTML('messagesList', messagesList);
+        const messagesList = window.uiComponents.renderMessagesList(messages, this.allParticipants);
+        window.uiComponents.updateHTML('messagesList', messagesList);
         
         // Auto-scroll to bottom
-        uiComponents.scrollToBottom('messagesList');
+        window.uiComponents.scrollToBottom('messagesList');
     }
 
     // Update proposals UI
     updateProposalsUI(proposals) {
-        const proposalsList = uiComponents.renderProposalsList(
+        const proposalsList = window.uiComponents.renderProposalsList(
             proposals, 
             this.allParticipants, 
             this.selectedParticipantId, 
             this.meetingDuration
         );
-        uiComponents.updateHTML('proposalsList', proposalsList);
+        window.uiComponents.updateHTML('proposalsList', proposalsList);
     }
 
     // Refresh proposals display (for manual updates)
@@ -461,7 +461,7 @@ class MeetupApp {
         
         try {
             // This will trigger the listener and update the UI
-            const snapshot = await firebaseAPI.database.ref('meetups/' + this.currentMeetupKey + '/proposals').once('value');
+            const snapshot = await window.firebaseAPI.database.ref('meetups/' + this.currentMeetupKey + '/proposals').once('value');
             const proposals = snapshot.val() || {};
             this.updateProposalsUI(proposals);
         } catch (error) {
@@ -472,7 +472,7 @@ class MeetupApp {
     // Clean up Firebase listeners
     cleanupListeners() {
         if (this.currentMeetupKey) {
-            firebaseAPI.cleanupMeetupListeners(this.currentMeetupKey);
+            window.firebaseAPI.cleanupMeetupListeners(this.currentMeetupKey);
         }
         this.listeners.clear();
     }
@@ -480,7 +480,7 @@ class MeetupApp {
     // Error handling
     handleError(error, context = 'Unknown') {
         console.error(`Error in ${context}:`, error);
-        uiComponents.showNotification(`Error: ${error.message}`, 'error');
+        window.uiComponents.showNotification(`Error: ${error.message}`, 'error');
     }
 }
 
@@ -501,6 +501,3 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.app = new MeetupApp();
     await window.app.init();
 });
-
-// Export for module usage
-export { MeetupApp };
