@@ -123,9 +123,9 @@
         max-width: none;
     }
     
-    #meetupScreen {
+    /*#meetupScreen {
         max-width: 4rem;
-    }
+    }*/
 }
 
 /* Large Devices (desktops, 992px and up) */
@@ -139,9 +139,9 @@
         grid-template-columns: repeat(5, 1fr);
     }
     
-    #meetupScreen {
+    /*#meetupScreen {
         max-width: 5rem;
-    }
+    }*/
 }
 
 /* Extra Large Devices (large desktops, 1200px and up) */
@@ -155,9 +155,9 @@
         grid-template-columns: repeat(6, 1fr);
     }
     
-    #meetupScreen {
+    /*#meetupScreen {
         max-width: 6rem;
-    }
+    }*/
     
     /* Enhanced spacing for large screens */
     .section-card {
