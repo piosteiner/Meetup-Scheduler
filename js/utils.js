@@ -35,7 +35,7 @@ function formatDate(date, options) {
         };
     }
     const dateObj = date instanceof Date ? date : new Date(date);
-    return dateObj.toLocaleDateString('en-US', options);
+    return dateObj.toLocaleDateString('en-DE', options);
 }
 
 function formatTime(date, options) {
