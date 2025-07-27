@@ -87,7 +87,7 @@
                 <p class="text-gray-600">Participants: <span id="participantCount">0</span></p>
             </div>
 
-            <div class="grid md:grid-cols-2 gap-6">
+            <div class="grid md:grid-cols-3 gap-6">
                 <!-- Participants Section -->
                 <div class="bg-gray-50 rounded-xl p-6">
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">Participants</h3>
@@ -107,6 +107,27 @@
                     <!-- Participants List -->
                     <div id="participantsList" class="space-y-2 max-h-64 overflow-y-auto">
                         <p class="text-gray-500 text-center">No participants yet</p>
+                    </div>
+                </div>
+
+                <!-- Scheduling Section -->
+                <div class="bg-gray-50 rounded-xl p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Schedule</h3>
+                    
+                    <!-- Propose Date Form -->
+                    <div id="proposeForm" class="hidden mb-6">
+                        <div class="space-y-3">
+                            <input type="datetime-local" id="dateTimeInput" 
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
+                            <button onclick="proposeDateTime()" class="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors duration-200">
+                                Propose Date & Time
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Proposed Times List -->
+                    <div id="proposalsList" class="space-y-3 max-h-80 overflow-y-auto">
+                        <p class="text-gray-500 text-center">No proposals yet</p>
                     </div>
                 </div>
 
@@ -222,7 +243,8 @@
                 title: `Meetup ${newKey}`,
                 created: firebase.database.ServerValue.TIMESTAMP,
                 participants: {},
-                messages: {}
+                messages: {},
+                proposals: {}
             }).then(() => {
                 document.getElementById('generatedKey').textContent = newKey;
                 const newUrl = `${window.location.origin}${window.location.pathname}?key=${newKey}`;
@@ -265,6 +287,7 @@
                     document.getElementById('nameInput').value = '';
                     document.getElementById('joinForm').style.display = 'none';
                     document.getElementById('messageForm').classList.remove('hidden');
+                    document.getElementById('proposeForm').classList.remove('hidden');
                 }).catch(error => {
                     console.error('Error joining meetup:', error);
                     alert('Error joining meetup. Please try again.');
@@ -286,6 +309,37 @@
                 }).catch(error => {
                     console.error('Error sending message:', error);
                     alert('Error sending message. Please try again.');
+                });
+            }
+        }
+
+        function proposeDateTime() {
+            const dateTime = document.getElementById('dateTimeInput').value;
+            if (dateTime && currentParticipantId && currentMeetupKey) {
+                const proposalId = Date.now().toString();
+                
+                database.ref('meetups/' + currentMeetupKey + '/proposals/' + proposalId).set({
+                    participantId: currentParticipantId,
+                    dateTime: dateTime,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    responses: {}
+                }).then(() => {
+                    document.getElementById('dateTimeInput').value = '';
+                }).catch(error => {
+                    console.error('Error proposing date:', error);
+                    alert('Error proposing date. Please try again.');
+                });
+            }
+        }
+
+        function respondToProposal(proposalId, response) {
+            if (currentParticipantId && currentMeetupKey) {
+                database.ref('meetups/' + currentMeetupKey + '/proposals/' + proposalId + '/responses/' + currentParticipantId).set({
+                    response: response,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                }).catch(error => {
+                    console.error('Error responding to proposal:', error);
+                    alert('Error responding to proposal. Please try again.');
                 });
             }
         }
