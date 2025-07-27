@@ -95,7 +95,10 @@ class MeetupApp {
             const newKey = window.Utils.generateMeetupKey();
             this.currentMeetupKey = newKey;
             
-            await window.firebaseAPI.createMeetup(newKey, { duration: this.meetingDuration });
+            await window.firebaseAPI.createMeetup(newKey, { 
+                duration: this.meetingDuration,
+                name: 'Untitled Meetup'
+            });
             
             window.uiComponents.updateText('generatedKey', newKey);
             window.Utils.updateUrl(newKey);
@@ -221,6 +224,41 @@ class MeetupApp {
         }
         
         this.refreshProposalsDisplay();
+    }
+
+    // Edit meetup name
+    async editMeetupName() {
+        try {
+            if (!this.currentMeetupKey) {
+                window.uiComponents.showNotification('No meetup selected', 'error');
+                return;
+            }
+
+            const currentName = document.getElementById('meetupTitle').textContent;
+            const newName = prompt('Enter meetup name:', currentName);
+            
+            if (newName === null) return; // User cancelled
+            
+            const trimmedName = newName.trim();
+            if (!trimmedName) {
+                window.uiComponents.showNotification('Meetup name cannot be empty', 'warning');
+                return;
+            }
+
+            if (trimmedName === currentName) return; // No change
+            
+            await window.firebaseAPI.updateMeetupName(this.currentMeetupKey, trimmedName);
+            
+            // Update UI immediately
+            document.getElementById('meetupTitle').textContent = trimmedName;
+            
+            window.uiComponents.showNotification('Meetup name updated!', 'success');
+            console.log('✅ Meetup name updated:', trimmedName);
+            
+        } catch (error) {
+            console.error('❌ Error updating meetup name:', error);
+            window.uiComponents.showNotification('Error updating meetup name: ' + error.message, 'error');
+        }
     }
 
     // Propose date and time
@@ -416,6 +454,9 @@ class MeetupApp {
         window.uiComponents.show('joinForm');
         window.uiComponents.hide('proposeForm');
         
+        // Reset meetup title
+        document.getElementById('meetupTitle').textContent = 'Untitled Meetup';
+        
         // Clear form values
         window.uiComponents.setValue('keyInput', '');
         window.uiComponents.setValue('nameInput', '');
@@ -432,9 +473,14 @@ class MeetupApp {
             
             // Load meetup settings
             const meetupData = await window.firebaseAPI.getMeetup(this.currentMeetupKey);
-            if (meetupData && meetupData.duration) {
-                this.meetingDuration = meetupData.duration;
-                window.uiComponents.setValue('durationSelect', this.meetingDuration.toString());
+            if (meetupData) {
+                if (meetupData.duration) {
+                    this.meetingDuration = meetupData.duration;
+                    window.uiComponents.setValue('durationSelect', this.meetingDuration.toString());
+                }
+                if (meetupData.name) {
+                    document.getElementById('meetupTitle').textContent = meetupData.name;
+                }
             }
             
             // Set up listeners
@@ -561,6 +607,7 @@ window.copyLink = () => window.app?.copyLink();
 window.goToMeetup = () => window.app?.goToMeetup();
 window.goHome = () => window.app?.goHome();
 window.deleteProposal = (proposalId, proposerName) => window.app?.deleteProposal(proposalId, proposerName);
+window.editMeetupName = () => window.app?.editMeetupName();
 
 // Initialize app when DOM is loaded
 document.addEventListener('DOMContentLoaded', async () => {

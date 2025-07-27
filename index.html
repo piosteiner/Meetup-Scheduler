@@ -88,9 +88,9 @@
         </div>
 
         <!-- Meetup Screen -->
-        <div id="meetupScreen" class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-6xl hidden">
             <div class="text-center mb-8">
-                <h2 class="text-2xl font-bold text-gray-900 mb-2">Meetup: <span id="currentMeetupKey"></span></h2>
+                <h1 id="meetupTitle" class="text-3xl font-bold text-gray-900 mb-1 cursor-pointer hover:text-indigo-600 transition-colors" onclick="window.app.editMeetupName()" title="Click to edit meetup name">Untitled Meetup</h1>
+                <p class="text-lg text-gray-700 mb-2">Key: <span id="currentMeetupKey" class="font-mono"></span></p>
                 <p class="text-gray-600">Participants: <span id="participantCount">0</span></p>
             </div>
 
