@@ -92,6 +92,14 @@
                 <div class="bg-gray-50 rounded-xl p-6">
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">Participants</h3>
                     
+                    <!-- Participant Selection - Always visible -->
+                    <div id="participantSelection" class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Select Participant:</label>
+                        <select id="participantSelect" onchange="selectParticipant()" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
+                            <option value="">Choose participant...</option>
+                        </select>
+                    </div>
+                    
                     <!-- Join Form -->
                     <div id="joinForm" class="mb-6">
                         <div class="flex space-x-3">
@@ -104,12 +112,12 @@
                         </div>
                     </div>
 
-                    <!-- Participant Selection -->
-                    <div id="participantSelection" class="mb-6 hidden">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Select Participant:</label>
-                        <select id="participantSelect" onchange="selectParticipant()" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
-                            <option value="">Choose participant...</option>
-                        </select>
+                    <!-- Current Selection Display -->
+                    <div id="currentSelection" class="mb-4 hidden">
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                            <div class="text-sm font-medium text-blue-800">Currently managing:</div>
+                            <div id="selectedParticipantName" class="text-blue-900 font-semibold"></div>
+                        </div>
                     </div>
 
                     <!-- Participants List -->
@@ -289,7 +297,6 @@
             if (name && currentMeetupKey) {
                 const participantId = Date.now().toString();
                 currentParticipantId = participantId;
-                selectedParticipantId = participantId;
                 
                 database.ref('meetups/' + currentMeetupKey + '/participants/' + participantId).set({
                     name: name,
@@ -298,7 +305,12 @@
                     document.getElementById('nameInput').value = '';
                     document.getElementById('joinForm').style.display = 'none';
                     document.getElementById('messageForm').classList.remove('hidden');
-                    document.getElementById('participantSelection').classList.remove('hidden');
+                    
+                    // Auto-select the participant that just joined
+                    setTimeout(() => {
+                        document.getElementById('participantSelect').value = participantId;
+                        selectParticipant();
+                    }, 500);
                 }).catch(error => {
                     console.error('Error joining meetup:', error);
                     alert('Error joining meetup. Please try again.');
@@ -308,7 +320,20 @@
 
         function selectParticipant() {
             selectedParticipantId = document.getElementById('participantSelect').value;
-            console.log('Selected participant:', selectedParticipantId);
+            const selectedName = selectedParticipantId ? allParticipants[selectedParticipantId]?.name : '';
+            
+            console.log('Selected participant:', selectedParticipantId, selectedName);
+            
+            // Update current selection display
+            if (selectedParticipantId && selectedName) {
+                document.getElementById('currentSelection').classList.remove('hidden');
+                document.getElementById('selectedParticipantName').textContent = selectedName;
+            } else {
+                document.getElementById('currentSelection').classList.add('hidden');
+            }
+            
+            // Refresh the proposals display to show this participant's responses
+            refreshProposalsDisplay();
         }
 
         function sendMessage() {
@@ -352,20 +377,110 @@
         }
 
         function respondToProposal(proposalId, response) {
-            const participantId = selectedParticipantId || currentParticipantId;
-            if (participantId && currentMeetupKey) {
-                database.ref('meetups/' + currentMeetupKey + '/proposals/' + proposalId + '/responses/' + participantId).set({
-                    response: response,
-                    timestamp: firebase.database.ServerValue.TIMESTAMP
-                }).then(() => {
-                    console.log('Response saved successfully');
-                }).catch(error => {
-                    console.error('Error responding to proposal:', error);
-                    alert('Error responding to proposal. Please try again.');
-                });
-            } else {
+            if (!selectedParticipantId) {
                 alert('Please select a participant first');
+                return;
             }
+            
+            if (!currentMeetupKey) {
+                alert('No meetup selected');
+                return;
+            }
+            
+            console.log('Setting response for participant:', selectedParticipantId, 'to proposal:', proposalId, 'response:', response);
+            
+            database.ref('meetups/' + currentMeetupKey + '/proposals/' + proposalId + '/responses/' + selectedParticipantId).set({
+                response: response,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            }).then(() => {
+                console.log('Response saved successfully');
+                // Force refresh the proposals display
+                setTimeout(refreshProposalsDisplay, 100);
+            }).catch(error => {
+                console.error('Error responding to proposal:', error);
+                alert('Error responding to proposal: ' + error.message);
+            });
+        }
+
+        // New function to refresh proposals display
+        function refreshProposalsDisplay() {
+            if (!currentMeetupKey) return;
+            
+            database.ref('meetups/' + currentMeetupKey + '/proposals').once('value', snapshot => {
+                const proposals = snapshot.val() || {};
+                updateProposalsUI(proposals);
+            });
+        }
+
+        // New function to update proposals UI
+        function updateProposalsUI(proposals) {
+            const proposalsList = document.getElementById('proposalsList');
+            const proposalArray = Object.entries(proposals).sort((a, b) => (b[1].timestamp || 0) - (a[1].timestamp || 0));
+            
+            if (proposalArray.length === 0) {
+                proposalsList.innerHTML = '<p class="text-gray-500 text-center">No proposals yet</p>';
+                return;
+            }
+
+            proposalsList.innerHTML = proposalArray
+                .map(([proposalId, proposal]) => {
+                    const dateTime = new Date(proposal.dateTime);
+                    const formattedDate = dateTime.toLocaleDateString();
+                    const formattedTime = dateTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    const proposerName = allParticipants[proposal.participantId]?.name || 'Unknown';
+                    
+                    const responses = proposal.responses || {};
+                    const availableCount = Object.values(responses).filter(r => r.response === 'available').length;
+                    const checkCount = Object.values(responses).filter(r => r.response === 'maybe').length;
+                    const unavailableCount = Object.values(responses).filter(r => r.response === 'unavailable').length;
+                    
+                    // Get current participant's response
+                    const selectedResponse = selectedParticipantId && responses[selectedParticipantId] ? responses[selectedParticipantId].response : null;
+                    const selectedParticipantName = selectedParticipantId ? allParticipants[selectedParticipantId]?.name : 'No one';
+                    
+                    return `
+                        <div class="bg-white p-4 rounded-lg shadow-sm border">
+                            <div class="mb-3">
+                                <div class="font-semibold text-gray-900">${formattedDate} at ${formattedTime}</div>
+                                <div class="text-sm text-gray-600">Proposed by ${proposerName}</div>
+                            </div>
+                            
+                            <div class="flex justify-between items-center mb-3 text-sm">
+                                <span class="text-green-600">✓ ${availableCount} available</span>
+                                <span class="text-yellow-600">? ${checkCount} maybe</span>
+                                <span class="text-red-600">✗ ${unavailableCount} unavailable</span>
+                            </div>
+                            
+                            ${selectedParticipantId ? `
+                                <div class="mb-3 p-2 bg-gray-50 rounded border">
+                                    <div class="text-sm text-gray-600">
+                                        <strong>${selectedParticipantName}</strong>'s status: 
+                                        ${selectedResponse ? `<span class="font-semibold ${
+                                            selectedResponse === 'available' ? 'text-green-600' : 
+                                            selectedResponse === 'maybe' ? 'text-yellow-600' : 'text-red-600'
+                                        }">${selectedResponse}</span>` : '<span class="text-gray-400">No response yet</span>'}
+                                    </div>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button onclick="respondToProposal('${proposalId}', 'available')" 
+                                            class="flex-1 py-2 px-3 text-sm rounded transition-colors duration-200 ${selectedResponse === 'available' ? 'bg-green-600 text-white' : 'bg-green-100 text-green-700 hover:bg-green-200'}">
+                                        Available
+                                    </button>
+                                    <button onclick="respondToProposal('${proposalId}', 'maybe')" 
+                                            class="flex-1 py-2 px-3 text-sm rounded transition-colors duration-200 ${selectedResponse === 'maybe' ? 'bg-yellow-600 text-white' : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'}">
+                                        Maybe
+                                    </button>
+                                    <button onclick="respondToProposal('${proposalId}', 'unavailable')" 
+                                            class="flex-1 py-2 px-3 text-sm rounded transition-colors duration-200 ${selectedResponse === 'unavailable' ? 'bg-red-600 text-white' : 'bg-red-100 text-red-700 hover:bg-red-200'}">
+                                        Unavailable
+                                    </button>
+                                </div>
+                            ` : `
+                                <p class="text-gray-500 text-sm text-center py-2">Select a participant above to set their availability</p>
+                            `}
+                        </div>
+                    `;
+                }).join('');
         }
 
         function loadMeetupData() {
@@ -430,64 +545,7 @@
                 // Listen for proposal changes
                 database.ref('meetups/' + currentMeetupKey + '/proposals').on('value', snapshot => {
                     const proposals = snapshot.val() || {};
-                    
-                    const proposalsList = document.getElementById('proposalsList');
-                    const proposalArray = Object.entries(proposals).sort((a, b) => (b[1].timestamp || 0) - (a[1].timestamp || 0));
-                    
-                    if (proposalArray.length === 0) {
-                        proposalsList.innerHTML = '<p class="text-gray-500 text-center">No proposals yet</p>';
-                    } else {
-                        proposalsList.innerHTML = proposalArray
-                            .map(([proposalId, proposal]) => {
-                                const dateTime = new Date(proposal.dateTime);
-                                const formattedDate = dateTime.toLocaleDateString();
-                                const formattedTime = dateTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                                const proposerName = allParticipants[proposal.participantId]?.name || 'Unknown';
-                                
-                                const responses = proposal.responses || {};
-                                const availableCount = Object.values(responses).filter(r => r.response === 'available').length;
-                                const checkCount = Object.values(responses).filter(r => r.response === 'maybe').length;
-                                const unavailableCount = Object.values(responses).filter(r => r.response === 'unavailable').length;
-                                
-                                const currentParticipant = selectedParticipantId || currentParticipantId;
-                                const userResponse = currentParticipant && responses[currentParticipant] ? responses[currentParticipant].response : null;
-                                
-                                return `
-                                    <div class="bg-white p-4 rounded-lg shadow-sm border">
-                                        <div class="mb-3">
-                                            <div class="font-semibold text-gray-900">${formattedDate} at ${formattedTime}</div>
-                                            <div class="text-sm text-gray-600">Proposed by ${proposerName}</div>
-                                        </div>
-                                        
-                                        <div class="flex justify-between items-center mb-3 text-sm">
-                                            <span class="text-green-600">✓ ${availableCount} available</span>
-                                            <span class="text-yellow-600">? ${checkCount} maybe</span>
-                                            <span class="text-red-600">✗ ${unavailableCount} unavailable</span>
-                                        </div>
-                                        
-                                        ${selectedParticipantId || currentParticipantId ? `
-                                            <div class="mb-2 text-sm text-gray-600">
-                                                Responding as: ${allParticipants[selectedParticipantId || currentParticipantId]?.name || 'Unknown'}
-                                            </div>
-                                            <div class="flex space-x-2">
-                                                <button onclick="respondToProposal('${proposalId}', 'available')" 
-                                                        class="flex-1 py-1 px-3 text-sm rounded transition-colors duration-200 ${userResponse === 'available' ? 'bg-green-600 text-white' : 'bg-green-100 text-green-700 hover:bg-green-200'}">
-                                                    Available
-                                                </button>
-                                                <button onclick="respondToProposal('${proposalId}', 'maybe')" 
-                                                        class="flex-1 py-1 px-3 text-sm rounded transition-colors duration-200 ${userResponse === 'maybe' ? 'bg-yellow-600 text-white' : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'}">
-                                                    Maybe
-                                                </button>
-                                                <button onclick="respondToProposal('${proposalId}', 'unavailable')" 
-                                                        class="flex-1 py-1 px-3 text-sm rounded transition-colors duration-200 ${userResponse === 'unavailable' ? 'bg-red-600 text-white' : 'bg-red-100 text-red-700 hover:bg-red-200'}">
-                                                    Unavailable
-                                                </button>
-                                            </div>
-                                        ` : '<p class="text-gray-500 text-sm">Select a participant to respond</p>'}
-                                    </div>
-                                `;
-                            }).join('');
-                    }
+                    updateProposalsUI(proposals);
                 });
             }
         }
