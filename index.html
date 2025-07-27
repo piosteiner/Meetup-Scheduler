@@ -87,27 +87,27 @@
                 <p class="text-gray-600">Participants: <span id="participantCount">0</span></p>
             </div>
 
-            <div class="grid md:grid-cols-3 gap-6">
+            <div class="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-6">
                 <!-- Participants Section -->
                 <div class="bg-gray-50 rounded-xl p-6">
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">Participants</h3>
                     
                     <!-- Participant Selection - Always visible -->
-                    <div id="participantSelection" class="mb-6">
+                    <div id="participantSelection" class="mb-4">
                         <label class="block text-sm font-medium text-gray-700 mb-2">Select Participant:</label>
-                        <select id="participantSelect" onchange="selectParticipant()" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
+                        <select id="participantSelect" onchange="selectParticipant()" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm">
                             <option value="">Choose participant...</option>
                         </select>
                     </div>
                     
                     <!-- Join Form -->
-                    <div id="joinForm" class="mb-6">
-                        <div class="flex space-x-3">
+                    <div id="joinForm" class="mb-4">
+                        <div class="space-y-2">
                             <input type="text" id="nameInput" placeholder="Enter your name" 
-                                   class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
                                    onkeypress="if(event.key==='Enter') joinAsMember()">
-                            <button onclick="joinAsMember()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg transition-colors duration-200">
-                                Join
+                            <button onclick="joinAsMember()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 text-sm">
+                                Join Meetup
                             </button>
                         </div>
                     </div>
@@ -116,44 +116,50 @@
                     <div id="currentSelection" class="mb-4 hidden">
                         <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
                             <div class="text-sm font-medium text-blue-800">Currently managing:</div>
-                            <div id="selectedParticipantName" class="text-blue-900 font-semibold"></div>
+                            <div id="selectedParticipantName" class="text-blue-900 font-semibold text-sm"></div>
                         </div>
                     </div>
 
                     <!-- Participants List -->
-                    <div id="participantsList" class="space-y-2 max-h-64 overflow-y-auto">
-                        <p class="text-gray-500 text-center">No participants yet</p>
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-700 mb-2">All Participants:</h4>
+                        <div id="participantsList" class="space-y-2 max-h-48 overflow-y-auto">
+                            <p class="text-gray-500 text-center text-sm">No participants yet</p>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Scheduling Section -->
-                <div class="bg-gray-50 rounded-xl p-6">
+                <div class="bg-gray-50 rounded-xl p-6 lg:col-span-2 md:col-span-2">
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">Schedule</h3>
                     
                     <!-- Propose Date Form - Always visible when participants exist -->
                     <div id="proposeForm" class="mb-6 hidden">
-                        <div class="space-y-3">
-                            <input type="datetime-local" id="dateTimeInput" 
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
-                            <button onclick="proposeDateTime()" class="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors duration-200">
-                                Propose Date & Time
-                            </button>
+                        <div class="bg-white p-4 rounded-lg border">
+                            <h4 class="text-sm font-medium text-gray-700 mb-3">Propose New Date & Time</h4>
+                            <div class="flex flex-col sm:flex-row gap-3">
+                                <input type="datetime-local" id="dateTimeInput" 
+                                       class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm">
+                                <button onclick="proposeDateTime()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 text-sm whitespace-nowrap">
+                                    Propose Date & Time
+                                </button>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Proposed Times List -->
-                    <div id="proposalsList" class="space-y-3 max-h-80 overflow-y-auto">
+                    <div id="proposalsList" class="space-y-4">
                         <p class="text-gray-500 text-center">No proposals yet</p>
                     </div>
                 </div>
 
                 <!-- Messages Section -->
-                <div class="bg-gray-50 rounded-xl p-6">
+                <div class="bg-gray-50 rounded-xl p-6 lg:col-span-3 md:col-span-2">
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">Messages</h3>
                     
                     <!-- Messages List -->
-                    <div id="messagesList" class="space-y-3 mb-4 max-h-64 overflow-y-auto">
-                        <p class="text-gray-500 text-center">No messages yet</p>
+                    <div id="messagesList" class="space-y-3 mb-4 max-h-48 overflow-y-auto bg-white rounded-lg p-3 border">
+                        <p class="text-gray-500 text-center text-sm">No messages yet</p>
                     </div>
 
                     <!-- Send Message Form -->
@@ -161,12 +167,12 @@
                         <div id="messageAsParticipant" class="mb-2 text-sm text-gray-600 hidden">
                             Sending as: <span id="messageParticipantName" class="font-semibold"></span>
                         </div>
-                        <div class="flex space-x-3">
+                        <div class="flex flex-col sm:flex-row gap-3">
                             <input type="text" id="messageInput" placeholder="Type a message..." 
-                                   class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                                   class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
                                    onkeypress="if(event.key==='Enter') sendMessage()">
-                            <button onclick="sendMessage()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors duration-200">
-                                Send
+                            <button onclick="sendMessage()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 text-sm whitespace-nowrap">
+                                Send Message
                             </button>
                         </div>
                     </div>
@@ -449,7 +455,13 @@
         // New function to update proposals UI
         function updateProposalsUI(proposals) {
             const proposalsList = document.getElementById('proposalsList');
-            const proposalArray = Object.entries(proposals).sort((a, b) => (b[1].timestamp || 0) - (a[1].timestamp || 0));
+            const proposalArray = Object.entries(proposals)
+                .sort((a, b) => {
+                    // Sort by actual date/time, not timestamp
+                    const dateA = new Date(a[1].dateTime);
+                    const dateB = new Date(b[1].dateTime);
+                    return dateA - dateB;
+                });
             
             if (proposalArray.length === 0) {
                 proposalsList.innerHTML = '<p class="text-gray-500 text-center">No proposals yet</p>';
@@ -459,7 +471,12 @@
             proposalsList.innerHTML = proposalArray
                 .map(([proposalId, proposal]) => {
                     const dateTime = new Date(proposal.dateTime);
-                    const formattedDate = dateTime.toLocaleDateString();
+                    const formattedDate = dateTime.toLocaleDateString('en-US', {
+                        weekday: 'short',
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                    });
                     const formattedTime = dateTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                     const proposerName = allParticipants[proposal.participantId]?.name || 'Unknown';
                     
@@ -474,43 +491,53 @@
                     
                     return `
                         <div class="bg-white p-4 rounded-lg shadow-sm border">
-                            <div class="mb-3">
-                                <div class="font-semibold text-gray-900">${formattedDate} at ${formattedTime}</div>
-                                <div class="text-sm text-gray-600">Proposed by ${proposerName}</div>
+                            <div class="mb-4">
+                                <div class="font-semibold text-gray-900 text-lg">${formattedDate}</div>
+                                <div class="font-medium text-indigo-600 text-base">${formattedTime}</div>
+                                <div class="text-sm text-gray-600 mt-1">Proposed by ${proposerName}</div>
                             </div>
                             
-                            <div class="flex justify-between items-center mb-3 text-sm">
-                                <span class="text-green-600">✓ ${availableCount} available</span>
-                                <span class="text-yellow-600">? ${checkCount} maybe</span>
-                                <span class="text-red-600">✗ ${unavailableCount} unavailable</span>
+                            <div class="grid grid-cols-3 gap-2 mb-4 text-sm">
+                                <div class="text-center">
+                                    <span class="text-green-600 font-semibold">✓ ${availableCount}</span>
+                                    <div class="text-gray-500 text-xs">available</div>
+                                </div>
+                                <div class="text-center">
+                                    <span class="text-yellow-600 font-semibold">? ${checkCount}</span>
+                                    <div class="text-gray-500 text-xs">maybe</div>
+                                </div>
+                                <div class="text-center">
+                                    <span class="text-red-600 font-semibold">✗ ${unavailableCount}</span>
+                                    <div class="text-gray-500 text-xs">unavailable</div>
+                                </div>
                             </div>
                             
                             ${selectedParticipantId ? `
-                                <div class="mb-3 p-2 bg-gray-50 rounded border">
+                                <div class="mb-3 p-3 bg-gray-50 rounded border">
                                     <div class="text-sm text-gray-600">
                                         <strong>${selectedParticipantName}</strong>'s status: 
-                                        ${selectedResponse ? `<span class="font-semibold ${
-                                            selectedResponse === 'available' ? 'text-green-600' : 
-                                            selectedResponse === 'maybe' ? 'text-yellow-600' : 'text-red-600'
+                                        ${selectedResponse ? `<span class="font-semibold px-2 py-1 rounded text-xs ${
+                                            selectedResponse === 'available' ? 'bg-green-100 text-green-700' : 
+                                            selectedResponse === 'maybe' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
                                         }">${selectedResponse}</span>` : '<span class="text-gray-400">No response yet</span>'}
                                     </div>
                                 </div>
-                                <div class="flex space-x-2">
+                                <div class="grid grid-cols-3 gap-2">
                                     <button onclick="respondToProposal('${proposalId}', 'available')" 
-                                            class="flex-1 py-2 px-3 text-sm rounded transition-colors duration-200 ${selectedResponse === 'available' ? 'bg-green-600 text-white' : 'bg-green-100 text-green-700 hover:bg-green-200'}">
+                                            class="py-2 px-3 text-sm rounded transition-colors duration-200 ${selectedResponse === 'available' ? 'bg-green-600 text-white' : 'bg-green-100 text-green-700 hover:bg-green-200'}">
                                         Available
                                     </button>
                                     <button onclick="respondToProposal('${proposalId}', 'maybe')" 
-                                            class="flex-1 py-2 px-3 text-sm rounded transition-colors duration-200 ${selectedResponse === 'maybe' ? 'bg-yellow-600 text-white' : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'}">
+                                            class="py-2 px-3 text-sm rounded transition-colors duration-200 ${selectedResponse === 'maybe' ? 'bg-yellow-600 text-white' : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'}">
                                         Maybe
                                     </button>
                                     <button onclick="respondToProposal('${proposalId}', 'unavailable')" 
-                                            class="flex-1 py-2 px-3 text-sm rounded transition-colors duration-200 ${selectedResponse === 'unavailable' ? 'bg-red-600 text-white' : 'bg-red-100 text-red-700 hover:bg-red-200'}">
+                                            class="py-2 px-3 text-sm rounded transition-colors duration-200 ${selectedResponse === 'unavailable' ? 'bg-red-600 text-white' : 'bg-red-100 text-red-700 hover:bg-red-200'}">
                                         Unavailable
                                     </button>
                                 </div>
                             ` : `
-                                <p class="text-gray-500 text-sm text-center py-2">Select a participant above to set their availability</p>
+                                <p class="text-gray-500 text-sm text-center py-3 bg-gray-50 rounded">Select a participant above to set their availability</p>
                             `}
                         </div>
                     `;
