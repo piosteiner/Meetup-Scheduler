@@ -7,21 +7,46 @@ class AvailabilityCalendar {
         this.calendarData = {}; // Store availability and comments for each day
         this.currentMeetupKey = '';
         this.selectedParticipantId = null;
+        this.calendarListener = null; // Track Firebase listener
     }
 
     // Initialize calendar when app loads
     init(meetupKey, participantId) {
+        console.log('Initializing calendar with:', meetupKey, participantId);
+        
         this.currentMeetupKey = meetupKey;
         this.selectedParticipantId = participantId;
+        
+        // Load calendar data and render
         this.loadCalendarData();
-        this.renderCalendar();
+        
+        // Setup event listeners
         this.setupEventListeners();
     }
 
     // Update selected participant
     updateSelectedParticipant(participantId) {
+        console.log('Updating calendar participant to:', participantId);
+        
+        // Clean up existing listener
+        if (this.calendarListener && this.currentMeetupKey && this.selectedParticipantId) {
+            window.firebaseAPI.database
+                .ref(`meetups/${this.currentMeetupKey}/calendar/${this.selectedParticipantId}`)
+                .off('value', this.calendarListener);
+        }
+        
         this.selectedParticipantId = participantId;
-        this.renderCalendar(); // Re-render to show participant's data
+        
+        if (participantId) {
+            // Load data for new participant
+            this.loadCalendarData();
+            // Setup real-time listener
+            this.setupCalendarListener();
+        } else {
+            // Clear calendar when no participant selected
+            this.calendarData = {};
+            this.renderCalendar();
+        }
     }
 
     // Setup event listeners
@@ -46,11 +71,16 @@ class AvailabilityCalendar {
         if (!this.currentMeetupKey || !this.selectedParticipantId) return;
 
         try {
+            console.log('Loading calendar data for:', this.currentMeetupKey, this.selectedParticipantId);
+            
             const snapshot = await window.firebaseAPI.database
                 .ref(`meetups/${this.currentMeetupKey}/calendar/${this.selectedParticipantId}`)
                 .once('value');
             
-            this.calendarData = snapshot.val() || {};
+            const data = snapshot.val();
+            console.log('Loaded calendar data:', data);
+            
+            this.calendarData = data || {};
             this.renderCalendar();
         } catch (error) {
             console.error('Error loading calendar data:', error);
@@ -59,16 +89,48 @@ class AvailabilityCalendar {
 
     // Save calendar data to Firebase
     async saveCalendarData() {
-        if (!this.currentMeetupKey || !this.selectedParticipantId) return;
+        if (!this.currentMeetupKey || !this.selectedParticipantId) {
+            console.error('Cannot save calendar data: missing meetup key or participant ID');
+            return;
+        }
 
         try {
+            console.log('Saving calendar data:', this.calendarData);
+            
             await window.firebaseAPI.database
                 .ref(`meetups/${this.currentMeetupKey}/calendar/${this.selectedParticipantId}`)
                 .set(this.calendarData);
+                
+            console.log('Calendar data saved successfully');
         } catch (error) {
             console.error('Error saving calendar data:', error);
             throw error;
         }
+    }
+
+    // Setup real-time listener for calendar data
+    setupCalendarListener() {
+        if (!this.currentMeetupKey || !this.selectedParticipantId) return;
+
+        // Clean up existing listener
+        if (this.calendarListener) {
+            window.firebaseAPI.database
+                .ref(`meetups/${this.currentMeetupKey}/calendar/${this.selectedParticipantId}`)
+                .off('value', this.calendarListener);
+        }
+
+        // Set up new listener
+        this.calendarListener = window.firebaseAPI.database
+            .ref(`meetups/${this.currentMeetupKey}/calendar/${this.selectedParticipantId}`)
+            .on('value', (snapshot) => {
+                const data = snapshot.val();
+                console.log('Calendar data updated from Firebase:', data);
+                
+                if (data) {
+                    this.calendarData = data;
+                    this.renderCalendar();
+                }
+            });
     }
 
     // Render the calendar
@@ -244,7 +306,10 @@ class AvailabilityCalendar {
 
     // Save day data
     async saveDayData() {
-        if (!this.currentSelectedDay || !this.selectedParticipantId) return;
+        if (!this.currentSelectedDay || !this.selectedParticipantId) {
+            console.error('Cannot save: missing selected day or participant');
+            return;
+        }
         
         try {
             // Get selected availability
@@ -254,6 +319,8 @@ class AvailabilityCalendar {
             // Get comment
             const commentInput = document.getElementById('dayComment');
             const comment = commentInput ? commentInput.value.trim() : '';
+            
+            console.log('Saving day data:', this.currentSelectedDay, 'availability:', availability, 'comment:', comment);
             
             // Save data locally
             if (!this.calendarData[this.currentSelectedDay]) {
@@ -284,9 +351,14 @@ class AvailabilityCalendar {
 
     // Clear day data
     async clearDayData() {
-        if (!this.currentSelectedDay || !this.selectedParticipantId) return;
+        if (!this.currentSelectedDay || !this.selectedParticipantId) {
+            console.error('Cannot clear: missing selected day or participant');
+            return;
+        }
         
         try {
+            console.log('Clearing day data for:', this.currentSelectedDay);
+            
             delete this.calendarData[this.currentSelectedDay];
             
             // Save to Firebase
@@ -307,6 +379,16 @@ class AvailabilityCalendar {
 
     // Reset calendar data (when switching participants or going home)
     reset() {
+        console.log('Resetting calendar');
+        
+        // Clean up listener
+        if (this.calendarListener && this.currentMeetupKey && this.selectedParticipantId) {
+            window.firebaseAPI.database
+                .ref(`meetups/${this.currentMeetupKey}/calendar/${this.selectedParticipantId}`)
+                .off('value', this.calendarListener);
+            this.calendarListener = null;
+        }
+        
         this.currentMeetupKey = '';
         this.selectedParticipantId = null;
         this.calendarData = {};

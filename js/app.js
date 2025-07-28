@@ -202,10 +202,6 @@ class MeetupApp {
         console.log('Selected participant:', this.selectedParticipantId, selectedName);
         
         if (this.selectedParticipantId && selectedName) {
-            // Show current selection
-            window.uiComponents.show('currentSelection');
-            window.uiComponents.updateText('selectedParticipantName', selectedName);
-            
             // Show message form
             window.uiComponents.show('messageForm');
             window.uiComponents.show('messageAsParticipant');
@@ -219,7 +215,6 @@ class MeetupApp {
             window.calendar.updateSelectedParticipant(this.selectedParticipantId);
         } else {
             // Hide forms when no participant selected
-            window.uiComponents.hide('currentSelection');
             window.uiComponents.hide('messageForm');
             window.uiComponents.hide('messageAsParticipant');
             window.uiComponents.show('noParticipantMessage');
@@ -543,7 +538,6 @@ class MeetupApp {
     resetUI() {
         window.uiComponents.updateHTML('participantSelect', '<option value="">Choose participant...</option>');
         window.uiComponents.setValue('durationSelect', window.MeetupConfig.app.defaultMeetingDuration.toString());
-        window.uiComponents.hide('currentSelection');
         window.uiComponents.hide('messageForm');
         window.uiComponents.show('noParticipantMessage');
         window.uiComponents.show('joinForm');
