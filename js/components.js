@@ -88,13 +88,23 @@ class UIComponents {
         }
     }
 
-    // Render participant card
-    renderParticipantCard(participant) {
-        return `<div class="bg-white p-2 rounded-lg shadow-sm text-center text-sm">${participant.name}</div>`;
+    // Render participant card with click functionality
+    renderParticipantCard(participant, participantId, isSelected = false) {
+        const selectedClass = isSelected ? 'bg-indigo-100 border-indigo-500 text-indigo-900' : 'bg-white hover:bg-gray-50 border-gray-200';
+        const cursorClass = 'cursor-pointer';
+        
+        return `
+            <div onclick="window.app.selectParticipantById('${participantId}')" 
+                 class="participant-card ${selectedClass} ${cursorClass} p-3 rounded-lg shadow-sm text-center text-sm font-medium transition-all duration-200 border-2"
+                 data-participant-id="${participantId}">
+                ${participant.name}
+                ${isSelected ? '<div class="text-xs text-indigo-600 mt-1">Selected</div>' : ''}
+            </div>
+        `;
     }
 
-    // Render participants list
-    renderParticipantsList(participants) {
+    // Render participants list with clickable cards
+    renderParticipantsList(participants, selectedParticipantId = null) {
         const participantArray = Object.entries(participants);
         
         if (participantArray.length === 0) {
@@ -102,7 +112,10 @@ class UIComponents {
         }
         
         return participantArray
-            .map(([id, participant]) => this.renderParticipantCard(participant))
+            .map(([id, participant]) => {
+                const isSelected = selectedParticipantId === id;
+                return this.renderParticipantCard(participant, id, isSelected);
+            })
             .join('');
     }
 

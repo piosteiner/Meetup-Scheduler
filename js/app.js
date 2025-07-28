@@ -169,8 +169,7 @@ class MeetupApp {
             
             // Auto-select the participant that just joined
             setTimeout(() => {
-                window.uiComponents.setValue('participantSelect', participantId);
-                this.selectParticipant();
+                this.selectParticipantById(participantId);
             }, 500);
 
             window.uiComponents.showNotification(`Welcome, ${name}!`, 'success');
@@ -180,9 +179,24 @@ class MeetupApp {
         }
     }
 
+    // Select participant by ID (new method for clickable cards)
+    selectParticipantById(participantId) {
+        this.selectedParticipantId = participantId;
+        
+        // Update the hidden select for backwards compatibility
+        window.uiComponents.setValue('participantSelect', participantId);
+        
+        // Call the original select participant method
+        this.selectParticipant();
+    }
+
     // Select participant for actions
     selectParticipant() {
-        this.selectedParticipantId = window.uiComponents.getValue('participantSelect');
+        // If not set by the new method, get from dropdown (backwards compatibility)
+        if (!this.selectedParticipantId) {
+            this.selectedParticipantId = window.uiComponents.getValue('participantSelect');
+        }
+        
         const selectedName = this.selectedParticipantId ? this.allParticipants[this.selectedParticipantId]?.name : '';
         
         console.log('Selected participant:', this.selectedParticipantId, selectedName);
@@ -213,6 +227,9 @@ class MeetupApp {
             // Reset calendar
             window.calendar.updateSelectedParticipant(null);
         }
+        
+        // Refresh participants display to show selection
+        this.updateParticipantsUI(this.allParticipants);
         
         // Refresh proposals display
         this.refreshProposalsDisplay();
@@ -641,11 +658,11 @@ class MeetupApp {
         const count = Object.keys(participants).length;
         window.uiComponents.updateText('participantCount', count.toString());
         
-        // Update participants list
-        const participantsList = window.uiComponents.renderParticipantsList(participants);
+        // Update participants list with clickable cards
+        const participantsList = window.uiComponents.renderParticipantsList(participants, this.selectedParticipantId);
         window.uiComponents.updateHTML('participantsList', participantsList);
 
-        // Update participant select dropdown
+        // Update participant select dropdown (hidden, for backwards compatibility)
         const participantOptions = window.uiComponents.renderParticipantOptions(participants);
         window.uiComponents.updateHTML('participantSelect', participantOptions);
 
