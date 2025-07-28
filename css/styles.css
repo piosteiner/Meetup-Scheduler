@@ -70,6 +70,81 @@ body {
     background: var(--text-secondary);
 }
 
+/* Calendar Styles */
+.calendar-day {
+    aspect-ratio: 1;
+    min-height: 32px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    border: 2px solid transparent;
+    position: relative;
+}
+
+.calendar-day:hover {
+    transform: scale(1.05);
+    border-color: var(--primary-color);
+    z-index: 10;
+}
+
+.calendar-day.available {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.calendar-day.checking {
+    background-color: var(--warning-color);
+    color: white;
+}
+
+.calendar-day.unavailable {
+    background-color: var(--error-color);
+    color: white;
+}
+
+.calendar-day.neutral {
+    background-color: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+.calendar-day.other-month {
+    opacity: 0.3;
+    cursor: default;
+}
+
+.calendar-day.other-month:hover {
+    transform: none;
+    border-color: transparent;
+}
+
+.calendar-day.today {
+    border: 2px solid var(--primary-color) !important;
+    font-weight: bold;
+    box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.2);
+}
+
+.calendar-day.has-comment::after {
+    content: '💬';
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    font-size: 10px;
+    z-index: 5;
+}
+
+/* Calendar responsive adjustments */
+@media (max-width: 640px) {
+    .calendar-day {
+        min-height: 28px;
+        font-size: 0.75rem;
+    }
+    
+    .calendar-day.has-comment::after {
+        font-size: 8px;
+        top: 1px;
+        right: 1px;
+    }
+}
+
 /* Button Styles */
 .btn-primary {
     background: var(--primary-color);
@@ -204,7 +279,7 @@ body {
     margin-bottom: 1rem;
 }
 
-/* NEW: Description Styles */
+/* Description Styles */
 .description-display {
     cursor: pointer;
     transition: background-color var(--transition-fast);
@@ -309,15 +384,13 @@ body {
     gap: 1rem;
 }
 
-/* IMPROVED: Messages Container - removed fixed height for auto-expanding */
+/* Messages Container - removed fixed height for auto-expanding */
 .messages-container {
     background: var(--bg-primary);
     border-radius: var(--border-radius-lg);
     padding: 0.75rem;
     border: 1px solid var(--border-color);
     margin-bottom: 1rem;
-    /* Removed: max-height: 12rem; */
-    /* Removed: overflow-y: auto; */
     min-height: 6rem;
 }
 
@@ -531,5 +604,11 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
     .section-card {
         box-shadow: none !important;
         border: 1px solid #ccc !important;
+    }
+    
+    /* Hide calendar in print */
+    .calendar-day,
+    #dayModal {
+        display: none !important;
     }
 }

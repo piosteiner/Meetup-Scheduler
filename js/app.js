@@ -99,7 +99,7 @@ class MeetupApp {
             await window.firebaseAPI.createMeetup(newKey, { 
                 duration: this.meetingDuration,
                 name: 'Untitled Meetup',
-                description: '' // NEW: Initialize with empty description
+                description: '' // Initialize with empty description
             });
             
             window.uiComponents.updateText('generatedKey', newKey);
@@ -200,12 +200,18 @@ class MeetupApp {
             
             // Show propose form
             window.uiComponents.show('proposeForm');
+            
+            // Update calendar for selected participant
+            window.calendar.updateSelectedParticipant(this.selectedParticipantId);
         } else {
             // Hide forms when no participant selected
             window.uiComponents.hide('currentSelection');
             window.uiComponents.hide('messageForm');
             window.uiComponents.hide('messageAsParticipant');
             window.uiComponents.show('noParticipantMessage');
+            
+            // Reset calendar
+            window.calendar.updateSelectedParticipant(null);
         }
         
         // Refresh proposals display
@@ -277,7 +283,7 @@ class MeetupApp {
         }
     }
 
-    // NEW: Description management functions
+    // Description management functions
     editDescription() {
         const display = document.getElementById('descriptionDisplay');
         const edit = document.getElementById('descriptionEdit');
@@ -495,6 +501,9 @@ class MeetupApp {
         // Clean up listeners
         this.cleanupListeners();
         
+        // Reset calendar
+        window.calendar.reset();
+        
         // Reset state
         this.currentMeetupKey = '';
         this.currentParticipantId = null;
@@ -541,6 +550,9 @@ class MeetupApp {
         try {
             window.uiComponents.updateText('currentMeetupKey', this.currentMeetupKey);
             
+            // Initialize calendar for this meetup
+            window.calendar.init(this.currentMeetupKey, this.selectedParticipantId);
+            
             // Set up listeners (they will load initial data)
             this.setupMeetupListeners();
             
@@ -555,7 +567,7 @@ class MeetupApp {
         // Clean up existing listeners first
         this.cleanupListeners();
 
-        // NEW: Real-time title listener
+        // Real-time title listener
         const titleListener = window.firebaseAPI.database.ref('meetups/' + this.currentMeetupKey + '/name').on('value', (snapshot) => {
             const title = snapshot.val();
             if (title) {
@@ -566,7 +578,7 @@ class MeetupApp {
         });
         this.listeners.set('title', titleListener);
 
-        // NEW: Real-time duration listener
+        // Real-time duration listener
         const durationListener = window.firebaseAPI.database.ref('meetups/' + this.currentMeetupKey + '/duration').on('value', (snapshot) => {
             const duration = snapshot.val();
             if (duration) {
@@ -576,7 +588,7 @@ class MeetupApp {
         });
         this.listeners.set('duration', durationListener);
 
-        // NEW: Real-time description listener
+        // Real-time description listener
         const descriptionListener = window.firebaseAPI.database.ref('meetups/' + this.currentMeetupKey + '/description').on('value', (snapshot) => {
             const description = snapshot.val() || '';
             window.uiComponents.updateDescriptionDisplay(description);
@@ -593,7 +605,7 @@ class MeetupApp {
         });
         this.listeners.set('participants', participantsListener);
 
-        // IMPROVED: Messages listener - newest first and auto-expanding
+        // Messages listener - newest first and auto-expanding
         const messagesListener = window.firebaseAPI.onMessagesChange(this.currentMeetupKey, (messages) => {
             this.currentMessages = messages;
             this.renderMessages(messages);
@@ -615,7 +627,7 @@ class MeetupApp {
         this.listeners.set('deletedProposals', deletedProposalsListener);
     }
 
-    // IMPROVED: Separate function to render messages with better name handling
+    // Separate function to render messages with better name handling
     renderMessages(messages) {
         const messageArray = Object.entries(messages)
             .sort((a, b) => (b[1].timestamp || 0) - (a[1].timestamp || 0)); // Newest first
