@@ -204,6 +204,25 @@ body {
     margin-bottom: 1rem;
 }
 
+/* NEW: Description Styles */
+.description-display {
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+    min-height: 4rem;
+    display: flex;
+    align-items: center;
+}
+
+.description-display:hover {
+    background-color: #f8fafc !important;
+}
+
+.description-editing {
+    resize: vertical;
+    min-height: 60px;
+    font-family: inherit;
+}
+
 /* Divider */
 .divider {
     position: relative;
@@ -290,15 +309,15 @@ body {
     gap: 1rem;
 }
 
-/* Messages Container */
+/* IMPROVED: Messages Container - removed fixed height for auto-expanding */
 .messages-container {
     background: var(--bg-primary);
     border-radius: var(--border-radius-lg);
     padding: 0.75rem;
     border: 1px solid var(--border-color);
     margin-bottom: 1rem;
-    max-height: 12rem;
-    overflow-y: auto;
+    /* Removed: max-height: 12rem; */
+    /* Removed: overflow-y: auto; */
     min-height: 6rem;
 }
 

@@ -72,6 +72,22 @@ class UIComponents {
         element.innerHTML = originalContent;
     }
 
+    // NEW: Update description display
+    updateDescriptionDisplay(description) {
+        const textElement = document.getElementById('descriptionText');
+        if (textElement) {
+            if (description && description.trim()) {
+                textElement.textContent = description;
+                textElement.classList.remove('italic', 'text-gray-600');
+                textElement.classList.add('text-gray-900');
+            } else {
+                textElement.textContent = 'Click here to add a description for this meetup...';
+                textElement.classList.add('italic', 'text-gray-600');
+                textElement.classList.remove('text-gray-900');
+            }
+        }
+    }
+
     // Render participant card
     renderParticipantCard(participant) {
         return `<div class="bg-white p-2 rounded-lg shadow-sm text-center text-sm">${participant.name}</div>`;
@@ -245,14 +261,22 @@ class UIComponents {
         `;
     }
 
-    // Render message
+    // IMPROVED: Render message with better name handling
     renderMessage(messageId, message, allParticipants) {
-        const senderName = allParticipants[message.participantId]?.name || 'Unknown';
+        // More robust name lookup
+        let senderName = 'Unknown';
+        if (message.participantId && allParticipants[message.participantId]) {
+            senderName = allParticipants[message.participantId].name;
+        } else if (message.participantId) {
+            // If we don't have the participant in our current list, show the ID with a note
+            senderName = `User ${message.participantId.slice(-4)} (left?)`;
+        }
+        
         const timestamp = message.timestamp ? new Date(message.timestamp).toLocaleString() : '';
         return `
-            <div class="bg-white p-3 rounded-lg shadow-sm">
+            <div class="bg-gray-50 p-3 rounded-lg border-l-4 border-indigo-500">
                 <div class="flex items-center justify-between mb-1">
-                    <div class="font-semibold text-sm text-gray-600">${senderName}</div>
+                    <div class="font-semibold text-sm text-indigo-600">${senderName}</div>
                     <div class="text-xs text-gray-400">${timestamp}</div>
                 </div>
                 <div class="text-gray-900">${this.escapeHtml(message.message)}</div>
@@ -260,10 +284,8 @@ class UIComponents {
         `;
     }
 
-    // Render messages list
-    renderMessagesList(messages, allParticipants) {
-        const messageArray = Object.entries(messages).sort((a, b) => (a[1].timestamp || 0) - (b[1].timestamp || 0));
-        
+    // IMPROVED: Render messages list with better handling for newest-first
+    renderMessagesList(messageArray, allParticipants) {
         if (messageArray.length === 0) {
             return '<p class="text-gray-500 text-center text-sm">No messages yet</p>';
         }

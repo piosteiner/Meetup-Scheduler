@@ -59,6 +59,8 @@ class FirebaseAPI {
         try {
             await this.database.ref('meetups/' + key).set({
                 title: `Meetup ${key}`,
+                name: meetupData.name || 'Untitled Meetup', // NEW: Use 'name' field for consistency
+                description: meetupData.description || '', // NEW: Description field
                 created: firebase.database.ServerValue.TIMESTAMP,
                 duration: meetupData.duration || 60,
                 participants: {},
@@ -88,6 +90,16 @@ class FirebaseAPI {
             await this.database.ref('meetups/' + key + '/name').set(name);
         } catch (error) {
             console.error('Error updating meetup name:', error);
+            throw error;
+        }
+    }
+
+    // NEW: Update meetup description
+    async updateMeetupDescription(key, description) {
+        try {
+            await this.database.ref('meetups/' + key + '/description').set(description);
+        } catch (error) {
+            console.error('Error updating meetup description:', error);
             throw error;
         }
     }

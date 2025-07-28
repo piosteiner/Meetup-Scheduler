@@ -9,6 +9,7 @@ class MeetupApp {
         this.meetingDuration = window.MeetupConfig.app.defaultMeetingDuration;
         this.listeners = new Map(); // Track Firebase listeners for cleanup
         this.currentProposals = {}; // Store current proposals for deleted proposals listener
+        this.currentMessages = {}; // Store current messages for re-rendering
     }
 
     // Initialize the application
@@ -63,7 +64,7 @@ class MeetupApp {
         
         // Make datetime input fully clickable
         document.getElementById('dateTimeInput')?.addEventListener('click', (e) => {
-        e.target.showPicker?.();
+            e.target.showPicker?.();
         });
     }
 
@@ -97,7 +98,8 @@ class MeetupApp {
             
             await window.firebaseAPI.createMeetup(newKey, { 
                 duration: this.meetingDuration,
-                name: 'Untitled Meetup'
+                name: 'Untitled Meetup',
+                description: '' // NEW: Initialize with empty description
             });
             
             window.uiComponents.updateText('generatedKey', newKey);
@@ -265,15 +267,65 @@ class MeetupApp {
             
             await window.firebaseAPI.updateMeetupName(this.currentMeetupKey, trimmedName);
             
-            // Update UI immediately
-            document.getElementById('meetupTitle').textContent = trimmedName;
-            
+            // Note: UI will be updated automatically by the real-time listener
             window.uiComponents.showNotification('Meetup name updated!', 'success');
             console.log('✅ Meetup name updated:', trimmedName);
             
         } catch (error) {
             console.error('❌ Error updating meetup name:', error);
             window.uiComponents.showNotification('Error updating meetup name: ' + error.message, 'error');
+        }
+    }
+
+    // NEW: Description management functions
+    editDescription() {
+        const display = document.getElementById('descriptionDisplay');
+        const edit = document.getElementById('descriptionEdit');
+        const input = document.getElementById('descriptionInput');
+        const currentText = document.getElementById('descriptionText').textContent;
+        
+        // Don't edit the placeholder text
+        if (currentText !== 'Click here to add a description for this meetup...') {
+            input.value = currentText;
+        } else {
+            input.value = '';
+        }
+        
+        display.classList.add('hidden');
+        edit.classList.remove('hidden');
+        input.focus();
+    }
+
+    async saveDescription() {
+        try {
+            const input = document.getElementById('descriptionInput');
+            const description = input.value.trim();
+            
+            if (!this.currentMeetupKey) {
+                window.uiComponents.showNotification('No meetup selected', 'error');
+                return;
+            }
+            
+            await window.firebaseAPI.updateMeetupDescription(this.currentMeetupKey, description);
+            
+            this.cancelDescriptionEdit();
+            window.uiComponents.showNotification('Description updated!', 'success');
+        } catch (error) {
+            console.error('Error updating description:', error);
+            window.uiComponents.showNotification('Failed to update description', 'error');
+        }
+    }
+
+    cancelDescriptionEdit() {
+        document.getElementById('descriptionDisplay').classList.remove('hidden');
+        document.getElementById('descriptionEdit').classList.add('hidden');
+    }
+
+    handleDescriptionKeydown(event) {
+        if (event.ctrlKey && event.key === 'Enter') {
+            this.saveDescription();
+        } else if (event.key === 'Escape') {
+            this.cancelDescriptionEdit();
         }
     }
 
@@ -449,6 +501,7 @@ class MeetupApp {
         this.selectedParticipantId = null;
         this.allParticipants = {};
         this.meetingDuration = window.MeetupConfig.app.defaultMeetingDuration;
+        this.currentMessages = {};
         
         // Clear URL
         window.Utils.clearUrl();
@@ -470,8 +523,9 @@ class MeetupApp {
         window.uiComponents.show('joinForm');
         window.uiComponents.hide('proposeForm');
         
-        // Reset meetup title
+        // Reset meetup title and description
         document.getElementById('meetupTitle').textContent = 'Untitled Meetup';
+        window.uiComponents.updateDescriptionDisplay('');
         
         // Clear form values
         window.uiComponents.setValue('keyInput', '');
@@ -487,19 +541,7 @@ class MeetupApp {
         try {
             window.uiComponents.updateText('currentMeetupKey', this.currentMeetupKey);
             
-            // Load meetup settings
-            const meetupData = await window.firebaseAPI.getMeetup(this.currentMeetupKey);
-            if (meetupData) {
-                if (meetupData.duration) {
-                    this.meetingDuration = meetupData.duration;
-                    window.uiComponents.setValue('durationSelect', this.meetingDuration.toString());
-                }
-                if (meetupData.name) {
-                    document.getElementById('meetupTitle').textContent = meetupData.name;
-                }
-            }
-            
-            // Set up listeners
+            // Set up listeners (they will load initial data)
             this.setupMeetupListeners();
             
         } catch (error) {
@@ -513,16 +555,48 @@ class MeetupApp {
         // Clean up existing listeners first
         this.cleanupListeners();
 
+        // NEW: Real-time title listener
+        const titleListener = window.firebaseAPI.database.ref('meetups/' + this.currentMeetupKey + '/name').on('value', (snapshot) => {
+            const title = snapshot.val();
+            if (title) {
+                document.getElementById('meetupTitle').textContent = title;
+            } else {
+                document.getElementById('meetupTitle').textContent = 'Untitled Meetup';
+            }
+        });
+        this.listeners.set('title', titleListener);
+
+        // NEW: Real-time duration listener
+        const durationListener = window.firebaseAPI.database.ref('meetups/' + this.currentMeetupKey + '/duration').on('value', (snapshot) => {
+            const duration = snapshot.val();
+            if (duration) {
+                this.meetingDuration = duration;
+                window.uiComponents.setValue('durationSelect', duration.toString());
+            }
+        });
+        this.listeners.set('duration', durationListener);
+
+        // NEW: Real-time description listener
+        const descriptionListener = window.firebaseAPI.database.ref('meetups/' + this.currentMeetupKey + '/description').on('value', (snapshot) => {
+            const description = snapshot.val() || '';
+            window.uiComponents.updateDescriptionDisplay(description);
+        });
+        this.listeners.set('description', descriptionListener);
+
         // Participants listener
         const participantsListener = window.firebaseAPI.onParticipantsChange(this.currentMeetupKey, (participants) => {
             this.allParticipants = participants;
             this.updateParticipantsUI(participants);
+            
+            // Re-render messages when participants update (fixes name association)
+            this.renderMessages(this.currentMessages);
         });
         this.listeners.set('participants', participantsListener);
 
-        // Messages listener
+        // IMPROVED: Messages listener - newest first and auto-expanding
         const messagesListener = window.firebaseAPI.onMessagesChange(this.currentMeetupKey, (messages) => {
-            this.updateMessagesUI(messages);
+            this.currentMessages = messages;
+            this.renderMessages(messages);
         });
         this.listeners.set('messages', messagesListener);
 
@@ -539,6 +613,15 @@ class MeetupApp {
             this.updateProposalsUI(this.currentProposals || {}, deletedProposals);
         });
         this.listeners.set('deletedProposals', deletedProposalsListener);
+    }
+
+    // IMPROVED: Separate function to render messages with better name handling
+    renderMessages(messages) {
+        const messageArray = Object.entries(messages)
+            .sort((a, b) => (b[1].timestamp || 0) - (a[1].timestamp || 0)); // Newest first
+        
+        const messagesList = window.uiComponents.renderMessagesList(messageArray, this.allParticipants);
+        window.uiComponents.updateHTML('messagesList', messagesList);
     }
 
     // Update participants UI
@@ -558,15 +641,6 @@ class MeetupApp {
         if (count > 0) {
             window.uiComponents.show('proposeForm');
         }
-    }
-
-    // Update messages UI
-    updateMessagesUI(messages) {
-        const messagesList = window.uiComponents.renderMessagesList(messages, this.allParticipants);
-        window.uiComponents.updateHTML('messagesList', messagesList);
-        
-        // Auto-scroll to bottom
-        window.uiComponents.scrollToBottom('messagesList');
     }
 
     // Update proposals UI
@@ -599,6 +673,20 @@ class MeetupApp {
     // Clean up Firebase listeners
     cleanupListeners() {
         if (this.currentMeetupKey) {
+            // Clean up individual listeners
+            this.listeners.forEach((listener, key) => {
+                if (key === 'title') {
+                    window.firebaseAPI.database.ref('meetups/' + this.currentMeetupKey + '/name').off('value', listener);
+                } else if (key === 'duration') {
+                    window.firebaseAPI.database.ref('meetups/' + this.currentMeetupKey + '/duration').off('value', listener);
+                } else if (key === 'description') {
+                    window.firebaseAPI.database.ref('meetups/' + this.currentMeetupKey + '/description').off('value', listener);
+                } else if (key === 'deletedProposals') {
+                    window.firebaseAPI.database.ref('meetups/' + this.currentMeetupKey + '/deletedProposals').off('value', listener);
+                }
+            });
+            
+            // Clean up main meetup listeners
             window.firebaseAPI.cleanupMeetupListeners(this.currentMeetupKey);
         }
         this.listeners.clear();
