@@ -3,18 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Piogino Meetup</title>
-    
-    <!-- External Dependencies -->
+    <title>Piogino Meetup - Improved</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
-    
-    <!-- Custom Styles -->
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/responsive.css">
-    <link rel="stylesheet" href="css/themes.css">
-    <link rel="stylesheet" href="css/animations.css">
+    <style>
+        /* Custom scrollbar for better UX */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        
+        /* Editable description styles */
+        .description-display {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .description-display:hover {
+            background-color: #f8fafc;
+        }
+        .description-editing {
+            resize: vertical;
+            min-height: 60px;
+        }
+    </style>
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
     <div id="app" class="flex items-center justify-center min-h-screen p-4">
@@ -90,9 +112,32 @@
         <!-- Meetup Screen -->
         <div id="meetupScreen" class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-6xl hidden">
             <div class="text-center mb-8">
-                <h1 id="meetupTitle" class="text-3xl font-bold text-gray-900 mb-1 cursor-pointer hover:text-indigo-600 transition-colors" onclick="window.app.editMeetupName()" title="Click to edit meetup name">Untitled Meetup</h1>
+                <h1 id="meetupTitle" class="text-3xl font-bold text-gray-900 mb-1 cursor-pointer hover:text-indigo-600 transition-colors" onclick="editMeetupName()" title="Click to edit meetup name">Untitled Meetup</h1>
                 <p class="text-lg text-gray-700 mb-2">Key: <span id="currentMeetupKey" class="font-mono"></span></p>
                 <p class="text-gray-600">Participants: <span id="participantCount">0</span></p>
+            </div>
+
+            <!-- NEW: Meetup Description Section -->
+            <div class="bg-gray-50 rounded-xl p-6 mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Description</h3>
+                
+                <div id="descriptionDisplay" class="description-display p-3 rounded-lg border border-gray-200 bg-white min-h-16 cursor-pointer" onclick="editDescription()" title="Click to edit description">
+                    <span id="descriptionText" class="text-gray-600 italic">Click here to add a description for this meetup...</span>
+                </div>
+                
+                <div id="descriptionEdit" class="hidden">
+                    <textarea id="descriptionInput" placeholder="Describe your meetup..." 
+                             class="description-editing w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
+                             onkeydown="handleDescriptionKeydown(event)"></textarea>
+                    <div class="flex gap-2 mt-2">
+                        <button onclick="saveDescription()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 text-sm">
+                            Save
+                        </button>
+                        <button onclick="cancelDescriptionEdit()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 text-sm">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <div class="space-y-6">
@@ -166,15 +211,11 @@
                     </div>
                 </div>
 
-                <!-- Messages Section -->
+                <!-- IMPROVED: Messages Section -->
                 <div class="bg-gray-50 rounded-xl p-6">
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">Messages</h3>
                     
-                    <div id="messagesList" class="space-y-3 mb-4 max-h-48 overflow-y-auto bg-white rounded-lg p-3 border">
-                        <p class="text-gray-500 text-center text-sm">No messages yet</p>
-                    </div>
-
-                    <div id="messageForm" class="hidden">
+                    <div id="messageForm" class="hidden mb-4">
                         <div id="messageAsParticipant" class="mb-2 text-sm text-gray-600 hidden">
                             Sending as: <span id="messageParticipantName" class="font-semibold"></span>
                         </div>
@@ -186,6 +227,11 @@
                                 Send Message
                             </button>
                         </div>
+                    </div>
+                    
+                    <!-- CHANGED: Removed fixed height and scrolling, messages now expand naturally -->
+                    <div id="messagesList" class="space-y-3 bg-white rounded-lg p-3 border">
+                        <p class="text-gray-500 text-center text-sm">No messages yet</p>
                     </div>
 
                     <div id="noParticipantMessage" class="text-center text-gray-500 text-sm py-4">
@@ -202,11 +248,575 @@
         </div>
     </div>
 
-    <!-- JavaScript Files -->
-    <script src="js/config.js"></script>
-    <script src="js/utils.js"></script>
-    <script src="js/api.js"></script>
-    <script src="js/components.js"></script>
-    <script src="js/app.js"></script>
+    <script>
+        // Firebase configuration (you'll need to replace with your actual config)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBeaBtfeqhiDA5GrYwZBNwtN4J8l5yszCk",
+            authDomain: "meetup-app-9f1ff.firebaseapp.com",
+            databaseURL: "https://meetup-app-9f1ff-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "meetup-app-9f1ff",
+            storageBucket: "meetup-app-9f1ff.firebasestorage.app",
+            messagingSenderId: "1093344835630",
+            appId: "1:1093344835630:web:fbb75663598de6747147bf"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // App state
+        let currentMeetupKey = '';
+        let selectedParticipantId = null;
+        let allParticipants = {};
+
+        // Utility functions
+        function generateMeetupKey(length = 8) {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let result = '';
+            for (let i = 0; i < length; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+
+        function formatDate(date) {
+            return new Date(date).toLocaleDateString('en-DE', {
+                weekday: 'short',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+
+        function formatTime(date) {
+            return new Date(date).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
+        }
+
+        function showNotification(message, type = 'info') {
+            // Simple notification system
+            const notification = document.createElement('div');
+            const colors = {
+                success: 'bg-green-500 text-white',
+                error: 'bg-red-500 text-white',
+                warning: 'bg-yellow-500 text-white',
+                info: 'bg-blue-500 text-white'
+            };
+            
+            notification.className = `fixed top-4 right-4 ${colors[type]} px-4 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // Screen navigation
+        function showScreen(screenId) {
+            ['homeScreen', 'createdScreen', 'meetupScreen'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        // NEW: Description functions
+        function editDescription() {
+            const display = document.getElementById('descriptionDisplay');
+            const edit = document.getElementById('descriptionEdit');
+            const input = document.getElementById('descriptionInput');
+            const currentText = document.getElementById('descriptionText').textContent;
+            
+            // Don't edit the placeholder text
+            if (currentText !== 'Click here to add a description for this meetup...') {
+                input.value = currentText;
+            } else {
+                input.value = '';
+            }
+            
+            display.classList.add('hidden');
+            edit.classList.remove('hidden');
+            input.focus();
+        }
+
+        function saveDescription() {
+            const input = document.getElementById('descriptionInput');
+            const description = input.value.trim();
+            
+            if (!currentMeetupKey) {
+                showNotification('No meetup selected', 'error');
+                return;
+            }
+            
+            database.ref('meetups/' + currentMeetupKey + '/description').set(description)
+                .then(() => {
+                    updateDescriptionDisplay(description);
+                    cancelDescriptionEdit();
+                    showNotification('Description updated!', 'success');
+                })
+                .catch(error => {
+                    console.error('Error updating description:', error);
+                    showNotification('Failed to update description', 'error');
+                });
+        }
+
+        function cancelDescriptionEdit() {
+            document.getElementById('descriptionDisplay').classList.remove('hidden');
+            document.getElementById('descriptionEdit').classList.add('hidden');
+        }
+
+        function handleDescriptionKeydown(event) {
+            if (event.ctrlKey && event.key === 'Enter') {
+                saveDescription();
+            } else if (event.key === 'Escape') {
+                cancelDescriptionEdit();
+            }
+        }
+
+        function updateDescriptionDisplay(description) {
+            const textElement = document.getElementById('descriptionText');
+            if (description && description.trim()) {
+                textElement.textContent = description;
+                textElement.classList.remove('italic', 'text-gray-600');
+                textElement.classList.add('text-gray-900');
+            } else {
+                textElement.textContent = 'Click here to add a description for this meetup...';
+                textElement.classList.add('italic', 'text-gray-600');
+                textElement.classList.remove('text-gray-900');
+            }
+        }
+
+        // Meetup functions
+        function createMeetup() {
+            const newKey = generateMeetupKey();
+            currentMeetupKey = newKey;
+            
+            database.ref('meetups/' + newKey).set({
+                title: 'Untitled Meetup',
+                description: '',
+                created: firebase.database.ServerValue.TIMESTAMP,
+                duration: 60,
+                participants: {},
+                messages: {},
+                proposals: {}
+            }).then(() => {
+                document.getElementById('generatedKey').textContent = newKey;
+                showScreen('createdScreen');
+                showNotification('Meetup created successfully!', 'success');
+            }).catch(error => {
+                showNotification('Error creating meetup', 'error');
+            });
+        }
+
+        function joinMeetup() {
+            const key = document.getElementById('keyInput').value.trim().toUpperCase();
+            if (!key) {
+                showNotification('Please enter a meetup key', 'warning');
+                return;
+            }
+
+            database.ref('meetups/' + key).once('value').then(snapshot => {
+                if (snapshot.exists()) {
+                    currentMeetupKey = key;
+                    showScreen('meetupScreen');
+                    loadMeetupData();
+                    showNotification('Joined meetup successfully!', 'success');
+                } else {
+                    showNotification('Meetup not found', 'error');
+                }
+            });
+        }
+
+        function joinAsMember() {
+            const name = document.getElementById('nameInput').value.trim();
+            if (!name) {
+                showNotification('Please enter your name', 'warning');
+                return;
+            }
+
+            const participantId = Date.now().toString();
+            database.ref('meetups/' + currentMeetupKey + '/participants/' + participantId).set({
+                name: name,
+                joined: firebase.database.ServerValue.TIMESTAMP
+            }).then(() => {
+                document.getElementById('nameInput').value = '';
+                showNotification(`Welcome, ${name}!`, 'success');
+                
+                // Auto-select the new participant
+                setTimeout(() => {
+                    document.getElementById('participantSelect').value = participantId;
+                    selectParticipant();
+                }, 500);
+            });
+        }
+
+        function selectParticipant() {
+            selectedParticipantId = document.getElementById('participantSelect').value;
+            const selectedName = selectedParticipantId ? allParticipants[selectedParticipantId]?.name : '';
+            
+            if (selectedParticipantId && selectedName) {
+                document.getElementById('currentSelection').classList.remove('hidden');
+                document.getElementById('selectedParticipantName').textContent = selectedName;
+                document.getElementById('messageForm').classList.remove('hidden');
+                document.getElementById('messageAsParticipant').classList.remove('hidden');
+                document.getElementById('messageParticipantName').textContent = selectedName;
+                document.getElementById('noParticipantMessage').classList.add('hidden');
+                document.getElementById('proposeForm').classList.remove('hidden');
+            } else {
+                document.getElementById('currentSelection').classList.add('hidden');
+                document.getElementById('messageForm').classList.add('hidden');
+                document.getElementById('messageAsParticipant').classList.add('hidden');
+                document.getElementById('noParticipantMessage').classList.remove('hidden');
+            }
+        }
+
+        function sendMessage() {
+            const message = document.getElementById('messageInput').value.trim();
+            if (!message || !selectedParticipantId) {
+                showNotification('Please enter a message and select a participant', 'warning');
+                return;
+            }
+
+            const messageId = Date.now().toString();
+            database.ref('meetups/' + currentMeetupKey + '/messages/' + messageId).set({
+                participantId: selectedParticipantId,
+                message: message,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            }).then(() => {
+                document.getElementById('messageInput').value = '';
+                showNotification('Message sent!', 'success');
+            });
+        }
+
+        function proposeDateTime() {
+            const dateTime = document.getElementById('dateTimeInput').value;
+            if (!dateTime || !selectedParticipantId) {
+                showNotification('Please select a date/time and participant', 'warning');
+                return;
+            }
+
+            const proposalId = Date.now().toString();
+            database.ref('meetups/' + currentMeetupKey + '/proposals/' + proposalId).set({
+                participantId: selectedParticipantId,
+                dateTime: dateTime,
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                responses: {}
+            }).then(() => {
+                document.getElementById('dateTimeInput').value = '';
+                showNotification('Date proposed successfully!', 'success');
+            });
+        }
+
+        function updateDuration() {
+            const duration = parseInt(document.getElementById('durationSelect').value);
+            if (duration < 15) {
+                showNotification('Duration must be at least 15 minutes', 'warning');
+                return;
+            }
+            
+            database.ref('meetups/' + currentMeetupKey + '/duration').set(duration);
+        }
+
+        function editMeetupName() {
+            const currentName = document.getElementById('meetupTitle').textContent;
+            const newName = prompt('Enter meetup name:', currentName);
+            
+            if (newName && newName.trim() && newName.trim() !== currentName) {
+                database.ref('meetups/' + currentMeetupKey + '/title').set(newName.trim()).then(() => {
+                    document.getElementById('meetupTitle').textContent = newName.trim();
+                    showNotification('Meetup name updated!', 'success');
+                });
+            }
+        }
+
+        function loadMeetupData() {
+            document.getElementById('currentMeetupKey').textContent = currentMeetupKey;
+            
+            // Load meetup info
+            database.ref('meetups/' + currentMeetupKey).once('value').then(snapshot => {
+                const data = snapshot.val();
+                if (data) {
+                    if (data.title) {
+                        document.getElementById('meetupTitle').textContent = data.title;
+                    }
+                    if (data.duration) {
+                        document.getElementById('durationSelect').value = data.duration;
+                    }
+                    // NEW: Load description
+                    updateDescriptionDisplay(data.description || '');
+                }
+            });
+            
+            // Set up listeners
+            setupListeners();
+        }
+
+        function setupListeners() {
+            // Participants listener
+            database.ref('meetups/' + currentMeetupKey + '/participants').on('value', snapshot => {
+                const participants = snapshot.val() || {};
+                allParticipants = participants;
+                
+                const count = Object.keys(participants).length;
+                document.getElementById('participantCount').textContent = count;
+                
+                // Update participants list
+                const participantsList = document.getElementById('participantsList');
+                if (count === 0) {
+                    participantsList.innerHTML = '<p class="text-gray-500 text-center text-sm col-span-full">No participants yet</p>';
+                } else {
+                    participantsList.innerHTML = Object.entries(participants)
+                        .map(([id, participant]) => `<div class="bg-white p-2 rounded-lg shadow-sm text-center text-sm">${participant.name}</div>`)
+                        .join('');
+                }
+                
+                // Update participant select dropdown
+                const participantSelect = document.getElementById('participantSelect');
+                participantSelect.innerHTML = '<option value="">Choose participant...</option>' + 
+                    Object.entries(participants)
+                        .map(([id, participant]) => `<option value="${id}">${participant.name}</option>`)
+                        .join('');
+                
+                if (count > 0) {
+                    document.getElementById('proposeForm').classList.remove('hidden');
+                }
+            });
+
+            // IMPROVED: Messages listener - newest first and auto-expanding
+            database.ref('meetups/' + currentMeetupKey + '/messages').on('value', snapshot => {
+                const messages = snapshot.val() || {};
+                const messageArray = Object.entries(messages)
+                    .sort((a, b) => (b[1].timestamp || 0) - (a[1].timestamp || 0)); // CHANGED: Newest first
+                
+                const messagesList = document.getElementById('messagesList');
+                if (messageArray.length === 0) {
+                    messagesList.innerHTML = '<p class="text-gray-500 text-center text-sm">No messages yet</p>';
+                } else {
+                    messagesList.innerHTML = messageArray
+                        .map(([id, message]) => {
+                            const senderName = allParticipants[message.participantId]?.name || 'Unknown';
+                            const timestamp = message.timestamp ? new Date(message.timestamp).toLocaleString() : '';
+                            return `
+                                <div class="bg-gray-50 p-3 rounded-lg border-l-4 border-indigo-500">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <div class="font-semibold text-sm text-indigo-600">${senderName}</div>
+                                        <div class="text-xs text-gray-400">${timestamp}</div>
+                                    </div>
+                                    <div class="text-gray-900">${message.message}</div>
+                                </div>
+                            `;
+                        })
+                        .join('');
+                }
+            });
+
+            // Proposals listener
+            database.ref('meetups/' + currentMeetupKey + '/proposals').on('value', snapshot => {
+                const proposals = snapshot.val() || {};
+                const proposalArray = Object.entries(proposals)
+                    .sort((a, b) => new Date(a[1].dateTime) - new Date(b[1].dateTime));
+                
+                const proposalsList = document.getElementById('proposalsList');
+                if (proposalArray.length === 0) {
+                    proposalsList.innerHTML = '<p class="text-gray-500 text-center col-span-full">No proposals yet</p>';
+                } else {
+                    proposalsList.innerHTML = proposalArray
+                        .map(([proposalId, proposal]) => renderProposalCard(proposalId, proposal))
+                        .join('');
+                }
+            });
+
+            // NEW: Description listener
+            database.ref('meetups/' + currentMeetupKey + '/description').on('value', snapshot => {
+                const description = snapshot.val() || '';
+                updateDescriptionDisplay(description);
+            });
+        }
+
+        function renderProposalCard(proposalId, proposal) {
+            const startTime = new Date(proposal.dateTime);
+            const duration = parseInt(document.getElementById('durationSelect').value) || 60;
+            const endTime = new Date(startTime.getTime() + duration * 60 * 1000);
+            
+            const formattedDate = formatDate(startTime);
+            const timeRange = `${formatTime(startTime)} - ${formatTime(endTime)}`;
+            const proposerName = allParticipants[proposal.participantId]?.name || 'Unknown';
+            
+            const responses = proposal.responses || {};
+            const availableCount = Object.values(responses).filter(r => r.response === 'available').length;
+            const maybeCount = Object.values(responses).filter(r => r.response === 'maybe').length;
+            const unavailableCount = Object.values(responses).filter(r => r.response === 'unavailable').length;
+            
+            const selectedResponse = selectedParticipantId && responses[selectedParticipantId] ? responses[selectedParticipantId].response : null;
+            const selectedParticipantName = selectedParticipantId ? allParticipants[selectedParticipantId]?.name : 'No one';
+            
+            const now = new Date();
+            const isToday = startTime.toDateString() === now.toDateString();
+            const isPast = startTime < now;
+            
+            return `
+                <div class="bg-white p-4 rounded-lg shadow-sm border ${isPast ? 'opacity-75 border-gray-300' : isToday ? 'border-indigo-300 bg-indigo-50' : 'border-gray-200'}">
+                    <div class="mb-4">
+                        <div class="font-semibold text-gray-900 text-lg ${isToday ? 'text-indigo-900' : ''}">${formattedDate}</div>
+                        <div class="font-medium text-lg ${isToday ? 'text-indigo-700' : 'text-indigo-600'}">
+                            ${timeRange}
+                        </div>
+                        <div class="text-sm text-gray-500">
+                            Duration: ${Math.floor(duration / 60)}h ${duration % 60}m
+                        </div>
+                        <div class="text-sm text-gray-600 mt-1">Proposed by ${proposerName}</div>
+                        ${isPast ? '<div class="text-xs text-red-500 mt-1">⏰ Past</div>' : ''}
+                        ${isToday ? '<div class="text-xs text-indigo-600 mt-1 font-semibold">📅 Today</div>' : ''}
+                    </div>
+                    
+                    <div class="grid grid-cols-3 gap-2 mb-4 text-sm">
+                        <div class="text-center">
+                            <span class="text-green-600 font-semibold">✓ ${availableCount}</span>
+                            <div class="text-gray-500 text-xs">available</div>
+                        </div>
+                        <div class="text-center">
+                            <span class="text-yellow-600 font-semibold">? ${maybeCount}</span>
+                            <div class="text-gray-500 text-xs">maybe</div>
+                        </div>
+                        <div class="text-center">
+                            <span class="text-red-600 font-semibold">✗ ${unavailableCount}</span>
+                            <div class="text-gray-500 text-xs">unavailable</div>
+                        </div>
+                    </div>
+                    
+                    ${selectedParticipantId ? `
+                        <div class="mb-3 p-3 bg-gray-50 rounded border">
+                            <div class="text-sm text-gray-600">
+                                <strong>${selectedParticipantName}</strong>'s status: 
+                                ${selectedResponse ? `<span class="font-semibold px-2 py-1 rounded text-xs ${getResponseBadgeClass(selectedResponse)}">${selectedResponse}</span>` : '<span class="text-gray-400">No response yet</span>'}
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2">
+                            ${renderResponseButton(proposalId, 'available', 'Available', selectedResponse)}
+                            ${renderResponseButton(proposalId, 'maybe', 'Maybe', selectedResponse)}
+                            ${renderResponseButton(proposalId, 'unavailable', 'Unavailable', selectedResponse)}
+                        </div>
+                    ` : '<p class="text-gray-500 text-sm text-center py-3 bg-gray-50 rounded">Select a participant above to set their availability</p>'}
+                    
+                    <div class="mt-3 pt-3 border-t border-gray-200">
+                        <button onclick="deleteProposal('${proposalId}', '${proposerName}')" 
+                                class="text-red-600 hover:text-red-800 text-xs font-medium transition-colors duration-200">
+                            🗑️ Delete this proposal
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderResponseButton(proposalId, responseType, label, currentResponse) {
+            const isSelected = currentResponse === responseType;
+            const baseClasses = 'py-2 px-3 text-sm rounded transition-colors duration-200';
+            const colorClasses = {
+                available: isSelected ? 'bg-green-600 text-white' : 'bg-green-100 text-green-700 hover:bg-green-200',
+                maybe: isSelected ? 'bg-yellow-600 text-white' : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200',
+                unavailable: isSelected ? 'bg-red-600 text-white' : 'bg-red-100 text-red-700 hover:bg-red-200'
+            };
+
+            return `
+                <button onclick="respondToProposal('${proposalId}', '${responseType}')" 
+                        class="${baseClasses} ${colorClasses[responseType]}">
+                    ${label}
+                </button>
+            `;
+        }
+
+        function getResponseBadgeClass(response) {
+            const classes = {
+                available: 'bg-green-100 text-green-700',
+                maybe: 'bg-yellow-100 text-yellow-700',
+                unavailable: 'bg-red-100 text-red-700'
+            };
+            return classes[response] || 'bg-gray-100 text-gray-700';
+        }
+
+        function respondToProposal(proposalId, response) {
+            if (!selectedParticipantId) {
+                showNotification('Please select a participant first', 'warning');
+                return;
+            }
+            
+            database.ref('meetups/' + currentMeetupKey + '/proposals/' + proposalId + '/responses/' + selectedParticipantId).set({
+                response: response,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            }).then(() => {
+                showNotification('Response saved!', 'success');
+            });
+        }
+
+        function deleteProposal(proposalId, proposerName) {
+            const confirmation = prompt('To delete this proposal, type DELETE in capital letters:');
+            
+            if (confirmation !== 'DELETE') {
+                if (confirmation !== null) {
+                    showNotification('Deletion cancelled. You must type "DELETE" exactly.', 'warning');
+                }
+                return;
+            }
+            
+            database.ref('meetups/' + currentMeetupKey + '/proposals/' + proposalId).remove().then(() => {
+                showNotification('Proposal deleted successfully', 'success');
+            });
+        }
+
+        function copyLink() {
+            const link = `${window.location.origin}${window.location.pathname}?key=${currentMeetupKey}`;
+            navigator.clipboard.writeText(link).then(() => {
+                showNotification('Link copied to clipboard!', 'success');
+            }).catch(() => {
+                showNotification('Failed to copy link', 'error');
+            });
+        }
+
+        function goToMeetup() {
+            showScreen('meetupScreen');
+            loadMeetupData();
+        }
+
+        function goHome() {
+            // Clean up listeners
+            if (currentMeetupKey) {
+                database.ref('meetups/' + currentMeetupKey).off();
+            }
+            
+            // Reset state
+            currentMeetupKey = '';
+            selectedParticipantId = null;
+            allParticipants = {};
+            
+            // Reset UI
+            document.getElementById('keyInput').value = '';
+            document.getElementById('nameInput').value = '';
+            document.getElementById('messageInput').value = '';
+            document.getElementById('dateTimeInput').value = '';
+            document.getElementById('participantSelect').innerHTML = '<option value="">Choose participant...</option>';
+            document.getElementById('durationSelect').value = '60';
+            document.getElementById('currentSelection').classList.add('hidden');
+            document.getElementById('messageForm').classList.add('hidden');
+            document.getElementById('noParticipantMessage').classList.remove('hidden');
+            document.getElementById('proposeForm').classList.add('hidden');
+            document.getElementById('meetupTitle').textContent = 'Untitled Meetup';
+            
+            showScreen('homeScreen');
+            showNotification('Returned to home', 'info');
+        }
+
+        // Check URL for direct meetup access
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const keyFromUrl = urlParams.get('key');
+            if (keyFromUrl) {
+                document.getElementById('keyInput').value = keyFromUrl.toUpperCase();
+                joinMeetup();
+            }
+        });
+    </script>
 </body>
 </html>
