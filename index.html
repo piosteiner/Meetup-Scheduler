@@ -535,26 +535,28 @@
         function loadMeetupData() {
             document.getElementById('currentMeetupKey').textContent = currentMeetupKey;
             
-            // Load meetup info
-            database.ref('meetups/' + currentMeetupKey).once('value').then(snapshot => {
-                const data = snapshot.val();
-                if (data) {
-                    if (data.title) {
-                        document.getElementById('meetupTitle').textContent = data.title;
-                    }
-                    if (data.duration) {
-                        document.getElementById('durationSelect').value = data.duration;
-                    }
-                    // NEW: Load description
-                    updateDescriptionDisplay(data.description || '');
-                }
-            });
-            
-            // Set up listeners
+            // Set up listeners (moved before initial load to ensure real-time updates)
             setupListeners();
         }
 
         function setupListeners() {
+            // NEW: Real-time meetup title listener
+            database.ref('meetups/' + currentMeetupKey + '/title').on('value', snapshot => {
+                const title = snapshot.val();
+                if (title) {
+                    document.getElementById('meetupTitle').textContent = title;
+                } else {
+                    document.getElementById('meetupTitle').textContent = 'Untitled Meetup';
+                }
+            });
+
+            // NEW: Real-time meetup duration listener  
+            database.ref('meetups/' + currentMeetupKey + '/duration').on('value', snapshot => {
+                const duration = snapshot.val();
+                if (duration) {
+                    document.getElementById('durationSelect').value = duration;
+                }
+            });
             // Participants listener
             database.ref('meetups/' + currentMeetupKey + '/participants').on('value', snapshot => {
                 const participants = snapshot.val() || {};
@@ -800,9 +802,12 @@
         }
 
         function goHome() {
-            // Clean up listeners
+            // Clean up listeners - now includes title and duration listeners
             if (currentMeetupKey) {
                 database.ref('meetups/' + currentMeetupKey).off();
+                database.ref('meetups/' + currentMeetupKey + '/title').off();
+                database.ref('meetups/' + currentMeetupKey + '/duration').off();
+                database.ref('meetups/' + currentMeetupKey + '/description').off();
             }
             
             // Reset state
