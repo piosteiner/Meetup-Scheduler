@@ -211,49 +211,49 @@
                     </div>
                     
                     <!-- Legend -->
-                    <div class="flex flex-wrap items-center gap-4 mb-4 text-sm">
-                        <div class="flex items-center gap-2">
-                            <div class="w-4 h-4 bg-green-500 rounded"></div>
+                    <div class="flex flex-wrap items-center gap-3 mb-3 text-xs">
+                        <div class="flex items-center gap-1">
+                            <div class="w-3 h-3 bg-green-500 rounded border border-green-600"></div>
                             <span>Available</span>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <div class="w-4 h-4 bg-yellow-500 rounded"></div>
+                        <div class="flex items-center gap-1">
+                            <div class="w-3 h-3 bg-yellow-500 rounded border border-yellow-600"></div>
                             <span>Checking</span>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <div class="w-4 h-4 bg-red-500 rounded"></div>
+                        <div class="flex items-center gap-1">
+                            <div class="w-3 h-3 bg-red-500 rounded border border-red-600"></div>
                             <span>Not Available</span>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <div class="w-4 h-4 bg-gray-300 rounded"></div>
+                        <div class="flex items-center gap-1">
+                            <div class="w-3 h-3 bg-gray-300 rounded border border-gray-400"></div>
                             <span>Not Set</span>
                         </div>
-                        <div class="text-gray-600">💬 = Has comment</div>
+                        <div class="text-gray-600 text-xs">💬 = Comment</div>
                     </div>
                     
                     <!-- Calendar Grid -->
                     <div class="bg-white rounded-lg shadow-sm overflow-hidden">
                         <!-- Days of week header -->
-                        <div class="grid grid-cols-7 bg-gray-100">
-                            <div class="p-2 text-center text-sm font-medium text-gray-600">Mon</div>
-                            <div class="p-2 text-center text-sm font-medium text-gray-600">Tue</div>
-                            <div class="p-2 text-center text-sm font-medium text-gray-600">Wed</div>
-                            <div class="p-2 text-center text-sm font-medium text-gray-600">Thu</div>
-                            <div class="p-2 text-center text-sm font-medium text-gray-600">Fri</div>
-                            <div class="p-2 text-center text-sm font-medium text-gray-600">Sat</div>
-                            <div class="p-2 text-center text-sm font-medium text-gray-600">Sun</div>
+                        <div class="grid grid-cols-7 bg-gray-50 border-b">
+                            <div class="p-1 text-center text-xs font-medium text-gray-600">Mon</div>
+                            <div class="p-1 text-center text-xs font-medium text-gray-600">Tue</div>
+                            <div class="p-1 text-center text-xs font-medium text-gray-600">Wed</div>
+                            <div class="p-1 text-center text-xs font-medium text-gray-600">Thu</div>
+                            <div class="p-1 text-center text-xs font-medium text-gray-600">Fri</div>
+                            <div class="p-1 text-center text-xs font-medium text-gray-600">Sat</div>
+                            <div class="p-1 text-center text-xs font-medium text-gray-600">Sun</div>
                         </div>
                         
                         <!-- Calendar days -->
-                        <div id="calendarGrid" class="grid grid-cols-7 gap-px bg-gray-200">
+                        <div id="calendarGrid" class="grid grid-cols-7 gap-0.5 p-1 bg-gray-100">
                             <!-- Days will be populated by JavaScript -->
                         </div>
                     </div>
                     
                     <!-- Instructions -->
-                    <div class="mt-4 text-sm text-gray-600 bg-blue-50 rounded-lg p-3">
-                        <strong>How to use:</strong> Click on any day to set your availability and add comments. 
-                        Use this overview to identify the best dates for scheduling actual meetup proposals.
+                    <div class="mt-3 text-xs text-gray-600 bg-blue-50 rounded-lg p-2">
+                        <strong>How to use:</strong> Click any day to set availability and add comments. 
+                        Use this overview to plan your meetup dates.
                     </div>
                 </div>
 

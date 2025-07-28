@@ -70,78 +70,90 @@ body {
     background: var(--text-secondary);
 }
 
-/* Calendar Styles */
+/* Calendar Styles - Compact Design */
 .calendar-day {
     aspect-ratio: 1;
-    min-height: 32px;
+    min-height: 24px;
+    max-height: 28px;
     cursor: pointer;
     transition: all var(--transition-fast);
-    border: 2px solid transparent;
+    border: 1px solid transparent;
     position: relative;
+    font-size: 0.75rem;
+    font-weight: 500;
 }
 
 .calendar-day:hover {
-    transform: scale(1.05);
-    border-color: var(--primary-color);
+    transform: scale(1.1);
+    border-color: #4f46e5;
     z-index: 10;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .calendar-day.available {
-    background-color: var(--success-color);
+    background-color: #22c55e;
     color: white;
+    border-color: #16a34a;
 }
 
 .calendar-day.checking {
-    background-color: var(--warning-color);
+    background-color: #f59e0b;
     color: white;
+    border-color: #d97706;
 }
 
 .calendar-day.unavailable {
-    background-color: var(--error-color);
+    background-color: #ef4444;
     color: white;
+    border-color: #dc2626;
 }
 
 .calendar-day.neutral {
-    background-color: var(--bg-tertiary);
-    color: var(--text-secondary);
+    background-color: #f1f5f9;
+    color: #64748b;
+    border-color: #e2e8f0;
 }
 
 .calendar-day.other-month {
-    opacity: 0.3;
+    opacity: 0.4;
     cursor: default;
+    background-color: #f8fafc;
+    color: #cbd5e1;
 }
 
 .calendar-day.other-month:hover {
     transform: none;
     border-color: transparent;
+    box-shadow: none;
 }
 
 .calendar-day.today {
-    border: 2px solid var(--primary-color) !important;
+    border: 2px solid #4f46e5 !important;
     font-weight: bold;
-    box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.2);
+    box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.3);
 }
 
 .calendar-day.has-comment::after {
     content: '💬';
     position: absolute;
-    top: 2px;
-    right: 2px;
-    font-size: 10px;
+    top: 1px;
+    right: 1px;
+    font-size: 8px;
     z-index: 5;
 }
 
 /* Calendar responsive adjustments */
 @media (max-width: 640px) {
     .calendar-day {
-        min-height: 28px;
-        font-size: 0.75rem;
+        min-height: 20px;
+        max-height: 24px;
+        font-size: 0.7rem;
     }
     
     .calendar-day.has-comment::after {
-        font-size: 8px;
-        top: 1px;
-        right: 1px;
+        font-size: 7px;
+        top: 0px;
+        right: 0px;
     }
 }
 
