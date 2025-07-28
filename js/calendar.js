@@ -144,7 +144,7 @@ class AvailabilityCalendar {
         const hasComment = dayData && dayData.comment && dayData.comment.trim();
         
         dayElement.className = `calendar-day ${availabilityClass} ${extraClass} ${hasComment ? 'has-comment' : ''} 
-                               flex items-center justify-center text-sm font-medium relative rounded-lg m-px`;
+                               flex items-center justify-center text-xs font-medium relative rounded m-0.5`;
         dayElement.textContent = day;
         dayElement.dataset.date = dateKey;
         
