@@ -92,6 +92,15 @@ class FirebaseAPI {
         }
     }
 
+    async updateMeetupDescription(key, description) {
+        try {
+            await this.database.ref('meetups/' + key + '/description').set(description);
+        } catch (error) {
+            console.error('Error updating meetup description:', error);
+            throw error;
+        }
+    }
+
     async updateMeetupDuration(key, duration) {
         try {
             await this.database.ref('meetups/' + key + '/duration').set(duration);

@@ -97,7 +97,8 @@ class MeetupApp {
             
             await window.firebaseAPI.createMeetup(newKey, { 
                 duration: this.meetingDuration,
-                name: 'Untitled Meetup'
+                name: 'Untitled Meetup',
+                description: ''
             });
             
             window.uiComponents.updateText('generatedKey', newKey);
@@ -140,6 +141,79 @@ class MeetupApp {
         } catch (error) {
             console.error('Error joining meetup:', error);
             window.uiComponents.showNotification('Error joining meetup. Please try again.', 'error');
+        }
+    }
+
+    // Edit meetup name
+    async editMeetupName() {
+        try {
+            if (!this.currentMeetupKey) {
+                window.uiComponents.showNotification('No meetup selected', 'error');
+                return;
+            }
+
+            const currentName = document.getElementById('meetupTitle').textContent;
+            const newName = prompt('Enter meetup name:', currentName);
+            
+            if (newName === null) return; // User cancelled
+            
+            const trimmedName = newName.trim();
+            if (!trimmedName) {
+                window.uiComponents.showNotification('Meetup name cannot be empty', 'warning');
+                return;
+            }
+
+            if (trimmedName === currentName) return; // No change
+            
+            await window.firebaseAPI.updateMeetupName(this.currentMeetupKey, trimmedName);
+            
+            // Update UI immediately
+            document.getElementById('meetupTitle').textContent = trimmedName;
+            
+            window.uiComponents.showNotification('Meetup name updated!', 'success');
+            console.log('✅ Meetup name updated:', trimmedName);
+            
+        } catch (error) {
+            console.error('❌ Error updating meetup name:', error);
+            window.uiComponents.showNotification('Error updating meetup name: ' + error.message, 'error');
+        }
+    }
+
+    // Edit meetup description
+    async editMeetupDescription() {
+        try {
+            if (!this.currentMeetupKey) {
+                window.uiComponents.showNotification('No meetup selected', 'error');
+                return;
+            }
+
+            const currentDescription = document.getElementById('meetupDescription').textContent;
+            const placeholder = currentDescription === 'Click to add a description...' ? '' : currentDescription;
+            
+            const newDescription = prompt('Enter meetup description:', placeholder);
+            
+            if (newDescription === null) return; // User cancelled
+            
+            const trimmedDescription = newDescription.trim();
+            
+            // Allow empty description to clear it
+            const displayDescription = trimmedDescription || 'Click to add a description...';
+            
+            if (trimmedDescription === placeholder) return; // No change
+            
+            await window.firebaseAPI.updateMeetupDescription(this.currentMeetupKey, trimmedDescription);
+            
+            // Update UI immediately
+            document.getElementById('meetupDescription').textContent = displayDescription;
+            document.getElementById('meetupDescription').classList.toggle('italic', !trimmedDescription);
+            
+            const message = trimmedDescription ? 'Description updated!' : 'Description cleared!';
+            window.uiComponents.showNotification(message, 'success');
+            console.log('✅ Meetup description updated:', trimmedDescription);
+            
+        } catch (error) {
+            console.error('❌ Error updating meetup description:', error);
+            window.uiComponents.showNotification('Error updating description: ' + error.message, 'error');
         }
     }
 
@@ -212,69 +286,48 @@ class MeetupApp {
 
     // Update meeting duration
     async updateDuration() {
-        const inputValue = parseInt(window.uiComponents.getValue('durationSelect'));
+        const hours = parseInt(document.getElementById('durationHours').value) || 0;
+        const minutes = parseInt(document.getElementById('durationMinutes').value) || 0;
         
         // Validate the input
-        if (isNaN(inputValue) || inputValue < 15) {
+        if (hours < 0 || minutes < 0) {
+            window.uiComponents.showNotification('Duration cannot be negative', 'warning');
+            return;
+        }
+        
+        if (minutes > 59) {
+            window.uiComponents.showNotification('Minutes must be between 0 and 59', 'warning');
+            document.getElementById('durationMinutes').value = Math.min(minutes, 59);
+            return;
+        }
+        
+        const totalMinutes = (hours * 60) + minutes;
+        
+        if (totalMinutes < 15) {
             window.uiComponents.showNotification('Duration must be at least 15 minutes', 'warning');
-            window.uiComponents.setValue('durationSelect', this.meetingDuration.toString());
             return;
         }
         
-        if (inputValue > 1440) { // 24 hours
-            window.uiComponents.showNotification('Duration cannot exceed 24 hours (1440 minutes)', 'warning');
-            window.uiComponents.setValue('durationSelect', this.meetingDuration.toString());
+        if (totalMinutes > 1440) { // 24 hours
+            window.uiComponents.showNotification('Duration cannot exceed 24 hours', 'warning');
             return;
         }
         
-        this.meetingDuration = inputValue;
+        this.meetingDuration = totalMinutes;
         console.log('Meeting duration updated to:', this.meetingDuration, 'minutes');
         
         if (this.currentMeetupKey) {
             try {
                 await window.firebaseAPI.updateMeetupDuration(this.currentMeetupKey, this.meetingDuration);
-                window.uiComponents.showNotification(`Duration updated to ${this.meetingDuration} minutes`, 'success');
+                const hoursText = hours > 0 ? `${hours}h ` : '';
+                const minutesText = minutes > 0 ? `${minutes}m` : '';
+                window.uiComponents.showNotification(`Duration updated to ${hoursText}${minutesText}`, 'success');
             } catch (error) {
                 console.error('Error updating duration:', error);
             }
         }
         
         this.refreshProposalsDisplay();
-    }
-
-    // Edit meetup name
-    async editMeetupName() {
-        try {
-            if (!this.currentMeetupKey) {
-                window.uiComponents.showNotification('No meetup selected', 'error');
-                return;
-            }
-
-            const currentName = document.getElementById('meetupTitle').textContent;
-            const newName = prompt('Enter meetup name:', currentName);
-            
-            if (newName === null) return; // User cancelled
-            
-            const trimmedName = newName.trim();
-            if (!trimmedName) {
-                window.uiComponents.showNotification('Meetup name cannot be empty', 'warning');
-                return;
-            }
-
-            if (trimmedName === currentName) return; // No change
-            
-            await window.firebaseAPI.updateMeetupName(this.currentMeetupKey, trimmedName);
-            
-            // Update UI immediately
-            document.getElementById('meetupTitle').textContent = trimmedName;
-            
-            window.uiComponents.showNotification('Meetup name updated!', 'success');
-            console.log('✅ Meetup name updated:', trimmedName);
-            
-        } catch (error) {
-            console.error('❌ Error updating meetup name:', error);
-            window.uiComponents.showNotification('Error updating meetup name: ' + error.message, 'error');
-        }
     }
 
     // Propose date and time
@@ -463,15 +516,23 @@ class MeetupApp {
     // Reset UI to initial state
     resetUI() {
         window.uiComponents.updateHTML('participantSelect', '<option value="">Choose participant...</option>');
-        window.uiComponents.setValue('durationSelect', window.MeetupConfig.app.defaultMeetingDuration.toString());
+        
+        // Reset duration to default hours/minutes
+        const defaultHours = Math.floor(window.MeetupConfig.app.defaultMeetingDuration / 60);
+        const defaultMinutes = window.MeetupConfig.app.defaultMeetingDuration % 60;
+        document.getElementById('durationHours').value = defaultHours;
+        document.getElementById('durationMinutes').value = defaultMinutes;
+        
         window.uiComponents.hide('currentSelection');
         window.uiComponents.hide('messageForm');
         window.uiComponents.show('noParticipantMessage');
         window.uiComponents.show('joinForm');
         window.uiComponents.hide('proposeForm');
         
-        // Reset meetup title
+        // Reset meetup title and description
         document.getElementById('meetupTitle').textContent = 'Untitled Meetup';
+        document.getElementById('meetupDescription').textContent = 'Click to add a description...';
+        document.getElementById('meetupDescription').classList.add('italic');
         
         // Clear form values
         window.uiComponents.setValue('keyInput', '');
@@ -492,10 +553,18 @@ class MeetupApp {
             if (meetupData) {
                 if (meetupData.duration) {
                     this.meetingDuration = meetupData.duration;
-                    window.uiComponents.setValue('durationSelect', this.meetingDuration.toString());
+                    const hours = Math.floor(this.meetingDuration / 60);
+                    const minutes = this.meetingDuration % 60;
+                    document.getElementById('durationHours').value = hours;
+                    document.getElementById('durationMinutes').value = minutes;
                 }
                 if (meetupData.name) {
                     document.getElementById('meetupTitle').textContent = meetupData.name;
+                }
+                if (meetupData.description !== undefined) {
+                    const displayDescription = meetupData.description || 'Click to add a description...';
+                    document.getElementById('meetupDescription').textContent = displayDescription;
+                    document.getElementById('meetupDescription').classList.toggle('italic', !meetupData.description);
                 }
             }
             
@@ -624,6 +693,7 @@ window.goToMeetup = () => window.app?.goToMeetup();
 window.goHome = () => window.app?.goHome();
 window.deleteProposal = (proposalId, proposerName) => window.app?.deleteProposal(proposalId, proposerName);
 window.editMeetupName = () => window.app?.editMeetupName();
+window.editMeetupDescription = () => window.app?.editMeetupDescription();
 
 // Initialize app when DOM is loaded
 document.addEventListener('DOMContentLoaded', async () => {
