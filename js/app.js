@@ -625,14 +625,16 @@ class MeetupApp {
 
         // Proposals listener
         const proposalsListener = window.firebaseAPI.onProposalsChange(this.currentMeetupKey, (proposals) => {
+            this.currentProposals = proposals;
             this.updateProposalsUI(proposals);
         });
         this.listeners.set('proposals', proposalsListener);
 
-        // Deleted proposals listener
+        // Deleted proposals listener - CHANGED: Always show, regardless of participant selection
         const deletedProposalsListener = window.firebaseAPI.database.ref('meetups/' + this.currentMeetupKey + '/deletedProposals').on('value', (snapshot) => {
             const deletedProposals = snapshot.val() || {};
             console.log('🗑️ Deleted proposals updated:', Object.keys(deletedProposals).length, 'deleted');
+            // Always update proposals with deleted ones visible
             this.updateProposalsUI(this.currentProposals || {}, deletedProposals);
         });
         this.listeners.set('deletedProposals', deletedProposalsListener);
@@ -669,14 +671,43 @@ class MeetupApp {
     // Update proposals UI
     updateProposalsUI(proposals, deletedProposals = {}) {
         this.currentProposals = proposals; // Store for deleted proposals listener
-        const proposalsList = window.uiComponents.renderProposalsList(
-            proposals, 
-            this.allParticipants, 
-            this.selectedParticipantId, 
-            this.meetingDuration,
-            deletedProposals
-        );
-        window.uiComponents.updateHTML('proposalsList', proposalsList);
+        
+        // Always pass the current deleted proposals to maintain visibility
+        if (!deletedProposals || Object.keys(deletedProposals).length === 0) {
+            // If no deleted proposals provided, get from stored state or fetch current ones
+            this.getCurrentDeletedProposals().then(currentDeleted => {
+                const proposalsList = window.uiComponents.renderProposalsList(
+                    proposals, 
+                    this.allParticipants, 
+                    this.selectedParticipantId, 
+                    this.meetingDuration,
+                    currentDeleted
+                );
+                window.uiComponents.updateHTML('proposalsList', proposalsList);
+            });
+        } else {
+            const proposalsList = window.uiComponents.renderProposalsList(
+                proposals, 
+                this.allParticipants, 
+                this.selectedParticipantId, 
+                this.meetingDuration,
+                deletedProposals
+            );
+            window.uiComponents.updateHTML('proposalsList', proposalsList);
+        }
+    }
+
+    // Helper method to get current deleted proposals
+    async getCurrentDeletedProposals() {
+        if (!this.currentMeetupKey) return {};
+        
+        try {
+            const snapshot = await window.firebaseAPI.database.ref('meetups/' + this.currentMeetupKey + '/deletedProposals').once('value');
+            return snapshot.val() || {};
+        } catch (error) {
+            console.error('Error fetching deleted proposals:', error);
+            return {};
+        }
     }
 
     // Refresh proposals display (for manual updates)
@@ -684,10 +715,16 @@ class MeetupApp {
         if (!this.currentMeetupKey) return;
         
         try {
-            // This will trigger the listener and update the UI
-            const snapshot = await window.firebaseAPI.database.ref('meetups/' + this.currentMeetupKey + '/proposals').once('value');
-            const proposals = snapshot.val() || {};
-            this.updateProposalsUI(proposals);
+            // Get both active and deleted proposals
+            const [proposalsSnapshot, deletedSnapshot] = await Promise.all([
+                window.firebaseAPI.database.ref('meetups/' + this.currentMeetupKey + '/proposals').once('value'),
+                window.firebaseAPI.database.ref('meetups/' + this.currentMeetupKey + '/deletedProposals').once('value')
+            ]);
+            
+            const proposals = proposalsSnapshot.val() || {};
+            const deletedProposals = deletedSnapshot.val() || {};
+            
+            this.updateProposalsUI(proposals, deletedProposals);
         } catch (error) {
             console.error('Error refreshing proposals:', error);
         }
