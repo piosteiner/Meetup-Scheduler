@@ -530,76 +530,12 @@ class EmoteEnabledUIComponents extends UIComponents {
                 this.selectedSuggestionIndex = -1; // Reset selection
                 this.activeSuggestionsInput = inputElement;
                 this.displayEmoteSuggestions(availableEmotes, inputElement);
-                
-                console.log(`📋 Showing ${availableEmotes.length} suggestions for "${partialEmote}"`);
-                
-                // Setup global keyboard handler as backup
-                this.setupGlobalKeyHandler();
             } else {
                 this.hideEmoteSuggestions();
             }
         } else {
             this.hideEmoteSuggestions();
         }
-    }
-
-    // NEW: Setup global keyboard handler as backup
-    setupGlobalKeyHandler() {
-        // Remove existing global handler if any
-        if (this.globalKeyHandler) {
-            document.removeEventListener('keydown', this.globalKeyHandler, true);
-        }
-        
-        this.globalKeyHandler = (e) => {
-            console.log(`🌍 Global key handler: ${e.key}, suggestions: ${this.currentSuggestions.length}`);
-            
-            if (this.currentSuggestions.length > 0) {
-                let shouldPrevent = false;
-                
-                switch (e.key) {
-                    case 'ArrowDown':
-                        console.log('🌍⬇️ Global Arrow Down');
-                        this.navigateSuggestions('down');
-                        shouldPrevent = true;
-                        break;
-                    case 'ArrowUp':
-                        console.log('🌍⬆️ Global Arrow Up');
-                        this.navigateSuggestions('up');
-                        shouldPrevent = true;
-                        break;
-                    case 'Tab':
-                        console.log('🌍🔄 Global Tab');
-                        if (e.shiftKey) {
-                            this.navigateSuggestions('shift-tab');
-                        } else {
-                            this.navigateSuggestions('tab');
-                        }
-                        shouldPrevent = true;
-                        break;
-                    case 'Enter':
-                        console.log('🌍✅ Global Enter');
-                        if (this.insertSelectedEmote()) {
-                            shouldPrevent = true;
-                        }
-                        break;
-                    case 'Escape':
-                        console.log('🌍❌ Global Escape');
-                        this.hideEmoteSuggestions();
-                        shouldPrevent = true;
-                        break;
-                }
-                
-                if (shouldPrevent) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
-                    return false;
-                }
-            }
-        };
-        
-        // Add global handler with capture
-        document.addEventListener('keydown', this.globalKeyHandler, true);
     }
 
     // FIXED: Display emote suggestions with proper aspect ratios and keyboard navigation
@@ -730,14 +666,6 @@ class EmoteEnabledUIComponents extends UIComponents {
         this.currentSuggestions = [];
         this.selectedSuggestionIndex = -1;
         this.activeSuggestionsInput = null;
-        
-        // Remove global key handler
-        if (this.globalKeyHandler) {
-            document.removeEventListener('keydown', this.globalKeyHandler, true);
-            this.globalKeyHandler = null;
-        }
-        
-        console.log('🚫 Suggestions hidden, state reset');
     }
 
     insertEmote(inputElement, emoteName) {
@@ -761,110 +689,101 @@ class EmoteEnabledUIComponents extends UIComponents {
 
 // Enhanced MeetupApp with emote-aware title processing and FIXED event listeners
 class EmoteEnabledMeetupApp extends MeetupApp {
-    // FIXED: Setup event listeners with emote preview and ROBUST keyboard navigation
+    // COMPLETELY REWRITTEN: Setup event listeners with aggressive keyboard navigation
     setupEventListeners() {
         // Call parent setup first
         super.setupEventListeners();
         
-        // Add emote preview to message input with ":" prefix support and keyboard navigation
-        const messageInput = document.getElementById('messageInput');
-        if (messageInput) {
-            console.log('🎯 Setting up message input handlers');
-            
-            messageInput.addEventListener('input', () => {
-                window.uiComponents.showEmotePreview(messageInput);
-            });
-            
-            messageInput.addEventListener('blur', () => {
-                // Delay hiding to allow clicking on suggestions
-                setTimeout(() => window.uiComponents.hideEmoteSuggestions(), 200);
-            });
-            
-            // Use capture phase for more reliable event handling
-            messageInput.addEventListener('keydown', (e) => {
-                console.log(`🔥 Key pressed: ${e.key}, suggestions: ${window.uiComponents.currentSuggestions.length}`);
+        // Use document-level event listener with capture phase for more reliable event handling
+        document.addEventListener('keydown', (e) => {
+            // Only handle if we have active suggestions and the right input is focused
+            if (window.uiComponents.currentSuggestions.length > 0 && window.uiComponents.activeSuggestionsInput) {
+                const activeElement = document.activeElement;
+                const isMessageInput = activeElement && activeElement.id === 'messageInput';
+                const isDescriptionInput = activeElement && activeElement.id === 'descriptionInput';
                 
-                // Check if we have suggestions
-                const hasSuggestions = window.uiComponents.currentSuggestions.length > 0;
-                
-                if (hasSuggestions) {
-                    console.log(`📋 Processing key ${e.key} with ${window.uiComponents.currentSuggestions.length} suggestions`);
+                if (isMessageInput || isDescriptionInput) {
+                    console.log(`🔧 Key pressed: ${e.key}, suggestions active: ${window.uiComponents.currentSuggestions.length}`);
                     
-                    let shouldPrevent = false;
+                    let handled = false;
                     
                     switch (e.key) {
                         case 'ArrowDown':
-                            console.log('⬇️ Arrow Down detected');
+                            console.log('⬇️ Arrow Down pressed');
                             window.uiComponents.navigateSuggestions('down');
-                            shouldPrevent = true;
+                            handled = true;
                             break;
                         case 'ArrowUp':
-                            console.log('⬆️ Arrow Up detected');
+                            console.log('⬆️ Arrow Up pressed');
                             window.uiComponents.navigateSuggestions('up');
-                            shouldPrevent = true;
+                            handled = true;
                             break;
                         case 'ArrowRight':
-                            console.log('➡️ Arrow Right detected');
+                            console.log('➡️ Arrow Right pressed');
                             window.uiComponents.navigateSuggestions('right');
-                            shouldPrevent = true;
+                            handled = true;
                             break;
                         case 'ArrowLeft':
-                            console.log('⬅️ Arrow Left detected');
+                            console.log('⬅️ Arrow Left pressed');
                             window.uiComponents.navigateSuggestions('left');
-                            shouldPrevent = true;
+                            handled = true;
                             break;
                         case 'Tab':
-                            console.log('🔄 Tab detected');
+                            console.log('⭐ Tab pressed');
                             if (e.shiftKey) {
                                 window.uiComponents.navigateSuggestions('shift-tab');
                             } else {
                                 window.uiComponents.navigateSuggestions('tab');
                             }
-                            shouldPrevent = true;
+                            handled = true;
                             break;
                         case 'Enter':
-                            console.log('✅ Enter detected');
+                            console.log('✅ Enter pressed');
                             if (window.uiComponents.insertSelectedEmote()) {
-                                shouldPrevent = true;
+                                handled = true;
                             }
                             break;
                         case 'Escape':
-                            console.log('❌ Escape detected');
+                            console.log('❌ Escape pressed');
                             window.uiComponents.hideEmoteSuggestions();
-                            shouldPrevent = true;
+                            handled = true;
                             break;
                     }
                     
-                    if (shouldPrevent) {
+                    if (handled) {
                         console.log('🛑 Preventing default behavior');
                         e.preventDefault();
                         e.stopPropagation();
                         e.stopImmediatePropagation();
                         return false;
                     }
-                } else {
-                    console.log('📭 No suggestions, allowing normal behavior');
                 }
-                
-                // Handle escape even when no suggestions
-                if (e.key === 'Escape') {
-                    window.uiComponents.hideEmoteSuggestions();
-                }
-            }, true); // Use capture phase
+            }
+        }, true); // Use capture phase for higher priority
+        
+        // Add emote preview to message input
+        const messageInput = document.getElementById('messageInput');
+        if (messageInput) {
+            messageInput.addEventListener('input', () => {
+                window.uiComponents.showEmotePreview(messageInput);
+            });
+            
+            messageInput.addEventListener('blur', () => {
+                setTimeout(() => window.uiComponents.hideEmoteSuggestions(), 200);
+            });
         }
         
-        // Add the same enhanced keyboard handling to description input
+        // Add emote preview to description input
         this.setupDescriptionInputHandlers();
     }
 
-    // NEW: Setup description input handlers separately for clarity
+    // Simplified description input setup
     setupDescriptionInputHandlers() {
         document.addEventListener('click', (e) => {
             if (e.target && e.target.id === 'descriptionInput') {
                 setTimeout(() => {
                     const descriptionInput = document.getElementById('descriptionInput');
                     if (descriptionInput && !descriptionInput.hasAttribute('data-emote-handlers')) {
-                        // Mark as having handlers to prevent duplicate listeners
                         descriptionInput.setAttribute('data-emote-handlers', 'true');
                         
                         descriptionInput.addEventListener('input', () => {
@@ -873,63 +792,6 @@ class EmoteEnabledMeetupApp extends MeetupApp {
                         
                         descriptionInput.addEventListener('blur', () => {
                             setTimeout(() => window.uiComponents.hideEmoteSuggestions(), 200);
-                        });
-                        
-                        descriptionInput.addEventListener('keydown', (e) => {
-                            // Check if we have suggestions first
-                            const hasSuggestions = window.uiComponents.currentSuggestions.length > 0;
-                            
-                            if (hasSuggestions) {
-                                let handled = false;
-                                
-                                switch (e.key) {
-                                    case 'ArrowDown':
-                                        window.uiComponents.navigateSuggestions('down');
-                                        handled = true;
-                                        break;
-                                    case 'ArrowUp':
-                                        window.uiComponents.navigateSuggestions('up');
-                                        handled = true;
-                                        break;
-                                    case 'ArrowRight':
-                                        window.uiComponents.navigateSuggestions('right');
-                                        handled = true;
-                                        break;
-                                    case 'ArrowLeft':
-                                        window.uiComponents.navigateSuggestions('left');
-                                        handled = true;
-                                        break;
-                                    case 'Tab':
-                                        if (e.shiftKey) {
-                                            window.uiComponents.navigateSuggestions('shift-tab');
-                                        } else {
-                                            window.uiComponents.navigateSuggestions('tab');
-                                        }
-                                        handled = true;
-                                        break;
-                                    case 'Enter':
-                                        if (window.uiComponents.insertSelectedEmote()) {
-                                            handled = true;
-                                        }
-                                        break;
-                                    case 'Escape':
-                                        window.uiComponents.hideEmoteSuggestions();
-                                        handled = true;
-                                        break;
-                                }
-                                
-                                if (handled) {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    e.stopImmediatePropagation();
-                                    return false;
-                                }
-                            }
-                            
-                            // Handle escape even when no suggestions
-                            if (e.key === 'Escape') {
-                                window.uiComponents.hideEmoteSuggestions();
-                            }
                         });
                     }
                 }, 100);
@@ -1022,52 +884,46 @@ class EmoteEnabledMeetupApp extends MeetupApp {
 window.uiComponents = new EmoteEnabledUIComponents();
 window.emoteSystem = window.uiComponents.emoteSystem;
 
-// Add global debug methods
+// Add global debug methods and TEST FUNCTIONS
 window.debugEmotes = (emoteName) => window.emoteSystem.debugEmoteDimensions(emoteName);
 window.testEmoteRatios = () => window.emoteSystem.testAspectRatios();
 window.refreshEmotes = () => window.emoteSystem.refreshEmotes();
 
-// NEW: Debug autocomplete system
-window.debugAutocomplete = () => {
-    console.log('🔍 Autocomplete Debug Info:');
-    console.log('Current suggestions:', window.uiComponents.currentSuggestions.length);
-    console.log('Selected index:', window.uiComponents.selectedSuggestionIndex);
-    console.log('Active input:', window.uiComponents.activeSuggestionsInput?.id || 'none');
-    console.log('Suggestions element exists:', !!document.getElementById('emote-suggestions'));
+// NEW: Test keyboard navigation manually
+window.testNavigation = () => {
+    console.log('🧪 Testing emote navigation...');
     
-    if (window.uiComponents.currentSuggestions.length > 0) {
-        console.log('Available emotes:', window.uiComponents.currentSuggestions.map(e => e.name));
-    }
+    // Simulate having suggestions
+    window.uiComponents.currentSuggestions = [
+        { name: 'peepoHey', originalWidth: 28, originalHeight: 28 },
+        { name: 'Kappa', originalWidth: 25, originalHeight: 28 },
+        { name: 'OMEGALUL', originalWidth: 32, originalHeight: 28 }
+    ];
+    window.uiComponents.selectedSuggestionIndex = -1;
+    
+    console.log('Current suggestions:', window.uiComponents.currentSuggestions.length);
+    
+    // Test navigation
+    console.log('Testing down navigation...');
+    window.uiComponents.navigateSuggestions('down');
+    console.log('Selected index:', window.uiComponents.selectedSuggestionIndex);
+    
+    window.uiComponents.navigateSuggestions('down');
+    console.log('Selected index after second down:', window.uiComponents.selectedSuggestionIndex);
+    
+    console.log('Testing up navigation...');
+    window.uiComponents.navigateSuggestions('up');
+    console.log('Selected index after up:', window.uiComponents.selectedSuggestionIndex);
 };
 
-// NEW: Test autocomplete functionality
-window.testAutocomplete = () => {
-    console.log('🧪 Testing autocomplete...');
-    
-    // Find message input
-    const messageInput = document.getElementById('messageInput');
-    if (!messageInput) {
-        console.error('❌ Message input not found');
-        return;
-    }
-    
-    // Simulate typing ":peepo"
-    messageInput.focus();
-    messageInput.value = ':peepo';
-    
-    // Simulate input event
-    const inputEvent = new Event('input', { bubbles: true });
-    messageInput.dispatchEvent(inputEvent);
-    
-    setTimeout(() => {
-        window.debugAutocomplete();
-        
-        if (window.uiComponents.currentSuggestions.length > 0) {
-            console.log('✅ Autocomplete working! Try pressing arrow keys now.');
-        } else {
-            console.error('❌ No suggestions appeared');
-        }
-    }, 100);
+// NEW: Show current state for debugging
+window.debugEmoteState = () => {
+    console.log('🔍 Current emote autocomplete state:');
+    console.log('- Has suggestions:', window.uiComponents.currentSuggestions.length);
+    console.log('- Selected index:', window.uiComponents.selectedSuggestionIndex);
+    console.log('- Active input:', window.uiComponents.activeSuggestionsInput?.id || 'none');
+    console.log('- Focused element:', document.activeElement?.id || 'none');
+    console.log('- Suggestions visible:', !!document.getElementById('emote-suggestions'));
 };
 
 // Replace the global app class when DOM loads
