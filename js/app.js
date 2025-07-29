@@ -209,14 +209,6 @@ class MeetupApp {
             window.uiComponents.updateText('messageParticipantName', selectedName);
             window.uiComponents.hide('noParticipantMessage');
             
-            // Setup emote input for message field when it becomes visible
-            setTimeout(() => {
-                const messageInput = document.getElementById('messageInput');
-                if (messageInput && window.emoteSystem) {
-                    window.emoteSystem.setupEmoteInput(messageInput);
-                }
-            }, 100);
-            
             // Show propose form
             window.uiComponents.show('proposeForm');
             

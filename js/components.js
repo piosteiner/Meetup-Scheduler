@@ -284,7 +284,7 @@ class UIComponents {
         `;
     }
 
-    // UPDATED: Render message with delete button and emote support
+    // UPDATED: Render message with delete button
     renderMessage(messageId, message, allParticipants) {
         // More robust name lookup
         let senderName = 'Unknown';
@@ -296,11 +296,7 @@ class UIComponents {
         }
         
         const timestamp = message.timestamp ? new Date(message.timestamp).toLocaleString() : '';
-        
-        // Parse emotes in the message text
-        const messageWithEmotes = window.emoteSystem ? 
-            window.emoteSystem.parseEmotes(message.message) : 
-            this.escapeHtml(message.message);
+        const escapedMessage = this.escapeHtml(message.message);
         
         return `
             <div class="bg-gray-50 p-3 rounded-lg border-l-4 border-indigo-500 group">
@@ -315,7 +311,7 @@ class UIComponents {
                         </button>
                     </div>
                 </div>
-                <div class="text-gray-900">${messageWithEmotes}</div>
+                <div class="text-gray-900">${escapedMessage}</div>
             </div>
         `;
     }
