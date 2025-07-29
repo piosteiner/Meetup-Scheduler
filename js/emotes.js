@@ -176,7 +176,68 @@ class EmoteSystem {
         // Sort emote names by length (longest first) to prevent partial matches
         const emoteNames = Array.from(this.emotes.keys())
             .sort((a, b) => b.length - a.length)
+            .map(name => name.replace(/[.*+?^${}()|[\]\\]/g, '\\    // Load emotes into memory and build regex
+    loadEmotes(emotesData) {
+        this.emotes.clear();
+        
+        Object.entries(emotesData).forEach(([name, data]) => {
+            this.emotes.set(name, data);
+        });
+        
+        this.buildEmoteRegex();
+    }
+
+    // Load fallback emotes if API fails
+    loadFallbackEmotes() {
+        const fallbackEmotes = {
+            'peepoHey': {
+                id: '01F6NMMEER00015NVG2J8ZH77N',
+                name: 'peepoHey',
+                url: 'https://cdn.7tv.app/emote/01F6NMMEER00015NVG2J8ZH77N/2x.webp',
+                fallbackUrl: 'https://cdn.7tv.app/emote/01F6NMMEER00015NVG2J8ZH77N/2x.png',
+                width: 28,
+                height: 28,
+                animated: false
+            },
+            'Kappa': {
+                id: '60ae958e229664e0042a3e6a',
+                name: 'Kappa',
+                url: 'https://cdn.7tv.app/emote/60ae958e229664e0042a3e6a/2x.webp',
+                fallbackUrl: 'https://cdn.7tv.app/emote/60ae958e229664e0042a3e6a/2x.png',
+                width: 28,
+                height: 28,
+                animated: false
+            },
+            'OMEGALUL': {
+                id: '60ae43bf259b0f00060b4b54',
+                name: 'OMEGALUL',
+                url: 'https://cdn.7tv.app/emote/60ae43bf259b0f00060b4b54/2x.webp',
+                fallbackUrl: 'https://cdn.7tv.app/emote/60ae43bf259b0f00060b4b54/2x.png',
+                width: 28,
+                height: 28,
+                animated: false
+            }
+        };
+        
+        this.loadEmotes(fallbackEmotes);
+        console.log('⚠️ Using fallback emotes');
+    }
+
+    // Build regex pattern to match emote names
+    buildEmoteRegex() {
+        if (this.emotes.size === 0) {
+            this.emoteRegex = null;
+            return;
+        }
+        
+        // Sort emote names by length (longest first) to prevent partial matches
+        const emoteNames = Array.from(this.emotes.keys())
+            .sort((a, b) => b.length - a.length)
             .map(name => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')); // Escape regex chars
+        
+        // Create regex that matches emote names as whole words
+        this.emoteRegex = new RegExp(`\\b(${emoteNames.join('|')})\\b`, 'g');
+    }')); // Escape regex chars
         
         // Create regex that matches emote names as whole words
         this.emoteRegex = new RegExp(`\\b(${emoteNames.join('|')})\\b`, 'g');
@@ -530,6 +591,10 @@ class EmoteEnabledUIComponents extends UIComponents {
     }
 }
 
+// Replace the global uiComponents instance
+window.uiComponents = new EmoteEnabledUIComponents();
+window.emoteSystem = window.uiComponents.emoteSystem;
+
 // Enhanced MeetupApp with emote-aware title processing
 class EmoteEnabledMeetupApp extends MeetupApp {
     // Override editMeetupName to process emotes in titles
@@ -749,10 +814,6 @@ class EmoteEnabledMeetupApp extends MeetupApp {
         this.listeners.set('deletedProposals', deletedProposalsListener);
     }
 }
-
-// Replace the global uiComponents instance
-window.uiComponents = new EmoteEnabledUIComponents();
-window.emoteSystem = window.uiComponents.emoteSystem;
 
 // Replace the global app class when DOM loads
 document.addEventListener('DOMContentLoaded', async () => {
