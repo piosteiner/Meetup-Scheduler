@@ -326,11 +326,6 @@
     background: #e5e7eb;
 }
 
-/* Special styling for animated emotes */
-.emote-img.animated {
-    /* Could add special styling for animated emotes if needed */
-}
-
 /* Error state for failed emote loads */
 .emote-img.error {
     display: inline-block;
