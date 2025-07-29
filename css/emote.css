@@ -1,6 +1,6 @@
-/* css/emotes.css - Fixed Styles for 7TV Emote System with Aspect Ratio Preservation */
+/* css/emotes.css - Updated Styles for Better Keyboard Navigation */
 
-/* Base Emote Images - Dimensions set inline to preserve aspect ratio */
+/* Base Emote Images */
 .emote-img {
     display: inline-block;
     vertical-align: middle;
@@ -8,7 +8,6 @@
     border-radius: 2px;
     transition: transform 0.1s ease;
     object-fit: contain;
-    /* Dimensions are set inline via style attribute: style="width: Xpx; height: Ypx;" */
 }
 
 .emote-img:hover {
@@ -43,20 +42,24 @@
     margin-top: 4px;
     min-width: 280px;
     max-width: 400px;
-    max-height: 280px;
+    max-height: 320px;
     overflow-y: auto;
     z-index: 1000;
 }
 
 #emote-suggestions::before {
-    content: "Use ↑↓←→ Tab or click to select, Enter to insert";
+    content: "↑↓ Navigate • Enter Select • Esc Close";
     display: block;
-    padding: 4px 8px;
+    padding: 6px 12px;
     font-size: 11px;
     color: #6b7280;
     border-bottom: 1px solid #e5e7eb;
-    margin-bottom: 2px;
+    margin-bottom: 4px;
     font-style: italic;
+    text-align: center;
+    background: #f9fafb;
+    margin: -4px -4px 4px -4px;
+    border-radius: 8px 8px 0 0;
 }
 
 .emote-suggestion {
@@ -70,36 +73,40 @@
     min-height: 40px;
     border: 2px solid transparent;
     position: relative;
+    margin: 2px 0;
 }
 
-.emote-suggestion:hover:not(.emote-selected) {
+.emote-suggestion:hover:not(.bg-indigo-600) {
     background-color: #f3f4f6;
+    border-color: #e5e7eb;
 }
 
-/* Selected state - more prominent */
-.emote-suggestion.emote-selected,
-.emote-suggestion.bg-indigo-100 {
-    background-color: #6366f1 !important;
-    border-color: #4f46e5 !important;
+/* Selected state - ensure it's clearly visible */
+.emote-suggestion.bg-indigo-600 {
+    background-color: #4f46e5 !important;
+    border-color: #3730a3 !important;
     color: white !important;
     transform: scale(1.02);
+    box-shadow: 0 2px 4px rgba(79, 70, 229, 0.3);
 }
 
-.emote-suggestion.emote-selected span,
-.emote-suggestion.bg-indigo-100 span {
+.emote-suggestion.bg-indigo-600 span {
     color: white !important;
-    font-weight: 600;
 }
 
-.emote-suggestion.emote-selected .text-gray-500,
-.emote-suggestion.bg-indigo-100 .text-gray-500 {
-    color: #e0e7ff !important;
+.emote-suggestion.bg-indigo-600 .text-gray-500,
+.emote-suggestion.bg-indigo-600 .text-indigo-200 {
+    color: #c7d2fe !important;
+}
+
+/* Smooth scrolling for keyboard navigation */
+#emote-suggestions {
+    scroll-behavior: smooth;
 }
 
 .emote-suggestion img {
     flex-shrink: 0;
     object-fit: contain;
-    /* Dimensions set inline to preserve aspect ratio */
 }
 
 .emote-suggestion span {
@@ -112,27 +119,25 @@
 
 /* Enhanced line height for emote-containing text */
 .emote-enabled {
-    line-height: 1.6; /* Increased to accommodate taller emotes */
+    line-height: 1.6;
 }
 
-/* Specific containers with emote support */
-
-/* Messages container - accommodate various emote heights */
+/* Messages container */
 .bg-gray-50 .emote-img {
     vertical-align: text-bottom;
 }
 
-/* Meetup titles - slightly larger emotes */
+/* Meetup titles */
 #meetupTitle .emote-img {
     margin: 0 4px;
     vertical-align: baseline;
 }
 
 #meetupTitle {
-    line-height: 1.4; /* Adjust line height for title emotes */
+    line-height: 1.4;
 }
 
-/* Descriptions - smaller emotes */
+/* Descriptions */
 #descriptionText .emote-img {
     margin: 0 2px;
     vertical-align: text-bottom;
@@ -142,16 +147,16 @@
     line-height: 1.6;
 }
 
-/* Message content specific styling */
+/* Message content */
 .text-gray-900.break-words {
-    line-height: 1.7; /* Better spacing for messages with emotes */
+    line-height: 1.7;
     word-break: break-word;
 }
 
 /* Responsive adjustments */
 @media (max-width: 640px) {
     .emote-img:hover {
-        transform: scale(1.1); /* Reduced scale on mobile to prevent overlap */
+        transform: scale(1.1);
     }
     
     #emote-suggestions {
@@ -160,8 +165,14 @@
         font-size: 13px;
     }
     
-    .emote-suggestion img {
-        /* Slightly smaller on mobile - will be handled by JS calculation */
+    #emote-suggestions::before {
+        font-size: 10px;
+        padding: 4px 8px;
+    }
+    
+    .emote-suggestion {
+        padding: 6px 10px;
+        min-height: 36px;
     }
     
     .emote-suggestion span {
@@ -193,32 +204,30 @@
 /* Dark theme support */
 @media (prefers-color-scheme: dark) {
     #emote-suggestions {
-        background: #374151;
-        border-color: #4b5563;
+        background: #1f2937;
+        border-color: #374151;
         color: #f9fafb;
     }
     
-    .emote-suggestion:hover {
-        background-color: #4b5563;
+    #emote-suggestions::before {
+        background: #111827;
+        color: #9ca3af;
+        border-bottom-color: #374151;
+    }
+    
+    .emote-suggestion:hover:not(.bg-indigo-600) {
+        background-color: #374151;
+        border-color: #4b5563;
     }
     
     .emote-suggestion span {
         color: #f9fafb;
     }
-}
-
-[data-theme="dark"] #emote-suggestions {
-    background: #374151;
-    border-color: #4b5563;
-    color: #f9fafb;
-}
-
-[data-theme="dark"] .emote-suggestion:hover {
-    background-color: #4b5563;
-}
-
-[data-theme="dark"] .emote-suggestion span {
-    color: #f9fafb;
+    
+    .emote-suggestion.bg-indigo-600 {
+        background-color: #4f46e5 !important;
+        border-color: #6366f1 !important;
+    }
 }
 
 /* Loading state for emotes */
@@ -235,50 +244,12 @@
     animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* Animation for emote hover effects */
-@keyframes emote-bounce {
-    0%, 100% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.1);
-    }
-}
-
-.emote-img.bounce {
-    animation: emote-bounce 0.3s ease;
-}
-
-/* Emote tooltip styling */
-.emote-img[title]:hover::after {
-    content: attr(title);
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.8);
-    color: white;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    white-space: nowrap;
-    z-index: 1000;
-    pointer-events: none;
-}
-
 /* Prevent text selection on emote images */
 .emote-img {
     user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
-}
-
-/* Ensure emotes don't break text flow */
-.emote-container {
-    display: inline;
-    white-space: normal;
-    word-wrap: break-word;
 }
 
 /* Accessibility: High contrast mode */
@@ -291,17 +262,23 @@
         border: 2px solid #000;
     }
     
-    .emote-suggestion:hover {
+    .emote-suggestion:hover:not(.bg-indigo-600) {
         background-color: #000;
         color: #fff;
     }
     
-    .emote-suggestion:hover span {
+    .emote-suggestion:hover:not(.bg-indigo-600) span {
         color: #fff;
+    }
+    
+    .emote-suggestion.bg-indigo-600 {
+        background-color: #000 !important;
+        color: #fff !important;
+        border: 2px solid #fff !important;
     }
 }
 
-/* Print styles - hide emotes in print or show alt text */
+/* Print styles */
 @media print {
     .emote-img {
         display: none;
@@ -328,103 +305,42 @@
         transform: none;
     }
     
-    .emote-loading {
-        animation: none;
-        background: #e5e7eb;
+    .emote-suggestion {
+        transition: none;
+    }
+    
+    .emote-suggestion.bg-indigo-600 {
+        transform: none;
+    }
+    
+    #emote-suggestions {
+        scroll-behavior: auto;
     }
 }
 
 /* Custom scrollbar for emote suggestions */
 #emote-suggestions::-webkit-scrollbar {
-    width: 4px;
+    width: 6px;
 }
 
 #emote-suggestions::-webkit-scrollbar-track {
     background: #f1f5f9;
-    border-radius: 2px;
+    border-radius: 3px;
 }
 
 #emote-suggestions::-webkit-scrollbar-thumb {
     background: #cbd5e1;
-    border-radius: 2px;
+    border-radius: 3px;
 }
 
 #emote-suggestions::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
 }
 
-/* Emote button for easy access (optional enhancement) */
-.emote-picker-button {
-    background: none;
-    border: 1px solid #d1d5db;
-    border-radius: 4px;
-    padding: 4px 8px;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    font-size: 16px;
-    line-height: 1;
-}
-
-.emote-picker-button:hover {
-    background: #f3f4f6;
-    border-color: #9ca3af;
-}
-
-.emote-picker-button:active {
-    background: #e5e7eb;
-}
-
-/* Error state for failed emote loads */
-.emote-img.error {
-    display: inline-block;
-    background: #fee2e2;
-    border: 1px solid #fecaca;
-    border-radius: 2px;
-    position: relative;
-}
-
-.emote-img.error::before {
-    content: "❌";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 12px;
-}
-
-/* Loading skeleton for emote suggestions */
-.emote-suggestion.loading {
-    opacity: 0.6;
-    pointer-events: none;
-}
-
-.emote-suggestion.loading img {
-    background: #f3f4f6;
-    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-/* Ensure proper spacing in different text contexts */
-p .emote-img,
-div .emote-img,
-span .emote-img {
-    margin: 0 1px;
-    vertical-align: text-bottom;
-}
-
-/* Special handling for emotes at start/end of text */
-.emote-img:first-child {
-    margin-left: 0;
-}
-
-.emote-img:last-child {
-    margin-right: 0;
-}
-
 /* Focus states for keyboard navigation */
 .emote-suggestion:focus-visible {
     outline: 2px solid #6366f1;
-    outline-offset: 2px;
-    background-color: #f3f4f6;
+    outline-offset: -2px;
 }
 
 /* Performance optimizations */
@@ -432,20 +348,7 @@ span .emote-img {
     will-change: transform;
 }
 
-/* Prevent layout shift during emote loading */
-.emote-placeholder {
-    display: inline-block;
-    width: 1em;
-    height: 1em;
-    background: transparent;
-    vertical-align: middle;
-}
-
-/* Support for right-to-left languages */
-[dir="rtl"] .emote-img {
-    margin: 0 2px 0 2px;
-}
-
-[dir="rtl"] #meetupTitle .emote-img {
-    margin: 0 4px 0 4px;
+/* Smooth transition for selection changes */
+.emote-suggestion * {
+    transition: color 0.15s ease;
 }

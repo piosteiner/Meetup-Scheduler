@@ -1,4 +1,4 @@
-// js/emotes.js - CLEAN VERSION - Fixed 7TV Emote System with Working Autocomplete and Keyboard Navigation
+// js/emotes.js - Fixed 7TV Emote System with Working Keyboard Navigation
 
 class EmoteSystem {
     constructor() {
@@ -211,20 +211,29 @@ class EmoteSystem {
     loadFallbackEmotes() {
         const fallbackEmotes = {
             'peepoHey': {
-                id: 'test1',
+                id: '60ae8c4b259ac5a73e56ae91',
                 name: 'peepoHey',
-                url: 'https://cdn.7tv.app/emote/test1/2x.webp',
-                fallbackUrl: 'https://cdn.7tv.app/emote/test1/2x.png',
+                url: 'https://cdn.7tv.app/emote/60ae8c4b259ac5a73e56ae91/2x.webp',
+                fallbackUrl: 'https://cdn.7tv.app/emote/60ae8c4b259ac5a73e56ae91/2x.png',
                 originalWidth: 28,
                 originalHeight: 28,
                 animated: false
             },
             'Kappa': {
-                id: 'test2', 
+                id: '60ae4c381981c439d5e9559f', 
                 name: 'Kappa',
-                url: 'https://cdn.7tv.app/emote/test2/2x.webp',
-                fallbackUrl: 'https://cdn.7tv.app/emote/test2/2x.png',
+                url: 'https://cdn.7tv.app/emote/60ae4c381981c439d5e9559f/2x.webp',
+                fallbackUrl: 'https://cdn.7tv.app/emote/60ae4c381981c439d5e9559f/2x.png',
                 originalWidth: 25,
+                originalHeight: 28,
+                animated: false
+            },
+            'OMEGALUL': {
+                id: '60ae958e229664e8667aea38',
+                name: 'OMEGALUL',
+                url: 'https://cdn.7tv.app/emote/60ae958e229664e8667aea38/2x.webp',
+                fallbackUrl: 'https://cdn.7tv.app/emote/60ae958e229664e8667aea38/2x.png',
+                originalWidth: 28,
                 originalHeight: 28,
                 animated: false
             }
@@ -321,15 +330,11 @@ class EmoteEnabledUIComponents extends UIComponents {
         super();
         this.emoteSystem = new EmoteSystem();
         
-        // Initialize autocomplete state properly
+        // Initialize autocomplete state
         this.currentSuggestions = [];
         this.selectedSuggestionIndex = -1;
         this.activeSuggestionsInput = null;
-        
-        console.log('✅ EmoteEnabledUIComponents initialized with:', {
-            suggestions: this.currentSuggestions.length,
-            selectedIndex: this.selectedSuggestionIndex
-        });
+        this.suggestionClickHandler = null;
     }
 
     renderMessage(messageId, message, allParticipants) {
@@ -378,21 +383,16 @@ class EmoteEnabledUIComponents extends UIComponents {
     }
 
     showEmotePreview(inputElement) {
-        // Safety check
-        if (!this.currentSuggestions) {
-            this.currentSuggestions = [];
-        }
-        
         const text = inputElement.value;
         const cursorPosition = inputElement.selectionStart;
         
         const beforeCursor = text.substring(0, cursorPosition);
-        const matches = beforeCursor.match(/:(\w+)$/);
+        const matches = beforeCursor.match(/:(\w*)$/);
         
-        if (matches && matches[1].length >= 1) {
+        if (matches) {
             const partialEmote = matches[1];
             const availableEmotes = this.emoteSystem.getAvailableEmotes()
-                .filter(emote => emote.name.toLowerCase().startsWith(partialEmote.toLowerCase()))
+                .filter(emote => emote.name.toLowerCase().includes(partialEmote.toLowerCase()))
                 .slice(0, 8);
             
             if (availableEmotes.length > 0) {
@@ -442,21 +442,35 @@ class EmoteEnabledUIComponents extends UIComponents {
         suggestions.style.position = 'fixed';
         suggestions.style.left = rect.left + 'px';
         suggestions.style.top = (rect.bottom + 5) + 'px';
+        suggestions.style.width = Math.min(350, window.innerWidth - rect.left - 20) + 'px';
         
         document.body.appendChild(suggestions);
         
-        suggestions.querySelectorAll('.emote-suggestion').forEach(item => {
-            item.addEventListener('click', () => {
-                const emoteName = item.dataset.emoteName;
+        // Store click handler reference so we can remove it later
+        this.suggestionClickHandler = (e) => {
+            const suggestionEl = e.target.closest('.emote-suggestion');
+            if (suggestionEl) {
+                const emoteName = suggestionEl.dataset.emoteName;
                 this.insertEmote(inputElement, emoteName);
                 this.hideEmoteSuggestions();
-            });
-        });
+            }
+        };
+        
+        suggestions.addEventListener('click', this.suggestionClickHandler);
+        
+        // Update visual selection if any
+        if (this.selectedSuggestionIndex >= 0) {
+            this.updateSuggestionSelection();
+        }
     }
 
     hideEmoteSuggestions() {
         const existing = document.getElementById('emote-suggestions');
         if (existing) {
+            if (this.suggestionClickHandler) {
+                existing.removeEventListener('click', this.suggestionClickHandler);
+                this.suggestionClickHandler = null;
+            }
             existing.remove();
         }
         
@@ -470,15 +484,21 @@ class EmoteEnabledUIComponents extends UIComponents {
         const cursorPosition = inputElement.selectionStart;
         
         const beforeCursor = text.substring(0, cursorPosition);
-        const matches = beforeCursor.match(/:(\w+)$/);
+        const afterCursor = text.substring(cursorPosition);
+        const matches = beforeCursor.match(/:(\w*)$/);
         
         if (matches) {
             const startPos = cursorPosition - matches[0].length;
-            const newText = text.substring(0, startPos) + emoteName + text.substring(cursorPosition);
+            const newText = text.substring(0, startPos) + emoteName + ' ' + afterCursor;
             
             inputElement.value = newText;
-            inputElement.setSelectionRange(startPos + emoteName.length, startPos + emoteName.length);
+            const newCursorPos = startPos + emoteName.length + 1;
+            inputElement.setSelectionRange(newCursorPos, newCursorPos);
             inputElement.focus();
+            
+            // Trigger input event to update any listeners
+            const event = new Event('input', { bubbles: true });
+            inputElement.dispatchEvent(event);
         }
     }
 
@@ -488,10 +508,10 @@ class EmoteEnabledUIComponents extends UIComponents {
         }
         
         const maxIndex = this.currentSuggestions.length - 1;
+        const prevIndex = this.selectedSuggestionIndex;
         
         switch (direction) {
             case 'down':
-            case 'tab':
                 this.selectedSuggestionIndex = this.selectedSuggestionIndex < maxIndex 
                     ? this.selectedSuggestionIndex + 1 
                     : 0;
@@ -501,8 +521,14 @@ class EmoteEnabledUIComponents extends UIComponents {
                     ? this.selectedSuggestionIndex - 1 
                     : maxIndex;
                 break;
+            case 'tab':
+                this.selectedSuggestionIndex = this.selectedSuggestionIndex < maxIndex 
+                    ? this.selectedSuggestionIndex + 1 
+                    : 0;
+                break;
         }
         
+        console.log(`Navigation: ${direction}, from ${prevIndex} to ${this.selectedSuggestionIndex}`);
         this.updateSuggestionSelection();
         return true;
     }
@@ -510,10 +536,24 @@ class EmoteEnabledUIComponents extends UIComponents {
     updateSuggestionSelection() {
         const suggestions = document.querySelectorAll('.emote-suggestion');
         suggestions.forEach((item, index) => {
-            item.classList.remove('emote-selected');
-            
             if (index === this.selectedSuggestionIndex) {
-                item.classList.add('emote-selected');
+                item.classList.add('bg-indigo-600', 'text-white');
+                item.classList.remove('hover:bg-gray-100');
+                item.querySelector('span').classList.add('text-white');
+                item.querySelector('.text-gray-500').classList.add('text-indigo-200');
+                item.querySelector('.text-gray-500').classList.remove('text-gray-500');
+                
+                // Scroll into view if needed
+                item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            } else {
+                item.classList.remove('bg-indigo-600', 'text-white');
+                item.classList.add('hover:bg-gray-100');
+                item.querySelector('span').classList.remove('text-white');
+                const grayText = item.querySelector('.text-indigo-200');
+                if (grayText) {
+                    grayText.classList.add('text-gray-500');
+                    grayText.classList.remove('text-indigo-200');
+                }
             }
         });
     }
@@ -530,6 +570,53 @@ class EmoteEnabledUIComponents extends UIComponents {
         }
         return false;
     }
+
+    handleEmoteKeydown(e, inputElement) {
+        // Check if suggestions are open
+        const suggestionsOpen = this.currentSuggestions && this.currentSuggestions.length > 0 && 
+                               document.getElementById('emote-suggestions');
+        
+        if (!suggestionsOpen) {
+            return false; // Let normal key handling continue
+        }
+        
+        switch (e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                e.stopPropagation();
+                this.navigateSuggestions('down');
+                return true;
+                
+            case 'ArrowUp':
+                e.preventDefault();
+                e.stopPropagation();
+                this.navigateSuggestions('up');
+                return true;
+                
+            case 'Tab':
+                e.preventDefault();
+                e.stopPropagation();
+                this.navigateSuggestions('tab');
+                return true;
+                
+            case 'Enter':
+                if (this.selectedSuggestionIndex >= 0) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.insertSelectedEmote();
+                    return true;
+                }
+                break;
+                
+            case 'Escape':
+                e.preventDefault();
+                e.stopPropagation();
+                this.hideEmoteSuggestions();
+                return true;
+        }
+        
+        return false;
+    }
 }
 
 // Enhanced MeetupApp with emote-aware title processing
@@ -537,6 +624,7 @@ class EmoteEnabledMeetupApp extends MeetupApp {
     setupEventListeners() {
         super.setupEventListeners();
         
+        // Message input with improved event handling
         const messageInput = document.getElementById('messageInput');
         if (messageInput) {
             messageInput.addEventListener('input', () => {
@@ -544,31 +632,28 @@ class EmoteEnabledMeetupApp extends MeetupApp {
             });
             
             messageInput.addEventListener('blur', () => {
-                setTimeout(() => window.uiComponents.hideEmoteSuggestions(), 200);
-            });
-            
-            messageInput.addEventListener('keydown', (e) => {
-                if (window.uiComponents.currentSuggestions && window.uiComponents.currentSuggestions.length > 0) {
-                    if (e.key === 'ArrowDown') {
-                        e.preventDefault();
-                        window.uiComponents.navigateSuggestions('down');
-                    } else if (e.key === 'ArrowUp') {
-                        e.preventDefault();
-                        window.uiComponents.navigateSuggestions('up');
-                    } else if (e.key === 'Tab') {
-                        e.preventDefault();
-                        window.uiComponents.navigateSuggestions('tab');
-                    } else if (e.key === 'Enter') {
-                        e.preventDefault();
-                        window.uiComponents.insertSelectedEmote();
-                    } else if (e.key === 'Escape') {
-                        e.preventDefault();
+                // Delay to allow click events on suggestions
+                setTimeout(() => {
+                    // Only hide if not clicking on suggestions
+                    if (!document.querySelector('#emote-suggestions:hover')) {
                         window.uiComponents.hideEmoteSuggestions();
                     }
+                }, 200);
+            });
+            
+            // Use keydown for better control
+            messageInput.addEventListener('keydown', (e) => {
+                const handled = window.uiComponents.handleEmoteKeydown(e, messageInput);
+                
+                // If emote system didn't handle it and it's Enter, send message
+                if (!handled && e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    this.sendMessage();
                 }
             });
         }
         
+        // Description input handling with event delegation
         document.addEventListener('click', (e) => {
             if (e.target && e.target.id === 'descriptionInput') {
                 setTimeout(() => {
@@ -581,27 +666,20 @@ class EmoteEnabledMeetupApp extends MeetupApp {
                         });
                         
                         descriptionInput.addEventListener('blur', () => {
-                            setTimeout(() => window.uiComponents.hideEmoteSuggestions(), 200);
+                            setTimeout(() => {
+                                if (!document.querySelector('#emote-suggestions:hover')) {
+                                    window.uiComponents.hideEmoteSuggestions();
+                                }
+                            }, 200);
                         });
                         
                         descriptionInput.addEventListener('keydown', (e) => {
-                            if (window.uiComponents.currentSuggestions && window.uiComponents.currentSuggestions.length > 0) {
-                                if (e.key === 'ArrowDown') {
-                                    e.preventDefault();
-                                    window.uiComponents.navigateSuggestions('down');
-                                } else if (e.key === 'ArrowUp') {
-                                    e.preventDefault();
-                                    window.uiComponents.navigateSuggestions('up');
-                                } else if (e.key === 'Tab') {
-                                    e.preventDefault();
-                                    window.uiComponents.navigateSuggestions('tab');
-                                } else if (e.key === 'Enter') {
-                                    e.preventDefault();
-                                    window.uiComponents.insertSelectedEmote();
-                                } else if (e.key === 'Escape') {
-                                    e.preventDefault();
-                                    window.uiComponents.hideEmoteSuggestions();
-                                }
+                            const handled = window.uiComponents.handleEmoteKeydown(e, descriptionInput);
+                            
+                            // Let Ctrl+Enter through for saving
+                            if (!handled && e.ctrlKey && e.key === 'Enter') {
+                                // This will be handled by the existing handler
+                                return;
                             }
                         });
                     }
@@ -685,8 +763,8 @@ class EmoteEnabledMeetupApp extends MeetupApp {
 window.uiComponents = new EmoteEnabledUIComponents();
 window.emoteSystem = window.uiComponents.emoteSystem;
 
-// Debug functions
-window.testAutocomplete = () => {
+// Test/Debug functions
+window.testEmoteNavigation = () => {
     const messageInput = document.getElementById('messageInput');
     if (messageInput) {
         messageInput.focus();
@@ -696,12 +774,17 @@ window.testAutocomplete = () => {
         const event = new Event('input', { bubbles: true });
         messageInput.dispatchEvent(event);
         
-        console.log('Test: Set input to ":peepo" and triggered autocomplete');
+        console.log('Test: Autocomplete triggered');
         
         setTimeout(() => {
             const suggestions = document.getElementById('emote-suggestions');
             console.log('Suggestions visible:', !!suggestions);
-            console.log('Current suggestions count:', window.uiComponents.currentSuggestions.length);
+            console.log('Current suggestions:', window.uiComponents.currentSuggestions.length);
+            console.log('Selected index:', window.uiComponents.selectedSuggestionIndex);
+            
+            if (suggestions) {
+                console.log('Try pressing arrow keys now!');
+            }
         }, 100);
     }
 };
@@ -709,6 +792,7 @@ window.testAutocomplete = () => {
 window.refreshEmotes = () => window.emoteSystem.refreshEmotes();
 
 document.addEventListener('DOMContentLoaded', async () => {
+    // Only initialize once
     if (window.app && window.app.constructor.name === 'EmoteEnabledMeetupApp') {
         return;
     }
@@ -717,4 +801,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     await window.app.init();
 });
 
-console.log('✅ CLEAN emote system loaded successfully');
+console.log('✅ Fixed emote system with keyboard navigation loaded');
