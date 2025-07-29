@@ -8,7 +8,14 @@ class EmoteSystem {
         this.loadPromise = null;
         
         // 7TV Global Emote Set ID (popular emotes available to everyone)
-        this.globalEmoteSetId = '01K1BPC2WFZB8QA3T04MPBTSS9';
+        this.globalEmoteSetId = '01EX2NCGX0000171FB842R1TPP'; // Try a different popular set
+        
+        // Alternative emote set IDs to try if the first fails
+        this.fallbackEmoteSetIds = [
+            '01K1BPC2WFZB8QA3T04MPBTSS9', // Original ID
+            '01F7B8YG000004DHQX8H81YQXF', // Another popular set
+            'global' // 7TV global emotes
+        ];
         
         // Cache configuration
         this.cacheKey = 'piogino_emotes_cache';
@@ -136,32 +143,86 @@ class EmoteSystem {
         try {
             console.log('🔄 Fetching fresh emotes from 7TV...');
             
-            // Fetch popular global emotes from 7TV
-            const response = await fetch(`https://7tv.io/v3/emote-sets/${this.globalEmoteSetId}`, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                }
-            });
+            // Try the main emote set first, then fallbacks
+            let data = null;
+            const setsToTry = [this.globalEmoteSetId, ...this.fallbackEmoteSetIds];
             
-            if (!response.ok) {
-                throw new Error(`7TV API responded with ${response.status}`);
+            for (const setId of setsToTry) {
+                try {
+                    console.log(`Trying emote set: ${setId}`);
+                    const url = setId === 'global' 
+                        ? 'https://7tv.io/v3/emote-sets/global'
+                        : `https://7tv.io/v3/emote-sets/${setId}`;
+                    
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        data = await response.json();
+                        console.log(`✅ Successfully fetched from ${setId}`);
+                        break;
+                    }
+                } catch (error) {
+                    console.warn(`Failed to fetch from ${setId}:`, error);
+                    continue;
+                }
             }
             
-            const data = await response.json();
+            if (!data) {
+                throw new Error('All emote set URLs failed');
+            }
+            
+            // Log the raw API response structure for debugging
+            console.log('📋 Raw 7TV API response structure:', {
+                hasEmotes: !!data.emotes,
+                emotesLength: data.emotes?.length || 0,
+                firstEmoteStructure: data.emotes?.[0] ? Object.keys(data.emotes[0]) : 'No emotes',
+                sampleEmote: data.emotes?.[0]
+            });
             
             if (!data.emotes || !Array.isArray(data.emotes)) {
-                throw new Error('Invalid response format from 7TV API');
+                throw new Error('Invalid response format from 7TV API - no emotes array found');
             }
             
             // Process emotes into our format
             const emotesData = {};
-            data.emotes.forEach(emoteData => {
+            data.emotes.forEach((emoteData, index) => {
                 if (!emoteData.name || !emoteData.id) return;
                 
-                // Get original dimensions from the data
-                const originalWidth = emoteData.data?.host?.width || 28;
-                const originalHeight = emoteData.data?.host?.height || 28;
+                // Get original dimensions from the data - try multiple paths
+                let originalWidth = 28;
+                let originalHeight = 28;
+                
+                // Log the first few emotes' full structure for debugging
+                if (index < 3) {
+                    console.log(`🔍 Emote ${index} (${emoteData.name}) structure:`, emoteData);
+                }
+                
+                // Try different paths in the 7TV API response
+                if (emoteData.data?.host?.width && emoteData.data?.host?.height) {
+                    originalWidth = emoteData.data.host.width;
+                    originalHeight = emoteData.data.host.height;
+                } else if (emoteData.data?.host?.files) {
+                    // Try to get dimensions from files array
+                    const files = emoteData.data.host.files;
+                    const largestFile = files.find(f => f.name === '4x.webp') || files.find(f => f.name === '2x.webp') || files[files.length - 1];
+                    if (largestFile && largestFile.width && largestFile.height) {
+                        originalWidth = largestFile.width;
+                        originalHeight = largestFile.height;
+                    }
+                } else if (emoteData.width && emoteData.height) {
+                    originalWidth = emoteData.width;
+                    originalHeight = emoteData.height;
+                } else if (emoteData.data?.width && emoteData.data?.height) {
+                    originalWidth = emoteData.data.width;
+                    originalHeight = emoteData.data.height;
+                }
+                
+                console.log(`📏 Emote ${emoteData.name}: ${originalWidth}×${originalHeight}`);
                 
                 emotesData[emoteData.name] = {
                     id: emoteData.id,
@@ -181,6 +242,15 @@ class EmoteSystem {
             this.saveToCache(emotesData);
             
             console.log('✅ Successfully loaded', Object.keys(emotesData).length, 'emotes from 7TV');
+            
+            // Debug: Log some example dimensions
+            const exampleEmotes = Object.entries(emotesData).slice(0, 5);
+            console.log('📊 Example emote dimensions:', exampleEmotes.map(([name, data]) => 
+                `${name}: ${data.originalWidth}×${data.originalHeight}`
+            ));
+            
+            // Test aspect ratio calculations
+            this.testAspectRatios();
             
         } catch (error) {
             console.warn('Failed to fetch emotes from 7TV:', error);
@@ -331,6 +401,48 @@ class EmoteSystem {
         localStorage.removeItem(this.cacheKey);
         this.emotes.clear();
         await this.fetchEmotes();
+    }
+
+    // Debug method to check emote dimensions
+    debugEmoteDimensions(emoteName = null) {
+        if (emoteName) {
+            const emote = this.getEmote(emoteName);
+            if (emote) {
+                console.log(`🔍 Debug ${emoteName}:`);
+                console.log(`  Original: ${emote.originalWidth}×${emote.originalHeight}`);
+                console.log(`  Message: ${this.calculateDisplayDimensions(emote.originalWidth, emote.originalHeight, 'message').width}×${this.calculateDisplayDimensions(emote.originalWidth, emote.originalHeight, 'message').height}`);
+                console.log(`  Title: ${this.calculateDisplayDimensions(emote.originalWidth, emote.originalHeight, 'title').width}×${this.calculateDisplayDimensions(emote.originalWidth, emote.originalHeight, 'title').height}`);
+                console.log(`  Description: ${this.calculateDisplayDimensions(emote.originalWidth, emote.originalHeight, 'description').width}×${this.calculateDisplayDimensions(emote.originalWidth, emote.originalHeight, 'description').height}`);
+            } else {
+                console.log(`❌ Emote '${emoteName}' not found`);
+            }
+        } else {
+            console.log('📊 All loaded emotes:');
+            this.emotes.forEach((emote, name) => {
+                const messageDims = this.calculateDisplayDimensions(emote.originalWidth, emote.originalHeight, 'message');
+                console.log(`  ${name}: ${emote.originalWidth}×${emote.originalHeight} → ${messageDims.width}×${messageDims.height} (message)`);
+            });
+        }
+    }
+
+    // Test method to verify aspect ratio preservation
+    testAspectRatios() {
+        console.log('🧪 Testing aspect ratio preservation:');
+        const testCases = [
+            { width: 56, height: 28, name: 'Wide emote' },
+            { width: 20, height: 40, name: 'Tall emote' },
+            { width: 32, height: 32, name: 'Square emote' },
+            { width: 44, height: 28, name: 'Medium wide' }
+        ];
+        
+        testCases.forEach(test => {
+            const result = this.calculateDisplayDimensions(test.width, test.height, 'message');
+            const originalRatio = test.width / test.height;
+            const displayRatio = result.width / result.height;
+            const ratioPreserved = Math.abs(originalRatio - displayRatio) < 0.01;
+            
+            console.log(`  ${test.name} (${test.width}×${test.height}): ${result.width}×${result.height} - Ratio preserved: ${ratioPreserved ? '✅' : '❌'}`);
+        });
     }
 }
 
@@ -628,6 +740,11 @@ class EmoteEnabledMeetupApp extends MeetupApp {
 // Replace the global uiComponents instance
 window.uiComponents = new EmoteEnabledUIComponents();
 window.emoteSystem = window.uiComponents.emoteSystem;
+
+// Add global debug methods
+window.debugEmotes = (emoteName) => window.emoteSystem.debugEmoteDimensions(emoteName);
+window.testEmoteRatios = () => window.emoteSystem.testAspectRatios();
+window.refreshEmotes = () => window.emoteSystem.refreshEmotes();
 
 // Replace the global app class when DOM loads
 document.addEventListener('DOMContentLoaded', async () => {
