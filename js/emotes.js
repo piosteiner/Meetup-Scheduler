@@ -510,46 +510,30 @@ class EmoteEnabledUIComponents extends UIComponents {
         }
     }
 
-    // FIXED: Enhanced emote preview functionality with ":" prefix and DEBUG LOGGING
+    // BACK TO BASICS: Simple emote preview that works
     showEmotePreview(inputElement) {
         const text = inputElement.value;
         const cursorPosition = inputElement.selectionStart;
         
-        console.log(`🔍 showEmotePreview called with text: "${text}", cursor: ${cursorPosition}`);
-        
         // Find emote names that start with ":" in the text around cursor position
         const beforeCursor = text.substring(0, cursorPosition);
-        console.log(`📝 Text before cursor: "${beforeCursor}"`);
-        
         const matches = beforeCursor.match(/:(\w+)$/);
-        console.log(`🎯 Regex matches:`, matches);
         
         if (matches && matches[1].length >= 1) { // At least 1 character after ":" to show suggestions
             const partialEmote = matches[1]; // Get the part after ":"
-            console.log(`🔤 Partial emote: "${partialEmote}"`);
+            const availableEmotes = this.emoteSystem.getAvailableEmotes()
+                .filter(emote => emote.name.toLowerCase().startsWith(partialEmote.toLowerCase()))
+                .slice(0, 8); // Show max 8 suggestions
             
-            const availableEmotes = this.emoteSystem.getAvailableEmotes();
-            console.log(`📦 Total available emotes: ${availableEmotes.length}`);
-            
-            const filteredEmotes = availableEmotes
-                .filter(emote => emote.name.toLowerCase().startsWith(partialEmote.toLowerCase()));
-            console.log(`🎯 Filtered emotes for "${partialEmote}":`, filteredEmotes.map(e => e.name));
-            
-            const finalEmotes = filteredEmotes.slice(0, 8); // Show max 8 suggestions
-            console.log(`✅ Final emotes to show: ${finalEmotes.length}`);
-            
-            if (finalEmotes.length > 0) {
-                this.currentSuggestions = finalEmotes;
+            if (availableEmotes.length > 0) {
+                this.currentSuggestions = availableEmotes;
                 this.selectedSuggestionIndex = -1; // Reset selection
                 this.activeSuggestionsInput = inputElement;
-                console.log(`🎉 Displaying ${finalEmotes.length} suggestions`);
-                this.displayEmoteSuggestions(finalEmotes, inputElement);
+                this.displayEmoteSuggestions(availableEmotes, inputElement);
             } else {
-                console.log(`❌ No emotes found for "${partialEmote}"`);
                 this.hideEmoteSuggestions();
             }
         } else {
-            console.log(`❌ No valid :emote pattern found in "${beforeCursor}"`);
             this.hideEmoteSuggestions();
         }
     }
@@ -969,7 +953,7 @@ class EmoteEnabledMeetupApp extends MeetupApp {
     }
 }
 
-// Replace the global uiComponents instance
+// Replace the global uiComponents instance  
 window.uiComponents = new EmoteEnabledUIComponents();
 window.emoteSystem = window.uiComponents.emoteSystem;
 
@@ -978,76 +962,31 @@ window.debugEmotes = (emoteName) => window.emoteSystem.debugEmoteDimensions(emot
 window.testEmoteRatios = () => window.emoteSystem.testAspectRatios();
 window.refreshEmotes = () => window.emoteSystem.refreshEmotes();
 
-// NEW: Test keyboard navigation manually
-window.testNavigation = () => {
-    console.log('🧪 Testing emote navigation...');
-    
-    // Simulate having suggestions
-    window.uiComponents.currentSuggestions = [
-        { name: 'peepoHey', originalWidth: 28, originalHeight: 28 },
-        { name: 'Kappa', originalWidth: 25, originalHeight: 28 },
-        { name: 'OMEGALUL', originalWidth: 32, originalHeight: 28 }
-    ];
-    window.uiComponents.selectedSuggestionIndex = -1;
-    
-    console.log('Current suggestions:', window.uiComponents.currentSuggestions.length);
-    
-    // Test navigation
-    console.log('Testing down navigation...');
-    window.uiComponents.navigateSuggestions('down');
-    console.log('Selected index:', window.uiComponents.selectedSuggestionIndex);
-    
-    window.uiComponents.navigateSuggestions('down');
-    console.log('Selected index after second down:', window.uiComponents.selectedSuggestionIndex);
-    
-    console.log('Testing up navigation...');
-    window.uiComponents.navigateSuggestions('up');
-    console.log('Selected index after up:', window.uiComponents.selectedSuggestionIndex);
-};
+// Add global debug methods (simple versions)
+window.debugEmotes = (emoteName) => window.emoteSystem.debugEmoteDimensions(emoteName);
+window.testEmoteRatios = () => window.emoteSystem.testAspectRatios();
+window.refreshEmotes = () => window.emoteSystem.refreshEmotes();
 
-// NEW: Show current state for debugging
-window.debugEmoteState = () => {
-    console.log('🔍 Current emote autocomplete state:');
-    console.log('- Has suggestions:', window.uiComponents.currentSuggestions.length);
-    console.log('- Selected index:', window.uiComponents.selectedSuggestionIndex);
-    console.log('- Active input:', window.uiComponents.activeSuggestionsInput?.id || 'none');
-    console.log('- Focused element:', document.activeElement?.id || 'none');
-    console.log('- Suggestions visible:', !!document.getElementById('emote-suggestions'));
-};
-
-// NEW: Test if emotes are loaded and available
-window.testEmoteLoading = () => {
-    console.log('🔍 Testing emote loading...');
-    const available = window.emoteSystem.getAvailableEmotes();
-    console.log('Total emotes loaded:', available.length);
-    
-    if (available.length > 0) {
-        console.log('First 5 emotes:', available.slice(0, 5).map(e => e.name));
-        
-        // Test filtering
-        const peepoEmotes = available.filter(e => e.name.toLowerCase().startsWith('peepo'));
-        console.log('Emotes starting with "peepo":', peepoEmotes.map(e => e.name));
-        
-        const kEmotes = available.filter(e => e.name.toLowerCase().startsWith('k'));
-        console.log('Emotes starting with "k":', kEmotes.map(e => e.name));
-    } else {
-        console.log('❌ No emotes loaded! Try running: refreshEmotes()');
-    }
-};
-
-// NEW: Test autocomplete manually
+// Simple test to check if autocomplete works
 window.testAutocomplete = () => {
-    console.log('🧪 Testing autocomplete manually...');
     const messageInput = document.getElementById('messageInput');
     if (messageInput) {
+        messageInput.focus();
         messageInput.value = ':peepo';
-        messageInput.setSelectionRange(6, 6); // Set cursor at end
-        console.log('Set input to ":peepo" with cursor at end');
+        messageInput.setSelectionRange(6, 6);
         
-        // Trigger autocomplete
-        window.uiComponents.showEmotePreview(messageInput);
-    } else {
-        console.log('❌ Message input not found');
+        // Trigger input event
+        const event = new Event('input', { bubbles: true });
+        messageInput.dispatchEvent(event);
+        
+        console.log('Test: Set input to ":peepo" and triggered autocomplete');
+        
+        // Check if suggestions appeared
+        setTimeout(() => {
+            const suggestions = document.getElementById('emote-suggestions');
+            console.log('Suggestions visible:', !!suggestions);
+            console.log('Current suggestions count:', window.uiComponents.currentSuggestions.length);
+        }, 100);
     }
 };
 
