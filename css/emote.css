@@ -49,7 +49,7 @@
 }
 
 #emote-suggestions::before {
-    content: "Type :emotename to insert emotes";
+    content: "Use ↑↓←→ Tab or click to select, Enter to insert";
     display: block;
     padding: 4px 8px;
     font-size: 11px;
@@ -66,12 +66,18 @@
     padding: 8px 12px;
     border-radius: 6px;
     cursor: pointer;
-    transition: background-color 0.15s ease;
+    transition: all 0.15s ease;
     min-height: 40px;
+    border: 2px solid transparent;
 }
 
 .emote-suggestion:hover {
     background-color: #f3f4f6;
+}
+
+.emote-suggestion.bg-indigo-100 {
+    background-color: #e0e7ff !important;
+    border-color: #6366f1 !important;
 }
 
 .emote-suggestion img {
