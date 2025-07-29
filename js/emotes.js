@@ -530,12 +530,76 @@ class EmoteEnabledUIComponents extends UIComponents {
                 this.selectedSuggestionIndex = -1; // Reset selection
                 this.activeSuggestionsInput = inputElement;
                 this.displayEmoteSuggestions(availableEmotes, inputElement);
+                
+                console.log(`📋 Showing ${availableEmotes.length} suggestions for "${partialEmote}"`);
+                
+                // Setup global keyboard handler as backup
+                this.setupGlobalKeyHandler();
             } else {
                 this.hideEmoteSuggestions();
             }
         } else {
             this.hideEmoteSuggestions();
         }
+    }
+
+    // NEW: Setup global keyboard handler as backup
+    setupGlobalKeyHandler() {
+        // Remove existing global handler if any
+        if (this.globalKeyHandler) {
+            document.removeEventListener('keydown', this.globalKeyHandler, true);
+        }
+        
+        this.globalKeyHandler = (e) => {
+            console.log(`🌍 Global key handler: ${e.key}, suggestions: ${this.currentSuggestions.length}`);
+            
+            if (this.currentSuggestions.length > 0) {
+                let shouldPrevent = false;
+                
+                switch (e.key) {
+                    case 'ArrowDown':
+                        console.log('🌍⬇️ Global Arrow Down');
+                        this.navigateSuggestions('down');
+                        shouldPrevent = true;
+                        break;
+                    case 'ArrowUp':
+                        console.log('🌍⬆️ Global Arrow Up');
+                        this.navigateSuggestions('up');
+                        shouldPrevent = true;
+                        break;
+                    case 'Tab':
+                        console.log('🌍🔄 Global Tab');
+                        if (e.shiftKey) {
+                            this.navigateSuggestions('shift-tab');
+                        } else {
+                            this.navigateSuggestions('tab');
+                        }
+                        shouldPrevent = true;
+                        break;
+                    case 'Enter':
+                        console.log('🌍✅ Global Enter');
+                        if (this.insertSelectedEmote()) {
+                            shouldPrevent = true;
+                        }
+                        break;
+                    case 'Escape':
+                        console.log('🌍❌ Global Escape');
+                        this.hideEmoteSuggestions();
+                        shouldPrevent = true;
+                        break;
+                }
+                
+                if (shouldPrevent) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    return false;
+                }
+            }
+        };
+        
+        // Add global handler with capture
+        document.addEventListener('keydown', this.globalKeyHandler, true);
     }
 
     // FIXED: Display emote suggestions with proper aspect ratios and keyboard navigation
@@ -666,6 +730,14 @@ class EmoteEnabledUIComponents extends UIComponents {
         this.currentSuggestions = [];
         this.selectedSuggestionIndex = -1;
         this.activeSuggestionsInput = null;
+        
+        // Remove global key handler
+        if (this.globalKeyHandler) {
+            document.removeEventListener('keydown', this.globalKeyHandler, true);
+            this.globalKeyHandler = null;
+        }
+        
+        console.log('🚫 Suggestions hidden, state reset');
     }
 
     insertEmote(inputElement, emoteName) {
@@ -689,7 +761,7 @@ class EmoteEnabledUIComponents extends UIComponents {
 
 // Enhanced MeetupApp with emote-aware title processing and FIXED event listeners
 class EmoteEnabledMeetupApp extends MeetupApp {
-    // FIXED: Setup event listeners with emote preview and PROPER keyboard navigation
+    // FIXED: Setup event listeners with emote preview and ROBUST keyboard navigation
     setupEventListeners() {
         // Call parent setup first
         super.setupEventListeners();
@@ -697,6 +769,8 @@ class EmoteEnabledMeetupApp extends MeetupApp {
         // Add emote preview to message input with ":" prefix support and keyboard navigation
         const messageInput = document.getElementById('messageInput');
         if (messageInput) {
+            console.log('🎯 Setting up message input handlers');
+            
             messageInput.addEventListener('input', () => {
                 window.uiComponents.showEmotePreview(messageInput);
             });
@@ -706,63 +780,77 @@ class EmoteEnabledMeetupApp extends MeetupApp {
                 setTimeout(() => window.uiComponents.hideEmoteSuggestions(), 200);
             });
             
-            // Use keydown with proper event handling
+            // Use capture phase for more reliable event handling
             messageInput.addEventListener('keydown', (e) => {
-                // Check if we have suggestions first
+                console.log(`🔥 Key pressed: ${e.key}, suggestions: ${window.uiComponents.currentSuggestions.length}`);
+                
+                // Check if we have suggestions
                 const hasSuggestions = window.uiComponents.currentSuggestions.length > 0;
                 
                 if (hasSuggestions) {
-                    let handled = false;
+                    console.log(`📋 Processing key ${e.key} with ${window.uiComponents.currentSuggestions.length} suggestions`);
+                    
+                    let shouldPrevent = false;
                     
                     switch (e.key) {
                         case 'ArrowDown':
+                            console.log('⬇️ Arrow Down detected');
                             window.uiComponents.navigateSuggestions('down');
-                            handled = true;
+                            shouldPrevent = true;
                             break;
                         case 'ArrowUp':
+                            console.log('⬆️ Arrow Up detected');
                             window.uiComponents.navigateSuggestions('up');
-                            handled = true;
+                            shouldPrevent = true;
                             break;
                         case 'ArrowRight':
+                            console.log('➡️ Arrow Right detected');
                             window.uiComponents.navigateSuggestions('right');
-                            handled = true;
+                            shouldPrevent = true;
                             break;
                         case 'ArrowLeft':
+                            console.log('⬅️ Arrow Left detected');
                             window.uiComponents.navigateSuggestions('left');
-                            handled = true;
+                            shouldPrevent = true;
                             break;
                         case 'Tab':
+                            console.log('🔄 Tab detected');
                             if (e.shiftKey) {
                                 window.uiComponents.navigateSuggestions('shift-tab');
                             } else {
                                 window.uiComponents.navigateSuggestions('tab');
                             }
-                            handled = true;
+                            shouldPrevent = true;
                             break;
                         case 'Enter':
+                            console.log('✅ Enter detected');
                             if (window.uiComponents.insertSelectedEmote()) {
-                                handled = true;
+                                shouldPrevent = true;
                             }
                             break;
                         case 'Escape':
+                            console.log('❌ Escape detected');
                             window.uiComponents.hideEmoteSuggestions();
-                            handled = true;
+                            shouldPrevent = true;
                             break;
                     }
                     
-                    if (handled) {
+                    if (shouldPrevent) {
+                        console.log('🛑 Preventing default behavior');
                         e.preventDefault();
                         e.stopPropagation();
                         e.stopImmediatePropagation();
                         return false;
                     }
+                } else {
+                    console.log('📭 No suggestions, allowing normal behavior');
                 }
                 
                 // Handle escape even when no suggestions
                 if (e.key === 'Escape') {
                     window.uiComponents.hideEmoteSuggestions();
                 }
-            });
+            }, true); // Use capture phase
         }
         
         // Add the same enhanced keyboard handling to description input
@@ -938,6 +1026,49 @@ window.emoteSystem = window.uiComponents.emoteSystem;
 window.debugEmotes = (emoteName) => window.emoteSystem.debugEmoteDimensions(emoteName);
 window.testEmoteRatios = () => window.emoteSystem.testAspectRatios();
 window.refreshEmotes = () => window.emoteSystem.refreshEmotes();
+
+// NEW: Debug autocomplete system
+window.debugAutocomplete = () => {
+    console.log('🔍 Autocomplete Debug Info:');
+    console.log('Current suggestions:', window.uiComponents.currentSuggestions.length);
+    console.log('Selected index:', window.uiComponents.selectedSuggestionIndex);
+    console.log('Active input:', window.uiComponents.activeSuggestionsInput?.id || 'none');
+    console.log('Suggestions element exists:', !!document.getElementById('emote-suggestions'));
+    
+    if (window.uiComponents.currentSuggestions.length > 0) {
+        console.log('Available emotes:', window.uiComponents.currentSuggestions.map(e => e.name));
+    }
+};
+
+// NEW: Test autocomplete functionality
+window.testAutocomplete = () => {
+    console.log('🧪 Testing autocomplete...');
+    
+    // Find message input
+    const messageInput = document.getElementById('messageInput');
+    if (!messageInput) {
+        console.error('❌ Message input not found');
+        return;
+    }
+    
+    // Simulate typing ":peepo"
+    messageInput.focus();
+    messageInput.value = ':peepo';
+    
+    // Simulate input event
+    const inputEvent = new Event('input', { bubbles: true });
+    messageInput.dispatchEvent(inputEvent);
+    
+    setTimeout(() => {
+        window.debugAutocomplete();
+        
+        if (window.uiComponents.currentSuggestions.length > 0) {
+            console.log('✅ Autocomplete working! Try pressing arrow keys now.');
+        } else {
+            console.error('❌ No suggestions appeared');
+        }
+    }, 100);
+};
 
 // Replace the global app class when DOM loads
 document.addEventListener('DOMContentLoaded', async () => {
