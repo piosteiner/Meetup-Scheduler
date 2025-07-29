@@ -1,4 +1,4 @@
-// js/emotes.js - Enhanced 7TV Emote System with Aspect Ratio Preservation
+// js/emotes.js - Fixed 7TV Emote System with Working Aspect Ratio and Autocomplete
 
 class EmoteSystem {
     constructor() {
@@ -15,7 +15,7 @@ class EmoteSystem {
         this.cacheExpiry = 24 * 60 * 60 * 1000; // 24 hours
         
         // Aspect ratio configuration
-        this.maxHeight = 28; // Maximum height for emotes
+        this.maxHeight = 28; // Maximum height for emotes in messages
         this.minHeight = 16; // Minimum height for very small emotes
         
         // Initialize the system
@@ -85,7 +85,7 @@ class EmoteSystem {
         const maxHeight = maxHeights[context] || this.maxHeight;
         
         // If no dimensions provided, use defaults
-        if (!originalWidth || !originalHeight) {
+        if (!originalWidth || !originalHeight || originalWidth <= 0 || originalHeight <= 0) {
             return { width: maxHeight, height: maxHeight };
         }
         
@@ -93,19 +93,25 @@ class EmoteSystem {
         const aspectRatio = originalWidth / originalHeight;
         
         // Scale based on height constraint
-        let displayHeight = Math.min(maxHeight, originalHeight);
-        let displayWidth = displayHeight * aspectRatio;
+        let displayHeight = Math.min(maxHeight, Math.max(originalHeight, this.minHeight));
+        let displayWidth = Math.round(displayHeight * aspectRatio);
         
         // Ensure minimum height for readability
         if (displayHeight < this.minHeight) {
             displayHeight = this.minHeight;
-            displayWidth = displayHeight * aspectRatio;
+            displayWidth = Math.round(displayHeight * aspectRatio);
         }
         
-        // Round to avoid sub-pixel rendering issues
+        // Prevent extremely wide emotes
+        const maxWidth = maxHeight * 2.5; // Allow up to 2.5x aspect ratio
+        if (displayWidth > maxWidth) {
+            displayWidth = maxWidth;
+            displayHeight = Math.round(displayWidth / aspectRatio);
+        }
+        
         return {
-            width: Math.round(displayWidth),
-            height: Math.round(displayHeight)
+            width: Math.max(1, displayWidth),
+            height: Math.max(1, displayHeight)
         };
     }
 
@@ -167,14 +173,7 @@ class EmoteSystem {
                     // Store original dimensions
                     originalWidth: originalWidth,
                     originalHeight: originalHeight,
-                    animated: emoteData.data?.animated || false,
-                    // Calculate display dimensions for different contexts
-                    displayDimensions: {
-                        message: this.calculateDisplayDimensions(originalWidth, originalHeight, 'message'),
-                        title: this.calculateDisplayDimensions(originalWidth, originalHeight, 'title'),
-                        description: this.calculateDisplayDimensions(originalWidth, originalHeight, 'description'),
-                        suggestion: this.calculateDisplayDimensions(originalWidth, originalHeight, 'suggestion')
-                    }
+                    animated: emoteData.data?.animated || false
                 };
             });
             
@@ -215,13 +214,7 @@ class EmoteSystem {
                 fallbackUrl: 'https://cdn.7tv.app/emote/01F6NMMEER00015NVG2J8ZH77N/2x.png',
                 originalWidth: 28,
                 originalHeight: 28,
-                animated: false,
-                displayDimensions: {
-                    message: { width: 28, height: 28 },
-                    title: { width: 32, height: 32 },
-                    description: { width: 24, height: 24 },
-                    suggestion: { width: 24, height: 24 }
-                }
+                animated: false
             },
             'Kappa': {
                 id: '60ae958e229664e0042a3e6a',
@@ -230,13 +223,7 @@ class EmoteSystem {
                 fallbackUrl: 'https://cdn.7tv.app/emote/60ae958e229664e0042a3e6a/2x.png',
                 originalWidth: 25,
                 originalHeight: 28,
-                animated: false,
-                displayDimensions: {
-                    message: { width: 25, height: 28 },
-                    title: { width: 29, height: 32 },
-                    description: { width: 21, height: 24 },
-                    suggestion: { width: 21, height: 24 }
-                }
+                animated: false
             },
             'OMEGALUL': {
                 id: '60ae43bf259b0f00060b4b54',
@@ -245,13 +232,7 @@ class EmoteSystem {
                 fallbackUrl: 'https://cdn.7tv.app/emote/60ae43bf259b0f00060b4b54/2x.png',
                 originalWidth: 32,
                 originalHeight: 28,
-                animated: false,
-                displayDimensions: {
-                    message: { width: 32, height: 28 },
-                    title: { width: 37, height: 32 },
-                    description: { width: 27, height: 24 },
-                    suggestion: { width: 27, height: 24 }
-                }
+                animated: false
             }
         };
         
@@ -295,7 +276,11 @@ class EmoteSystem {
 
     // Create HTML for an emote with proper aspect ratio
     createEmoteHtml(emote, context = 'message') {
-        const dimensions = emote.displayDimensions[context] || emote.displayDimensions.message;
+        const dimensions = this.calculateDisplayDimensions(
+            emote.originalWidth, 
+            emote.originalHeight, 
+            context
+        );
         
         // Add CSS class based on context for additional styling
         const contextClass = context !== 'message' ? `emote-${context}` : '';
@@ -303,7 +288,7 @@ class EmoteSystem {
         return `<img src="${emote.url}" 
                     alt="${emote.name}" 
                     title="${emote.name}"
-                    class="emote-img ${contextClass} inline-block align-middle mx-0.5" 
+                    class="emote-img ${contextClass}" 
                     style="width: ${dimensions.width}px; height: ${dimensions.height}px; object-fit: contain;"
                     data-emote-name="${emote.name}"
                     data-original-width="${emote.originalWidth}"
@@ -324,10 +309,10 @@ class EmoteSystem {
         return Array.from(this.emotes.entries()).map(([name, data]) => ({
             name: name,
             url: data.url,
+            fallbackUrl: data.fallbackUrl,
             id: data.id,
             originalWidth: data.originalWidth,
-            originalHeight: data.originalHeight,
-            displayDimensions: data.displayDimensions
+            originalHeight: data.originalHeight
         }));
     }
 
@@ -347,23 +332,9 @@ class EmoteSystem {
         this.emotes.clear();
         await this.fetchEmotes();
     }
-
-    // Get emote statistics
-    getEmoteStats() {
-        const emotes = Array.from(this.emotes.values());
-        return {
-            total: emotes.length,
-            animated: emotes.filter(e => e.animated).length,
-            aspectRatios: emotes.map(e => ({
-                name: e.name,
-                ratio: e.originalWidth / e.originalHeight,
-                dimensions: `${e.originalWidth}x${e.originalHeight}`
-            }))
-        };
-    }
 }
 
-// Enhanced UI Components with emote support and aspect ratio preservation
+// Enhanced UI Components with emote support and FIXED autocomplete
 class EmoteEnabledUIComponents extends UIComponents {
     constructor() {
         super();
@@ -422,7 +393,7 @@ class EmoteEnabledUIComponents extends UIComponents {
         }
     }
 
-    // Enhanced emote preview functionality with proper sizing
+    // FIXED: Enhanced emote preview functionality
     showEmotePreview(inputElement) {
         const text = inputElement.value;
         const cursorPosition = inputElement.selectionStart;
@@ -431,7 +402,7 @@ class EmoteEnabledUIComponents extends UIComponents {
         const beforeCursor = text.substring(0, cursorPosition);
         const matches = beforeCursor.match(/\b\w+$/);
         
-        if (matches) {
+        if (matches && matches[0].length >= 2) { // At least 2 characters to show suggestions
             const partialEmote = matches[0];
             const availableEmotes = this.emoteSystem.getAvailableEmotes()
                 .filter(emote => emote.name.toLowerCase().startsWith(partialEmote.toLowerCase()))
@@ -447,6 +418,7 @@ class EmoteEnabledUIComponents extends UIComponents {
         }
     }
 
+    // FIXED: Display emote suggestions with proper aspect ratios
     displayEmoteSuggestions(emotes, inputElement) {
         // Remove existing suggestions
         this.hideEmoteSuggestions();
@@ -456,14 +428,19 @@ class EmoteEnabledUIComponents extends UIComponents {
         suggestions.className = 'absolute z-50 bg-white border border-gray-300 rounded-lg shadow-lg p-2 mt-1 max-w-sm';
         
         suggestions.innerHTML = emotes.map(emote => {
-            const dims = emote.displayDimensions.suggestion;
+            const dims = this.emoteSystem.calculateDisplayDimensions(
+                emote.originalWidth, 
+                emote.originalHeight, 
+                'suggestion'
+            );
             return `
                 <div class="flex items-center gap-3 p-2 hover:bg-gray-100 rounded cursor-pointer emote-suggestion" 
                      data-emote-name="${emote.name}">
                     <img src="${emote.url}" 
                          alt="${emote.name}" 
                          class="flex-shrink-0"
-                         style="width: ${dims.width}px; height: ${dims.height}px; object-fit: contain;">
+                         style="width: ${dims.width}px; height: ${dims.height}px; object-fit: contain;"
+                         onerror="this.src='${emote.fallbackUrl}'; this.onerror=null;">
                     <div class="flex-1 min-w-0">
                         <span class="text-sm font-medium text-gray-900">${emote.name}</span>
                         <div class="text-xs text-gray-500">${emote.originalWidth}×${emote.originalHeight}</div>
@@ -516,8 +493,57 @@ class EmoteEnabledUIComponents extends UIComponents {
     }
 }
 
-// Enhanced MeetupApp with emote-aware title processing
+// Enhanced MeetupApp with emote-aware title processing and FIXED event listeners
 class EmoteEnabledMeetupApp extends MeetupApp {
+    // FIXED: Setup event listeners with emote preview
+    setupEventListeners() {
+        // Call parent setup first
+        super.setupEventListeners();
+        
+        // Add emote preview to message input
+        const messageInput = document.getElementById('messageInput');
+        if (messageInput) {
+            messageInput.addEventListener('input', () => {
+                window.uiComponents.showEmotePreview(messageInput);
+            });
+            
+            messageInput.addEventListener('blur', () => {
+                // Delay hiding to allow clicking on suggestions
+                setTimeout(() => window.uiComponents.hideEmoteSuggestions(), 200);
+            });
+            
+            messageInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    window.uiComponents.hideEmoteSuggestions();
+                }
+            });
+        }
+        
+        // Add emote preview to description input (when it becomes visible)
+        document.addEventListener('click', (e) => {
+            if (e.target && e.target.id === 'descriptionInput') {
+                setTimeout(() => {
+                    const descriptionInput = document.getElementById('descriptionInput');
+                    if (descriptionInput) {
+                        descriptionInput.addEventListener('input', () => {
+                            window.uiComponents.showEmotePreview(descriptionInput);
+                        });
+                        
+                        descriptionInput.addEventListener('blur', () => {
+                            setTimeout(() => window.uiComponents.hideEmoteSuggestions(), 200);
+                        });
+                        
+                        descriptionInput.addEventListener('keydown', (e) => {
+                            if (e.key === 'Escape') {
+                                window.uiComponents.hideEmoteSuggestions();
+                            }
+                        });
+                    }
+                }, 100);
+            }
+        });
+    }
+
     // Override setupMeetupListeners to handle emote-processed titles with proper context
     setupMeetupListeners() {
         // Clean up existing listeners first
@@ -614,4 +640,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     await window.app.init();
 });
 
-console.log('✅ Enhanced emote system with aspect ratio preservation loaded successfully');
+console.log('✅ FIXED emote system with working aspect ratio and autocomplete loaded successfully');
