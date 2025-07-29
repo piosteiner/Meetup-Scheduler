@@ -90,7 +90,7 @@ class EmoteSystem {
             console.log('🔄 Fetching fresh emotes from 7TV...');
             
             // Fetch popular global emotes from 7TV
-            const response = await fetch('https://7tv.io/v3/emote-sets/global', {
+            const response = await fetch('https://7tv.io/v3/emote-sets/01K1BPC2WFZB8QA3T04MPBTSS9', {
                 method: 'GET',
                 headers: {
                     'Accept': 'application/json',
