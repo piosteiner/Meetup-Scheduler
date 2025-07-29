@@ -167,7 +167,7 @@ class UIComponents {
                 ${this.renderResponseSummary(availableCount, maybeCount, unavailableCount)}
                 
                 ${selectedParticipantId ? 
-                    this.renderParticipantResponseSection(proposalId, selectedParticipantName, selectedResponse) :
+                    this.renderParticipantResponseSection(proposalId, selectedParticipantName, selectedResponse, proposal.dateTime) :
                     this.renderNoParticipantSelected()
                 }
                 ${this.renderDeleteButton(proposalId, proposerName)}
@@ -196,13 +196,23 @@ class UIComponents {
     }
 
     // Render participant response section
-    renderParticipantResponseSection(proposalId, participantName, currentResponse) {
+    renderParticipantResponseSection(proposalId, participantName, currentResponse, proposalDateTime) {
+        // Format the proposal date for the clear button
+        const formattedProposalDate = window.Utils.formatDate(new Date(proposalDateTime)) + ' at ' + 
+                                      window.Utils.formatTime(new Date(proposalDateTime));
+        
         return `
             <div class="mb-3 p-3 bg-gray-50 rounded border">
-                <div class="text-sm text-gray-600">
+                <div class="text-sm text-gray-600 mb-2">
                     <strong>${participantName}</strong>'s status: 
                     ${currentResponse ? `<span class="font-semibold px-2 py-1 rounded text-xs ${this.getResponseBadgeClass(currentResponse)}">${currentResponse}</span>` : '<span class="text-gray-400">No response yet</span>'}
                 </div>
+                ${currentResponse ? `
+                    <button onclick="window.clearAvailabilityResponse('${proposalId}', '${this.escapeHtml(participantName)}', '${this.escapeHtml(formattedProposalDate)}')" 
+                            class="text-gray-500 hover:text-red-600 text-xs transition-colors duration-200 underline">
+                        Clear response
+                    </button>
+                ` : ''}
             </div>
             <div class="grid grid-cols-3 gap-2">
                 ${this.renderResponseButton(proposalId, 'available', 'Available', currentResponse)}

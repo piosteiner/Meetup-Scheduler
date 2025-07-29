@@ -402,6 +402,44 @@ class MeetupApp {
         }
     }
 
+    // Clear availability response with confirmation
+    async clearAvailabilityResponse(proposalId, participantName, proposalDate) {
+        try {
+            // Show confirmation dialog
+            const confirmClear = confirm(
+                `Are you sure you want to clear ${participantName}'s availability response for:\n\n` +
+                `${proposalDate}\n\n` +
+                `This will remove their current availability status.`
+            );
+            
+            if (!confirmClear) {
+                return; // User cancelled
+            }
+            
+            if (!this.selectedParticipantId) {
+                window.uiComponents.showNotification('Please select a participant first', 'warning');
+                return;
+            }
+            
+            if (!this.currentMeetupKey) {
+                window.uiComponents.showNotification('No meetup selected', 'error');
+                return;
+            }
+            
+            // Remove the participant's response from Firebase
+            await window.firebaseAPI.database.ref(
+                `meetups/${this.currentMeetupKey}/proposals/${proposalId}/responses/${this.selectedParticipantId}`
+            ).remove();
+            
+            window.uiComponents.showNotification('Availability response cleared!', 'success');
+            console.log('✅ Availability response cleared for:', this.selectedParticipantId, 'on proposal:', proposalId);
+            
+        } catch (error) {
+            console.error('❌ Error clearing availability response:', error);
+            window.uiComponents.showNotification('Error clearing response: ' + error.message, 'error');
+        }
+    }
+
     // Delete proposal with confirmation
     async deleteProposal(proposalId, proposerName) {
         try {
@@ -836,6 +874,7 @@ window.goToMeetup = () => window.app?.goToMeetup();
 window.goHome = () => window.app?.goHome();
 window.deleteProposal = (proposalId, proposerName) => window.app?.deleteProposal(proposalId, proposerName);
 window.deleteMessage = (messageId, senderName, messageText) => window.app?.deleteMessage(messageId, senderName, messageText);
+window.clearAvailabilityResponse = (proposalId, participantName, proposalDate) => window.app?.clearAvailabilityResponse(proposalId, participantName, proposalDate);
 window.editMeetupName = () => window.app?.editMeetupName();
 
 // Initialize app when DOM is loaded
