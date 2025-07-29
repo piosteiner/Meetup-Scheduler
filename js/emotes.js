@@ -7,8 +7,8 @@ class EmoteSystem {
         this.isLoading = false;
         this.loadPromise = null;
         
-        // 7TV Global Emote Set ID (popular emotes available to everyone)
-        this.globalEmoteSetId = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
+        // Your custom emote set ID
+        this.customEmoteSetId = '01K1BPC2WFZB8QA3T04MPBTSS9';
         
         // Cache configuration
         this.cacheKey = 'piogino_emotes_cache';
@@ -28,7 +28,13 @@ class EmoteSystem {
             }
             
             // Always fetch fresh data in background (but don't block UI)
-            this.fetchEmotes().catch(console.warn);
+            this.fetchEmotes().catch(error => {
+                console.warn('Failed to fetch fresh emotes:', error);
+                // If we don't have cached emotes and fetch fails, show warning
+                if (this.emotes.size === 0) {
+                    console.warn('⚠️ No emotes available - API fetch failed and no cache found');
+                }
+            });
         } catch (error) {
             console.warn('Failed to initialize emote system:', error);
         }
@@ -87,10 +93,10 @@ class EmoteSystem {
 
     async _doFetchEmotes() {
         try {
-            console.log('🔄 Fetching fresh emotes from 7TV...');
+            console.log('🔄 Fetching emotes from your custom 7TV set...');
             
-            // Fetch popular global emotes from 7TV
-            const response = await fetch('https://7tv.io/v3/emote-sets/01K1BPC2WFZB8QA3T04MPBTSS9', {
+            // Fetch your specific emote set from 7TV
+            const response = await fetch(`https://7tv.io/v3/emote-sets/${this.customEmoteSetId}`, {
                 method: 'GET',
                 headers: {
                     'Accept': 'application/json',
@@ -98,19 +104,22 @@ class EmoteSystem {
             });
             
             if (!response.ok) {
-                throw new Error(`7TV API responded with ${response.status}`);
+                throw new Error(`7TV API responded with ${response.status}: ${response.statusText}`);
             }
             
             const data = await response.json();
             
             if (!data.emotes || !Array.isArray(data.emotes)) {
-                throw new Error('Invalid response format from 7TV API');
+                throw new Error('Invalid response format from 7TV API - no emotes array found');
             }
             
             // Process emotes into our format
             const emotesData = {};
             data.emotes.forEach(emoteData => {
-                if (!emoteData.name || !emoteData.id) return;
+                if (!emoteData.name || !emoteData.id) {
+                    console.warn('Skipping emote with missing name or id:', emoteData);
+                    return;
+                }
                 
                 emotesData[emoteData.name] = {
                     id: emoteData.id,
@@ -125,23 +134,49 @@ class EmoteSystem {
                 };
             });
             
+            if (Object.keys(emotesData).length === 0) {
+                throw new Error('No valid emotes found in the emote set');
+            }
+            
             this.loadEmotes(emotesData);
             this.saveToCache(emotesData);
             
-            console.log('✅ Successfully loaded', Object.keys(emotesData).length, 'emotes from 7TV');
+            console.log('✅ Successfully loaded', Object.keys(emotesData).length, 'emotes from your custom set');
             
         } catch (error) {
-            console.warn('Failed to fetch emotes from 7TV:', error);
+            console.error('❌ Failed to fetch emotes from 7TV:', error);
             
-            // If we have cached emotes, continue using them
+            // Don't load fallback emotes - just fail gracefully
             if (this.emotes.size === 0) {
-                // Load a minimal set of popular emotes as fallback
-                this.loadFallbackEmotes();
+                console.warn('⚠️ No emotes available - please check your internet connection or the emote set ID');
             }
+            
+            throw error; // Re-throw to be handled by caller
         }
     }
 
     // Load emotes into memory and build regex
+    loadEmotes(emotesData) {
+        this.emotes.clear();
+        
+        Object.entries(emotesData).forEach(([name, data]) => {
+            this.emotes.set(name, data);
+        });
+        
+        this.buildEmoteRegex();
+    }
+
+    // Build regex pattern to match emote names
+    buildEmoteRegex() {
+        if (this.emotes.size === 0) {
+            this.emoteRegex = null;
+            return;
+        }
+        
+        // Sort emote names by length (longest first) to prevent partial matches
+        const emoteNames = Array.from(this.emotes.keys())
+            .sort((a, b) => b.length - a.length)
+            .map(name => name.replace(/[.*+?^${}()|[\]\\]/g, '\\    // Load emotes into memory and build regex
     loadEmotes(emotesData) {
         this.emotes.clear();
         
@@ -199,6 +234,10 @@ class EmoteSystem {
         const emoteNames = Array.from(this.emotes.keys())
             .sort((a, b) => b.length - a.length)
             .map(name => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')); // Escape regex chars
+        
+        // Create regex that matches emote names as whole words
+        this.emoteRegex = new RegExp(`\\b(${emoteNames.join('|')})\\b`, 'g');
+    }')); // Escape regex chars
         
         // Create regex that matches emote names as whole words
         this.emoteRegex = new RegExp(`\\b(${emoteNames.join('|')})\\b`, 'g');
@@ -263,16 +302,37 @@ class EmoteSystem {
     async refreshEmotes() {
         localStorage.removeItem(this.cacheKey);
         this.emotes.clear();
+        this.emoteRegex = null;
         await this.fetchEmotes();
+    }
+
+    // Check if emote system is ready
+    isReady() {
+        return this.emotes.size > 0;
+    }
+
+    // Get status of emote system
+    getStatus() {
+        return {
+            ready: this.isReady(),
+            emoteCount: this.emotes.size,
+            isLoading: this.isLoading,
+            setId: this.customEmoteSetId
+        };
     }
 }
 
-// Enhanced UI Components with emote support
+// Enhanced UI Components with emote support and keyboard navigation
 class EmoteEnabledUIComponents extends UIComponents {
     constructor() {
         super();
         // Initialize emote system
         this.emoteSystem = new EmoteSystem();
+        
+        // Navigation state for emote suggestions
+        this.currentSuggestions = null;
+        this.currentInput = null;
+        this.selectedIndex = -1;
     }
 
     // Override message rendering to include emotes
@@ -326,7 +386,7 @@ class EmoteEnabledUIComponents extends UIComponents {
         }
     }
 
-    // Add emote preview functionality
+    // Enhanced emote preview with keyboard navigation
     showEmotePreview(inputElement) {
         const text = inputElement.value;
         const cursorPosition = inputElement.selectionStart;
@@ -335,11 +395,11 @@ class EmoteEnabledUIComponents extends UIComponents {
         const beforeCursor = text.substring(0, cursorPosition);
         const matches = beforeCursor.match(/\b\w+$/);
         
-        if (matches) {
+        if (matches && matches[0].length > 0) {
             const partialEmote = matches[0];
             const availableEmotes = this.emoteSystem.getAvailableEmotes()
                 .filter(emote => emote.name.toLowerCase().startsWith(partialEmote.toLowerCase()))
-                .slice(0, 5); // Show max 5 suggestions
+                .slice(0, 8); // Show max 8 suggestions
             
             if (availableEmotes.length > 0) {
                 this.displayEmoteSuggestions(availableEmotes, inputElement);
@@ -357,13 +417,18 @@ class EmoteEnabledUIComponents extends UIComponents {
         
         const suggestions = document.createElement('div');
         suggestions.id = 'emote-suggestions';
-        suggestions.className = 'absolute z-50 bg-white border border-gray-300 rounded-lg shadow-lg p-2 mt-1 max-w-xs';
+        suggestions.className = 'absolute z-50 bg-white border border-gray-300 rounded-lg shadow-lg p-1 mt-1 max-w-xs';
+        suggestions.setAttribute('role', 'listbox');
+        suggestions.setAttribute('aria-label', 'Emote suggestions');
         
-        suggestions.innerHTML = emotes.map(emote => `
-            <div class="flex items-center gap-2 p-1 hover:bg-gray-100 rounded cursor-pointer emote-suggestion" 
-                 data-emote-name="${emote.name}">
-                <img src="${emote.url}" alt="${emote.name}" class="w-6 h-6">
-                <span class="text-sm">${emote.name}</span>
+        suggestions.innerHTML = emotes.map((emote, index) => `
+            <div class="flex items-center gap-2 p-2 hover:bg-gray-100 rounded cursor-pointer emote-suggestion ${index === 0 ? 'selected' : ''}" 
+                 data-emote-name="${emote.name}"
+                 data-index="${index}"
+                 role="option"
+                 aria-selected="${index === 0 ? 'true' : 'false'}">
+                <img src="${emote.url}" alt="${emote.name}" class="w-6 h-6 flex-shrink-0">
+                <span class="text-sm font-medium">${emote.name}</span>
             </div>
         `).join('');
         
@@ -375,12 +440,19 @@ class EmoteEnabledUIComponents extends UIComponents {
         
         document.body.appendChild(suggestions);
         
+        // Store reference for keyboard navigation
+        this.currentSuggestions = suggestions;
+        this.currentInput = inputElement;
+        this.selectedIndex = 0;
+        
         // Add click handlers
         suggestions.querySelectorAll('.emote-suggestion').forEach(item => {
-            item.addEventListener('click', () => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
                 const emoteName = item.dataset.emoteName;
                 this.insertEmote(inputElement, emoteName);
                 this.hideEmoteSuggestions();
+                inputElement.focus();
             });
         });
     }
@@ -390,6 +462,106 @@ class EmoteEnabledUIComponents extends UIComponents {
         if (existing) {
             existing.remove();
         }
+        
+        // Clean up navigation state
+        this.currentSuggestions = null;
+        this.currentInput = null;
+        this.selectedIndex = -1;
+    }
+
+    // Navigate emote suggestions with keyboard
+    navigateEmoteSuggestions(direction) {
+        if (!this.currentSuggestions) return false;
+        
+        const suggestions = this.currentSuggestions.querySelectorAll('.emote-suggestion');
+        if (suggestions.length === 0) return false;
+        
+        // Remove current selection
+        suggestions[this.selectedIndex]?.classList.remove('selected');
+        suggestions[this.selectedIndex]?.setAttribute('aria-selected', 'false');
+        
+        // Update selected index
+        if (direction === 'down') {
+            this.selectedIndex = (this.selectedIndex + 1) % suggestions.length;
+        } else if (direction === 'up') {
+            this.selectedIndex = this.selectedIndex <= 0 ? suggestions.length - 1 : this.selectedIndex - 1;
+        }
+        
+        // Apply new selection
+        const newSelected = suggestions[this.selectedIndex];
+        if (newSelected) {
+            newSelected.classList.add('selected');
+            newSelected.setAttribute('aria-selected', 'true');
+            
+            // Scroll into view if needed
+            newSelected.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+        
+        return true;
+    }
+
+    // Select currently highlighted emote
+    selectHighlightedEmote() {
+        if (!this.currentSuggestions || !this.currentInput) return false;
+        
+        const selected = this.currentSuggestions.querySelector('.emote-suggestion.selected');
+        if (selected) {
+            const emoteName = selected.dataset.emoteName;
+            this.insertEmote(this.currentInput, emoteName);
+            this.hideEmoteSuggestions();
+            this.currentInput.focus();
+            return true;
+        }
+        
+        return false;
+    }
+
+    // Handle keyboard events for emote navigation
+    handleEmoteKeydown(event, inputElement) {
+        const suggestions = document.getElementById('emote-suggestions');
+        if (!suggestions) {
+            return false; // No suggestions visible, let normal handling proceed
+        }
+        
+        switch (event.key) {
+            case 'ArrowDown':
+                event.preventDefault();
+                this.navigateEmoteSuggestions('down');
+                return true;
+                
+            case 'ArrowUp':
+                event.preventDefault();
+                this.navigateEmoteSuggestions('up');
+                return true;
+                
+            case 'Tab':
+                event.preventDefault();
+                if (this.selectHighlightedEmote()) {
+                    return true;
+                }
+                break;
+                
+            case 'Enter':
+                event.preventDefault();
+                if (this.selectHighlightedEmote()) {
+                    return true;
+                }
+                break;
+                
+            case 'Escape':
+                event.preventDefault();
+                this.hideEmoteSuggestions();
+                return true;
+                
+            default:
+                // For other keys, let the input handle it normally and then update suggestions
+                setTimeout(() => {
+                    this.showEmotePreview(inputElement);
+                }, 0);
+                return false;
+        }
+        
+        return false;
     }
 
     insertEmote(inputElement, emoteName) {
@@ -402,11 +574,19 @@ class EmoteEnabledUIComponents extends UIComponents {
         
         if (matches) {
             const startPos = cursorPosition - matches[0].length;
-            const newText = text.substring(0, startPos) + emoteName + text.substring(cursorPosition);
+            const afterCursor = text.substring(cursorPosition);
+            
+            // Insert emote name with a space after it if there isn't one already
+            const needsSpace = afterCursor.length === 0 || !afterCursor.startsWith(' ');
+            const newText = text.substring(0, startPos) + emoteName + (needsSpace ? ' ' : '') + afterCursor;
             
             inputElement.value = newText;
-            inputElement.setSelectionRange(startPos + emoteName.length, startPos + emoteName.length);
-            inputElement.focus();
+            const newCursorPos = startPos + emoteName.length + (needsSpace ? 1 : 0);
+            inputElement.setSelectionRange(newCursorPos, newCursorPos);
+            
+            // Trigger input event to update any listeners
+            const inputEvent = new Event('input', { bubbles: true });
+            inputElement.dispatchEvent(inputEvent);
         }
     }
 }
@@ -449,33 +629,109 @@ class EmoteEnabledMeetupApp extends MeetupApp {
         }
     }
 
-    // Override setupEventListeners to add emote preview
+    // Override setupEventListeners to add emote preview and keyboard navigation
     setupEventListeners() {
         super.setupEventListeners();
         
-        // Add emote preview to message input
+        // Enhanced message input with keyboard navigation
         const messageInput = document.getElementById('messageInput');
         if (messageInput) {
-            messageInput.addEventListener('input', () => {
+            // Handle input changes for autocomplete
+            messageInput.addEventListener('input', (e) => {
                 window.uiComponents.showEmotePreview(messageInput);
             });
             
-            messageInput.addEventListener('blur', () => {
-                setTimeout(() => window.uiComponents.hideEmoteSuggestions(), 150);
+            // Handle keyboard navigation
+            messageInput.addEventListener('keydown', (e) => {
+                const handled = window.uiComponents.handleEmoteKeydown(e, messageInput);
+                if (!handled && e.key === 'Enter' && !e.shiftKey) {
+                    // Only send message if no emote suggestions are visible
+                    const suggestions = document.getElementById('emote-suggestions');
+                    if (!suggestions) {
+                        // Let the normal enter handling proceed
+                        return;
+                    }
+                }
+            });
+            
+            // Hide suggestions when input loses focus (with delay for clicks)
+            messageInput.addEventListener('blur', (e) => {
+                setTimeout(() => {
+                    // Only hide if focus didn't move to a suggestion
+                    if (!document.getElementById('emote-suggestions')?.contains(document.activeElement)) {
+                        window.uiComponents.hideEmoteSuggestions();
+                    }
+                }, 150);
+            });
+            
+            // Re-show suggestions when input gains focus
+            messageInput.addEventListener('focus', () => {
+                if (messageInput.value.trim()) {
+                    window.uiComponents.showEmotePreview(messageInput);
+                }
             });
         }
         
-        // Add emote preview to description input
-        const descriptionInput = document.getElementById('descriptionInput');
-        if (descriptionInput) {
-            descriptionInput.addEventListener('input', () => {
-                window.uiComponents.showEmotePreview(descriptionInput);
-            });
-            
-            descriptionInput.addEventListener('blur', () => {
-                setTimeout(() => window.uiComponents.hideEmoteSuggestions(), 150);
-            });
+        // Enhanced description input with keyboard navigation
+        const setupDescriptionInput = () => {
+            const descriptionInput = document.getElementById('descriptionInput');
+            if (descriptionInput) {
+                // Handle input changes for autocomplete
+                descriptionInput.addEventListener('input', (e) => {
+                    window.uiComponents.showEmotePreview(descriptionInput);
+                });
+                
+                // Handle keyboard navigation
+                descriptionInput.addEventListener('keydown', (e) => {
+                    const handled = window.uiComponents.handleEmoteKeydown(e, descriptionInput);
+                    if (!handled) {
+                        // Let original description keydown handler run
+                        if (e.ctrlKey && e.key === 'Enter') {
+                            window.app.saveDescription();
+                        } else if (e.key === 'Escape') {
+                            window.app.cancelDescriptionEdit();
+                        }
+                    }
+                });
+                
+                // Hide suggestions when input loses focus (with delay for clicks)
+                descriptionInput.addEventListener('blur', (e) => {
+                    setTimeout(() => {
+                        if (!document.getElementById('emote-suggestions')?.contains(document.activeElement)) {
+                            window.uiComponents.hideEmoteSuggestions();
+                        }
+                    }, 150);
+                });
+                
+                // Re-show suggestions when input gains focus
+                descriptionInput.addEventListener('focus', () => {
+                    if (descriptionInput.value.trim()) {
+                        window.uiComponents.showEmotePreview(descriptionInput);
+                    }
+                });
+            }
+        };
+        
+        // Set up description input initially
+        setupDescriptionInput();
+        
+        // Re-setup when description edit mode is activated (since the input is dynamically shown/hidden)
+        const originalEditDescription = window.app?.editDescription;
+        if (originalEditDescription) {
+            window.app.editDescription = function() {
+                originalEditDescription.call(this);
+                setTimeout(setupDescriptionInput, 100); // Setup after the input is shown
+            };
         }
+        
+        // Global click handler to hide suggestions when clicking outside
+        document.addEventListener('click', (e) => {
+            const suggestions = document.getElementById('emote-suggestions');
+            if (suggestions && !suggestions.contains(e.target) && 
+                !['messageInput', 'descriptionInput'].includes(e.target.id)) {
+                window.uiComponents.hideEmoteSuggestions();
+            }
+        });
     }
 
     // Override setupMeetupListeners to handle emote-processed titles
