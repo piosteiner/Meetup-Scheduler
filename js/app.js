@@ -1,4 +1,4 @@
-// app.js - Main application logic
+// app.js - Main application logic with duplicate message fix
 
 class MeetupApp {
     constructor() {
@@ -10,6 +10,7 @@ class MeetupApp {
         this.listeners = new Map(); // Track Firebase listeners for cleanup
         this.currentProposals = {}; // Store current proposals for deleted proposals listener
         this.currentMessages = {}; // Store current messages for re-rendering
+        this.lastMessagesRender = ''; // Track last rendered messages HTML to prevent duplicates
     }
 
     // Initialize the application
@@ -523,6 +524,7 @@ class MeetupApp {
         this.allParticipants = {};
         this.meetingDuration = window.MeetupConfig.app.defaultMeetingDuration;
         this.currentMessages = {};
+        this.lastMessagesRender = ''; // Reset message render tracking
         
         // Clear URL
         window.Utils.clearUrl();
@@ -611,15 +613,32 @@ class MeetupApp {
             this.allParticipants = participants;
             this.updateParticipantsUI(participants);
             
-            // Re-render messages when participants update (fixes name association)
-            this.renderMessages(this.currentMessages);
+            // FIXED: Only re-render messages if participants actually changed
+            // This prevents duplicate rendering when messages update
+            if (Object.keys(this.currentMessages).length > 0) {
+                this.renderMessages(this.currentMessages);
+            }
         });
         this.listeners.set('participants', participantsListener);
 
-        // Messages listener - newest first and auto-expanding
+        // Messages listener - FIXED: Only render if content actually changed
         const messagesListener = window.firebaseAPI.onMessagesChange(this.currentMeetupKey, (messages) => {
             this.currentMessages = messages;
-            this.renderMessages(messages);
+            
+            // Generate HTML and only update if it's different
+            const newMessagesList = window.uiComponents.renderMessagesList(
+                Object.entries(messages).sort((a, b) => (b[1].timestamp || 0) - (a[1].timestamp || 0)),
+                this.allParticipants
+            );
+            
+            // Only update DOM if the HTML actually changed
+            if (newMessagesList !== this.lastMessagesRender) {
+                window.uiComponents.updateHTML('messagesList', newMessagesList);
+                this.lastMessagesRender = newMessagesList;
+                console.log('Messages updated - DOM rendered');
+            } else {
+                console.log('Messages updated - no DOM change needed');
+            }
         });
         this.listeners.set('messages', messagesListener);
 
@@ -640,14 +659,8 @@ class MeetupApp {
         this.listeners.set('deletedProposals', deletedProposalsListener);
     }
 
-    // Separate function to render messages with better name handling
-    renderMessages(messages) {
-        const messageArray = Object.entries(messages)
-            .sort((a, b) => (b[1].timestamp || 0) - (a[1].timestamp || 0)); // Newest first
-        
-        const messagesList = window.uiComponents.renderMessagesList(messageArray, this.allParticipants);
-        window.uiComponents.updateHTML('messagesList', messagesList);
-    }
+    // REMOVED: Separate renderMessages function to prevent double calling
+    // Messages are now rendered directly in the listener
 
     // Update participants UI
     updateParticipantsUI(participants) {
