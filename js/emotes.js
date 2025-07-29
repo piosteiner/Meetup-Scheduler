@@ -67,14 +67,22 @@ class EmoteSystem {
                 name: 'KEKW',
                 id: '60b8e75ac943e40014af4e7b',
                 url: 'https://cdn.7tv.app/emote/60b8e75ac943e40014af4e7b/1x.webp'
+            },
+            // Test with a simple emote that should definitely work
+            {
+                name: 'test',
+                id: 'test',
+                url: 'https://cdn.7tv.app/emote/60b8e75ac943e40014af4e7b/1x.webp'
             }
         ];
 
         predefinedEmotes.forEach(emote => {
+            // Store by lowercase name for searching, but keep original name
             this.emotes.set(emote.name.toLowerCase(), emote);
         });
 
         console.log('✅ Emotes initialized:', this.emotes.size, 'emotes loaded');
+        console.log('Available emotes:', Array.from(this.emotes.keys()));
     }
 
     // Setup autocomplete container
@@ -296,19 +304,26 @@ class EmoteSystem {
 
     // Parse text and replace emote names with HTML
     parseEmotes(text) {
-        if (!text) return '';
+        if (!text || typeof text !== 'string') return text || '';
 
         let parsedText = text;
         
+        console.log('Parsing emotes in text:', text);
+        
         // Replace emote names with img tags
-        for (const [name, emote] of this.emotes) {
-            // Use word boundaries to avoid partial matches
+        for (const [lowerName, emote] of this.emotes) {
+            // Create regex for exact emote name (case insensitive)
             const regex = new RegExp(`\\b${this.escapeRegex(emote.name)}\\b`, 'gi');
-            parsedText = parsedText.replace(regex, 
-                `<img src="${emote.url}" alt="${emote.name}" class="inline-block w-6 h-6 object-contain mx-1 align-middle" title="${emote.name}" loading="lazy">`
-            );
+            const replacement = `<img src="${emote.url}" alt="${emote.name}" class="inline-block w-6 h-6 object-contain mx-1 align-middle" title="${emote.name}" loading="lazy" onerror="this.style.display='none'">`;
+            
+            const matches = parsedText.match(regex);
+            if (matches) {
+                console.log(`Found emote ${emote.name} in text, replacing...`);
+                parsedText = parsedText.replace(regex, replacement);
+            }
         }
 
+        console.log('Parsed text result:', parsedText);
         return parsedText;
     }
 
