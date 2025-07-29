@@ -689,7 +689,7 @@ class EmoteEnabledUIComponents extends UIComponents {
 
 // Enhanced MeetupApp with emote-aware title processing and FIXED event listeners
 class EmoteEnabledMeetupApp extends MeetupApp {
-    // FIXED: Setup event listeners with emote preview and keyboard navigation
+    // FIXED: Setup event listeners with emote preview and PROPER keyboard navigation
     setupEventListeners() {
         // Call parent setup first
         super.setupEventListeners();
@@ -706,44 +706,55 @@ class EmoteEnabledMeetupApp extends MeetupApp {
                 setTimeout(() => window.uiComponents.hideEmoteSuggestions(), 200);
             });
             
+            // Use keydown with proper event handling
             messageInput.addEventListener('keydown', (e) => {
-                // Handle keyboard navigation for emote suggestions
-                if (window.uiComponents.currentSuggestions.length > 0) {
+                // Check if we have suggestions first
+                const hasSuggestions = window.uiComponents.currentSuggestions.length > 0;
+                
+                if (hasSuggestions) {
+                    let handled = false;
+                    
                     switch (e.key) {
                         case 'ArrowDown':
-                            e.preventDefault();
                             window.uiComponents.navigateSuggestions('down');
-                            return;
+                            handled = true;
+                            break;
                         case 'ArrowUp':
-                            e.preventDefault();
                             window.uiComponents.navigateSuggestions('up');
-                            return;
+                            handled = true;
+                            break;
                         case 'ArrowRight':
-                            e.preventDefault();
                             window.uiComponents.navigateSuggestions('right');
-                            return;
+                            handled = true;
+                            break;
                         case 'ArrowLeft':
-                            e.preventDefault();
                             window.uiComponents.navigateSuggestions('left');
-                            return;
+                            handled = true;
+                            break;
                         case 'Tab':
-                            e.preventDefault();
                             if (e.shiftKey) {
                                 window.uiComponents.navigateSuggestions('shift-tab');
                             } else {
                                 window.uiComponents.navigateSuggestions('tab');
                             }
-                            return;
+                            handled = true;
+                            break;
                         case 'Enter':
-                            e.preventDefault();
                             if (window.uiComponents.insertSelectedEmote()) {
-                                return; // Successfully inserted emote
+                                handled = true;
                             }
                             break;
                         case 'Escape':
-                            e.preventDefault();
                             window.uiComponents.hideEmoteSuggestions();
-                            return;
+                            handled = true;
+                            break;
+                    }
+                    
+                    if (handled) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.stopImmediatePropagation();
+                        return false;
                     }
                 }
                 
@@ -754,12 +765,20 @@ class EmoteEnabledMeetupApp extends MeetupApp {
             });
         }
         
-        // Add emote preview to description input (when it becomes visible) with keyboard navigation
+        // Add the same enhanced keyboard handling to description input
+        this.setupDescriptionInputHandlers();
+    }
+
+    // NEW: Setup description input handlers separately for clarity
+    setupDescriptionInputHandlers() {
         document.addEventListener('click', (e) => {
             if (e.target && e.target.id === 'descriptionInput') {
                 setTimeout(() => {
                     const descriptionInput = document.getElementById('descriptionInput');
-                    if (descriptionInput) {
+                    if (descriptionInput && !descriptionInput.hasAttribute('data-emote-handlers')) {
+                        // Mark as having handlers to prevent duplicate listeners
+                        descriptionInput.setAttribute('data-emote-handlers', 'true');
+                        
                         descriptionInput.addEventListener('input', () => {
                             window.uiComponents.showEmotePreview(descriptionInput);
                         });
@@ -769,43 +788,53 @@ class EmoteEnabledMeetupApp extends MeetupApp {
                         });
                         
                         descriptionInput.addEventListener('keydown', (e) => {
-                            // Handle keyboard navigation for emote suggestions
-                            if (window.uiComponents.currentSuggestions.length > 0) {
+                            // Check if we have suggestions first
+                            const hasSuggestions = window.uiComponents.currentSuggestions.length > 0;
+                            
+                            if (hasSuggestions) {
+                                let handled = false;
+                                
                                 switch (e.key) {
                                     case 'ArrowDown':
-                                        e.preventDefault();
                                         window.uiComponents.navigateSuggestions('down');
-                                        return;
+                                        handled = true;
+                                        break;
                                     case 'ArrowUp':
-                                        e.preventDefault();
                                         window.uiComponents.navigateSuggestions('up');
-                                        return;
+                                        handled = true;
+                                        break;
                                     case 'ArrowRight':
-                                        e.preventDefault();
                                         window.uiComponents.navigateSuggestions('right');
-                                        return;
+                                        handled = true;
+                                        break;
                                     case 'ArrowLeft':
-                                        e.preventDefault();
                                         window.uiComponents.navigateSuggestions('left');
-                                        return;
+                                        handled = true;
+                                        break;
                                     case 'Tab':
-                                        e.preventDefault();
                                         if (e.shiftKey) {
                                             window.uiComponents.navigateSuggestions('shift-tab');
                                         } else {
                                             window.uiComponents.navigateSuggestions('tab');
                                         }
-                                        return;
+                                        handled = true;
+                                        break;
                                     case 'Enter':
-                                        e.preventDefault();
                                         if (window.uiComponents.insertSelectedEmote()) {
-                                            return; // Successfully inserted emote
+                                            handled = true;
                                         }
                                         break;
                                     case 'Escape':
-                                        e.preventDefault();
                                         window.uiComponents.hideEmoteSuggestions();
-                                        return;
+                                        handled = true;
+                                        break;
+                                }
+                                
+                                if (handled) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    e.stopImmediatePropagation();
+                                    return false;
                                 }
                             }
                             

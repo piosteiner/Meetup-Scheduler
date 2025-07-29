@@ -69,15 +69,31 @@
     transition: all 0.15s ease;
     min-height: 40px;
     border: 2px solid transparent;
+    position: relative;
 }
 
-.emote-suggestion:hover {
+.emote-suggestion:hover:not(.emote-selected) {
     background-color: #f3f4f6;
 }
 
+/* Selected state - more prominent */
+.emote-suggestion.emote-selected,
 .emote-suggestion.bg-indigo-100 {
-    background-color: #e0e7ff !important;
-    border-color: #6366f1 !important;
+    background-color: #6366f1 !important;
+    border-color: #4f46e5 !important;
+    color: white !important;
+    transform: scale(1.02);
+}
+
+.emote-suggestion.emote-selected span,
+.emote-suggestion.bg-indigo-100 span {
+    color: white !important;
+    font-weight: 600;
+}
+
+.emote-suggestion.emote-selected .text-gray-500,
+.emote-suggestion.bg-indigo-100 .text-gray-500 {
+    color: #e0e7ff !important;
 }
 
 .emote-suggestion img {
