@@ -1,4 +1,4 @@
-// components.js - UI components and notifications
+// components.js - UI components and notifications (with message delete feature)
 
 class UIComponents {
     constructor() {
@@ -274,7 +274,7 @@ class UIComponents {
         `;
     }
 
-    // IMPROVED: Render message with better name handling
+    // UPDATED: Render message with delete button
     renderMessage(messageId, message, allParticipants) {
         // More robust name lookup
         let senderName = 'Unknown';
@@ -286,13 +286,22 @@ class UIComponents {
         }
         
         const timestamp = message.timestamp ? new Date(message.timestamp).toLocaleString() : '';
+        const escapedMessage = this.escapeHtml(message.message);
+        
         return `
-            <div class="bg-gray-50 p-3 rounded-lg border-l-4 border-indigo-500">
+            <div class="bg-gray-50 p-3 rounded-lg border-l-4 border-indigo-500 group">
                 <div class="flex items-center justify-between mb-1">
                     <div class="font-semibold text-sm text-indigo-600">${senderName}</div>
-                    <div class="text-xs text-gray-400">${timestamp}</div>
+                    <div class="flex items-center gap-2">
+                        <div class="text-xs text-gray-400">${timestamp}</div>
+                        <button onclick="window.deleteMessage('${messageId}', '${this.escapeHtml(senderName)}', '${this.escapeHtml(message.message)}')" 
+                                class="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 text-xs transition-all duration-200 ml-2"
+                                title="Delete message">
+                            🗑️
+                        </button>
+                    </div>
                 </div>
-                <div class="text-gray-900">${this.escapeHtml(message.message)}</div>
+                <div class="text-gray-900">${escapedMessage}</div>
             </div>
         `;
     }

@@ -487,6 +487,57 @@ class MeetupApp {
         }
     }
 
+    // Delete message with confirmation
+    async deleteMessage(messageId, senderName, messageText) {
+        try {
+            // Show confirmation dialog
+            const confirmDelete = confirm(
+                `Are you sure you want to delete this message?\n\n` +
+                `From: ${senderName}\n` +
+                `Message: "${messageText.length > 50 ? messageText.substring(0, 50) + '...' : messageText}"\n\n` +
+                `This action cannot be undone.`
+            );
+            
+            if (!confirmDelete) {
+                return; // User cancelled
+            }
+            
+            if (!this.currentMeetupKey) {
+                window.uiComponents.showNotification('No meetup selected', 'error');
+                return;
+            }
+            
+            // Get the message data before deleting
+            const messageSnapshot = await window.firebaseAPI.database.ref('meetups/' + this.currentMeetupKey + '/messages/' + messageId).once('value');
+            const messageData = messageSnapshot.val();
+            
+            if (!messageData) {
+                window.uiComponents.showNotification('Message not found', 'error');
+                return;
+            }
+            
+            // Move to deleted messages and remove from active messages
+            const deletedMessageData = {
+                ...messageData,
+                senderName: senderName,
+                originalMessage: messageData.message,
+                deletedAt: firebase.database.ServerValue.TIMESTAMP
+            };
+            
+            await Promise.all([
+                window.firebaseAPI.database.ref('meetups/' + this.currentMeetupKey + '/deletedMessages/' + messageId).set(deletedMessageData),
+                window.firebaseAPI.database.ref('meetups/' + this.currentMeetupKey + '/messages/' + messageId).remove()
+            ]);
+            
+            window.uiComponents.showNotification('Message deleted successfully', 'success');
+            console.log('✅ Message deleted:', messageId);
+            
+        } catch (error) {
+            console.error('❌ Error deleting message:', error);
+            window.uiComponents.showNotification('Error deleting message: ' + error.message, 'error');
+        }
+    }
+
     // Copy meetup link
     async copyLink() {
         try {
@@ -784,6 +835,7 @@ window.copyLink = () => window.app?.copyLink();
 window.goToMeetup = () => window.app?.goToMeetup();
 window.goHome = () => window.app?.goHome();
 window.deleteProposal = (proposalId, proposerName) => window.app?.deleteProposal(proposalId, proposerName);
+window.deleteMessage = (messageId, senderName, messageText) => window.app?.deleteMessage(messageId, senderName, messageText);
 window.editMeetupName = () => window.app?.editMeetupName();
 
 // Initialize app when DOM is loaded
