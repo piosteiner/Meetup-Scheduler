@@ -1,0 +1,348 @@
+/* css/emotes.css - Styles for 7TV Emote System */
+
+/* Emote Images */
+.emote-img {
+    display: inline-block;
+    vertical-align: middle;
+    margin: 0 2px;
+    border-radius: 2px;
+    transition: transform 0.1s ease;
+    max-width: none !important; /* Override any max-width restrictions */
+    max-height: none !important; /* Override any max-height restrictions */
+}
+
+.emote-img:hover {
+    transform: scale(1.2);
+    z-index: 10;
+    position: relative;
+}
+
+/* Emote Suggestions Dropdown */
+#emote-suggestions {
+    background: white;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    padding: 4px;
+    margin-top: 4px;
+    max-width: 300px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+.emote-suggestion {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.emote-suggestion:hover {
+    background-color: #f3f4f6;
+}
+
+.emote-suggestion img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.emote-suggestion span {
+    font-size: 14px;
+    color: #374151;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Emote-aware text containers */
+.emote-enabled {
+    line-height: 1.6; /* Slightly increased line height to accommodate emotes */
+}
+
+/* Emotes in different contexts */
+
+/* Emotes in messages */
+.bg-gray-50 .emote-img {
+    width: 24px;
+    height: 24px;
+}
+
+/* Emotes in meetup titles */
+#meetupTitle .emote-img {
+    width: 28px;
+    height: 28px;
+    margin: 0 4px;
+    vertical-align: baseline;
+}
+
+/* Emotes in descriptions */
+#descriptionText .emote-img {
+    width: 20px;
+    height: 20px;
+    margin: 0 2px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+    .emote-img {
+        width: 20px !important;
+        height: 20px !important;
+        margin: 0 1px;
+    }
+    
+    #meetupTitle .emote-img {
+        width: 24px !important;
+        height: 24px !important;
+    }
+    
+    #emote-suggestions {
+        max-width: 250px;
+        font-size: 13px;
+    }
+    
+    .emote-suggestion img {
+        width: 20px;
+        height: 20px;
+    }
+}
+
+/* Dark theme support */
+@media (prefers-color-scheme: dark) {
+    #emote-suggestions {
+        background: #374151;
+        border-color: #4b5563;
+        color: #f9fafb;
+    }
+    
+    .emote-suggestion:hover {
+        background-color: #4b5563;
+    }
+    
+    .emote-suggestion span {
+        color: #f9fafb;
+    }
+}
+
+[data-theme="dark"] #emote-suggestions {
+    background: #374151;
+    border-color: #4b5563;
+    color: #f9fafb;
+}
+
+[data-theme="dark"] .emote-suggestion:hover {
+    background-color: #4b5563;
+}
+
+[data-theme="dark"] .emote-suggestion span {
+    color: #f9fafb;
+}
+
+/* Loading state for emotes */
+.emote-img[src=""] {
+    display: none;
+}
+
+.emote-loading {
+    width: 24px;
+    height: 24px;
+    background: #f3f4f6;
+    border-radius: 2px;
+    display: inline-block;
+    vertical-align: middle;
+    margin: 0 2px;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Animation for emote hover effects */
+@keyframes emote-bounce {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+.emote-img.bounce {
+    animation: emote-bounce 0.3s ease;
+}
+
+/* Emote tooltip styling */
+.emote-img[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+/* Prevent text selection on emote images */
+.emote-img {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+/* Ensure emotes don't break text flow */
+.emote-container {
+    display: inline;
+    white-space: normal;
+    word-wrap: break-word;
+}
+
+/* Accessibility: High contrast mode */
+@media (prefers-contrast: high) {
+    .emote-img {
+        border: 1px solid #000;
+    }
+    
+    #emote-suggestions {
+        border: 2px solid #000;
+    }
+    
+    .emote-suggestion:hover {
+        background-color: #000;
+        color: #fff;
+    }
+}
+
+/* Print styles - hide emotes in print or show alt text */
+@media print {
+    .emote-img {
+        display: none;
+    }
+    
+    .emote-img::after {
+        content: "[" attr(alt) "]";
+        font-weight: bold;
+        display: inline;
+    }
+    
+    #emote-suggestions {
+        display: none !important;
+    }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+    .emote-img {
+        transition: none;
+    }
+    
+    .emote-img:hover {
+        transform: none;
+    }
+    
+    .emote-loading {
+        animation: none;
+        background: #e5e7eb;
+    }
+}
+
+/* Custom scrollbar for emote suggestions */
+#emote-suggestions::-webkit-scrollbar {
+    width: 4px;
+}
+
+#emote-suggestions::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 2px;
+}
+
+#emote-suggestions::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 2px;
+}
+
+#emote-suggestions::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Emote button for easy access (optional enhancement) */
+.emote-picker-button {
+    background: none;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    padding: 4px 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-size: 16px;
+    line-height: 1;
+}
+
+.emote-picker-button:hover {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+}
+
+.emote-picker-button:active {
+    background: #e5e7eb;
+}
+
+/* Special styling for animated emotes */
+.emote-img.animated {
+    /* Could add special styling for animated emotes if needed */
+}
+
+/* Error state for failed emote loads */
+.emote-img.error {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    background: #fee2e2;
+    border: 1px solid #fecaca;
+    border-radius: 2px;
+    position: relative;
+}
+
+.emote-img.error::before {
+    content: "❌";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 12px;
+}
+
+/* Loading skeleton for emote suggestions */
+.emote-suggestion.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.emote-suggestion.loading img {
+    background: #f3f4f6;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Ensure proper spacing in different text contexts */
+p .emote-img,
+div .emote-img,
+span .emote-img {
+    margin: 0 1px;
+    vertical-align: text-bottom;
+}
+
+/* Special handling for emotes at start/end of text */
+.emote-img:first-child {
+    margin-left: 0;
+}
+
+.emote-img:last-child {
+    margin-right: 0;
+}
