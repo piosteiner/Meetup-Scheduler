@@ -70,21 +70,21 @@ body {
     background: var(--text-secondary);
 }
 
-/* Calendar Styles - Compact Design */
+/* Calendar Styles - UPDATED: Stretched width with minimal gaps */
 .calendar-day {
-    aspect-ratio: 1;
-    min-height: 24px;
-    max-height: 28px;
+    height: 28px; /* Fixed height */
+    width: 100%; /* Full width of grid cell */
     cursor: pointer;
     transition: all var(--transition-fast);
     border: 1px solid transparent;
     position: relative;
     font-size: 0.75rem;
     font-weight: 500;
+    margin: 1px; /* Minimal margin for very small gaps */
 }
 
 .calendar-day:hover {
-    transform: scale(1.1);
+    transform: scale(1.05); /* Slightly reduced scale to prevent overlap */
     border-color: #4f46e5;
     z-index: 10;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -142,18 +142,32 @@ body {
     z-index: 5;
 }
 
+/* UPDATED: Calendar grid container with minimal gaps */
+#calendarGrid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px; /* Minimal gap between cells */
+    padding: 2px; /* Small padding around the grid */
+    background: #e5e7eb; /* Light background to show minimal gaps */
+}
+
 /* Calendar responsive adjustments */
 @media (max-width: 640px) {
     .calendar-day {
-        min-height: 20px;
-        max-height: 24px;
+        height: 24px; /* Slightly smaller on mobile */
         font-size: 0.7rem;
+        margin: 0.5px; /* Even smaller margin on mobile */
     }
     
     .calendar-day.has-comment::after {
         font-size: 7px;
         top: 0px;
         right: 0px;
+    }
+    
+    #calendarGrid {
+        gap: 1px; /* Even smaller gap on mobile */
+        padding: 1px;
     }
 }
 
