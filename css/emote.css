@@ -48,6 +48,17 @@
     z-index: 1000;
 }
 
+#emote-suggestions::before {
+    content: "Type :emotename to insert emotes";
+    display: block;
+    padding: 4px 8px;
+    font-size: 11px;
+    color: #6b7280;
+    border-bottom: 1px solid #e5e7eb;
+    margin-bottom: 2px;
+    font-style: italic;
+}
+
 .emote-suggestion {
     display: flex;
     align-items: center;

@@ -505,17 +505,17 @@ class EmoteEnabledUIComponents extends UIComponents {
         }
     }
 
-    // FIXED: Enhanced emote preview functionality
+    // FIXED: Enhanced emote preview functionality with ":" prefix
     showEmotePreview(inputElement) {
         const text = inputElement.value;
         const cursorPosition = inputElement.selectionStart;
         
-        // Find emote names in the text around cursor position
+        // Find emote names that start with ":" in the text around cursor position
         const beforeCursor = text.substring(0, cursorPosition);
-        const matches = beforeCursor.match(/\b\w+$/);
+        const matches = beforeCursor.match(/:(\w+)$/);
         
-        if (matches && matches[0].length >= 2) { // At least 2 characters to show suggestions
-            const partialEmote = matches[0];
+        if (matches && matches[1].length >= 1) { // At least 1 character after ":" to show suggestions
+            const partialEmote = matches[1]; // Get the part after ":"
             const availableEmotes = this.emoteSystem.getAvailableEmotes()
                 .filter(emote => emote.name.toLowerCase().startsWith(partialEmote.toLowerCase()))
                 .slice(0, 8); // Show max 8 suggestions
@@ -590,12 +590,12 @@ class EmoteEnabledUIComponents extends UIComponents {
         const text = inputElement.value;
         const cursorPosition = inputElement.selectionStart;
         
-        // Find the partial emote text to replace
+        // Find the partial emote text to replace (including the ":")
         const beforeCursor = text.substring(0, cursorPosition);
-        const matches = beforeCursor.match(/\b\w+$/);
+        const matches = beforeCursor.match(/:(\w+)$/);
         
         if (matches) {
-            const startPos = cursorPosition - matches[0].length;
+            const startPos = cursorPosition - matches[0].length; // Start of ":"
             const newText = text.substring(0, startPos) + emoteName + text.substring(cursorPosition);
             
             inputElement.value = newText;
@@ -612,7 +612,7 @@ class EmoteEnabledMeetupApp extends MeetupApp {
         // Call parent setup first
         super.setupEventListeners();
         
-        // Add emote preview to message input
+        // Add emote preview to message input with ":" prefix support
         const messageInput = document.getElementById('messageInput');
         if (messageInput) {
             messageInput.addEventListener('input', () => {
@@ -631,7 +631,7 @@ class EmoteEnabledMeetupApp extends MeetupApp {
             });
         }
         
-        // Add emote preview to description input (when it becomes visible)
+        // Add emote preview to description input (when it becomes visible) with ":" prefix support
         document.addEventListener('click', (e) => {
             if (e.target && e.target.id === 'descriptionInput') {
                 setTimeout(() => {
