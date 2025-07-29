@@ -47,40 +47,26 @@ class MeetupApp {
 
     // Set up event listeners
     setupEventListeners() {
-        // Remove existing listeners first to prevent duplicates
-        const keyInput = document.getElementById('keyInput');
-        const nameInput = document.getElementById('nameInput');
-        const messageInput = document.getElementById('messageInput');
-        
-        // Clone and replace elements to remove all event listeners
-        if (keyInput) {
-            const newKeyInput = keyInput.cloneNode(true);
-            keyInput.parentNode.replaceChild(newKeyInput, keyInput);
-            newKeyInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') this.joinMeetup();
-            });
-        }
+        // Enter key handlers
+        document.getElementById('keyInput')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') this.joinMeetup();
+        });
 
-        if (nameInput) {
-            const newNameInput = nameInput.cloneNode(true);
-            nameInput.parentNode.replaceChild(newNameInput, nameInput);
-            newNameInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') this.joinAsMember();
-            });
-        }
+        document.getElementById('nameInput')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') this.joinAsMember();
+        });
 
-        // Don't add message input listener here - it will be added when participant is selected
-        
+        document.getElementById('messageInput')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') this.sendMessage();
+        });
+
         // Make app available globally for onclick handlers
         window.app = this;
         
         // Make datetime input fully clickable
-        const dateTimeInput = document.getElementById('dateTimeInput');
-        if (dateTimeInput) {
-            dateTimeInput.addEventListener('click', (e) => {
-                e.target.showPicker?.();
-            });
-        }
+        document.getElementById('dateTimeInput')?.addEventListener('click', (e) => {
+            e.target.showPicker?.();
+        });
     }
 
     // Screen navigation
@@ -223,26 +209,11 @@ class MeetupApp {
             window.uiComponents.updateText('messageParticipantName', selectedName);
             window.uiComponents.hide('noParticipantMessage');
             
-            // Setup message input with proper event listeners when it becomes visible
+            // Setup emote input for message field when it becomes visible
             setTimeout(() => {
                 const messageInput = document.getElementById('messageInput');
-                if (messageInput) {
-                    // Remove existing event listeners by cloning the element
-                    const newMessageInput = messageInput.cloneNode(true);
-                    messageInput.parentNode.replaceChild(newMessageInput, messageInput);
-                    
-                    // Add single Enter key listener
-                    newMessageInput.addEventListener('keypress', (e) => {
-                        if (e.key === 'Enter') {
-                            e.preventDefault();
-                            this.sendMessage();
-                        }
-                    });
-                    
-                    // Setup emote system
-                    if (window.emoteSystem) {
-                        window.emoteSystem.setupEmoteInput(newMessageInput);
-                    }
+                if (messageInput && window.emoteSystem) {
+                    window.emoteSystem.setupEmoteInput(messageInput);
                 }
             }, 100);
             

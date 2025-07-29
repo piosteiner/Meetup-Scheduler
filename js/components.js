@@ -298,15 +298,9 @@ class UIComponents {
         const timestamp = message.timestamp ? new Date(message.timestamp).toLocaleString() : '';
         
         // Parse emotes in the message text
-        let messageWithEmotes = '';
-        if (window.emoteSystem && window.emoteSystem.parseEmotes) {
-            console.log('Processing message for emotes:', message.message);
-            messageWithEmotes = window.emoteSystem.parseEmotes(message.message);
-            console.log('Result after emote parsing:', messageWithEmotes);
-        } else {
-            console.log('Emote system not available, using escaped HTML');
-            messageWithEmotes = this.escapeHtml(message.message);
-        }
+        const messageWithEmotes = window.emoteSystem ? 
+            window.emoteSystem.parseEmotes(message.message) : 
+            this.escapeHtml(message.message);
         
         return `
             <div class="bg-gray-50 p-3 rounded-lg border-l-4 border-indigo-500 group">
