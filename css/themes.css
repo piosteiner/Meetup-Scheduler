@@ -350,6 +350,58 @@
     color: var(--text-primary) !important;
 }
 
+/* Deleted Proposals - Dark Mode Fix */
+[data-theme="dark"] .bg-red-50,
+.theme-dark .bg-red-50 {
+    background: rgba(239, 68, 68, 0.1) !important;
+    border: 1px solid rgba(239, 68, 68, 0.3) !important;
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .border-red-200,
+.theme-dark .border-red-200 {
+    border-color: rgba(239, 68, 68, 0.4) !important;
+}
+
+[data-theme="dark"] .text-red-800,
+.theme-dark .text-red-800 {
+    color: #fca5a5 !important;
+    font-weight: 600 !important;
+}
+
+[data-theme="dark"] .text-red-600,
+.theme-dark .text-red-600 {
+    color: #f87171 !important;
+}
+
+[data-theme="dark"] .text-red-500,
+.theme-dark .text-red-500 {
+    color: #ef4444 !important;
+}
+
+/* Better visual separation for deleted proposals */
+[data-theme="dark"] .bg-red-50 > div,
+.theme-dark .bg-red-50 > div {
+    opacity: 0.9;
+}
+
+/* Fix other colored backgrounds in dark mode */
+[data-theme="dark"] .bg-green-100,
+.theme-dark .bg-green-100 {
+    background: rgba(52, 211, 153, 0.15) !important;
+}
+
+[data-theme="dark"] .bg-blue-50,
+.theme-dark .bg-blue-50 {
+    background: rgba(129, 140, 248, 0.1) !important;
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .text-blue-600,
+.theme-dark .text-blue-600 {
+    color: #93c5fd !important;
+}
+
 /* Sepia Theme */
 [data-theme="sepia"],
 .theme-sepia {
@@ -436,6 +488,85 @@
 .theme-sepia .calendar-day.other-month {
     background-color: #f5e6d3;
     color: #a0956b;
+}
+
+/* Deleted Proposals - Sepia Mode */
+[data-theme="sepia"] .bg-red-50,
+.theme-sepia .bg-red-50 {
+    background: rgba(178, 34, 34, 0.08) !important;
+    border: 1px solid rgba(178, 34, 34, 0.2) !important;
+    color: var(--text-primary) !important;
+}
+
+[data-theme="sepia"] .border-red-200,
+.theme-sepia .border-red-200 {
+    border-color: rgba(178, 34, 34, 0.3) !important;
+}
+
+[data-theme="sepia"] .text-red-800,
+.theme-sepia .text-red-800 {
+    color: #8b0000 !important;
+    font-weight: 600 !important;
+}
+
+[data-theme="sepia"] .text-red-600,
+.theme-sepia .text-red-600 {
+    color: #b22222 !important;
+}
+
+[data-theme="sepia"] .text-red-500,
+.theme-sepia .text-red-500 {
+    color: #dc143c !important;
+}
+
+/* Better visual separation for deleted proposals in sepia */
+[data-theme="sepia"] .bg-red-50 > div,
+.theme-sepia .bg-red-50 > div {
+    opacity: 0.9;
+}
+
+/* Fix other colored backgrounds in sepia mode */
+[data-theme="sepia"] .bg-green-100,
+.theme-sepia .bg-green-100 {
+    background: rgba(85, 107, 47, 0.15) !important;
+}
+
+[data-theme="sepia"] .bg-blue-50,
+.theme-sepia .bg-blue-50 {
+    background: rgba(139, 69, 19, 0.08) !important;
+    color: var(--text-primary) !important;
+}
+
+[data-theme="sepia"] .text-blue-600,
+.theme-sepia .text-blue-600 {
+    color: #8b4513 !important;
+}
+
+/* Warning and error state improvements */
+[data-theme="dark"] .bg-yellow-50,
+.theme-dark .bg-yellow-50 {
+    background: rgba(251, 191, 36, 0.1) !important;
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .text-yellow-600,
+[data-theme="dark"] .text-yellow-700,
+.theme-dark .text-yellow-600,
+.theme-dark .text-yellow-700 {
+    color: #fbbf24 !important;
+}
+
+[data-theme="sepia"] .bg-yellow-50,
+.theme-sepia .bg-yellow-50 {
+    background: rgba(218, 165, 32, 0.1) !important;
+    color: var(--text-primary) !important;
+}
+
+[data-theme="sepia"] .text-yellow-600,
+[data-theme="sepia"] .text-yellow-700,
+.theme-sepia .text-yellow-600,
+.theme-sepia .text-yellow-700 {
+    color: #daa520 !important;
 }
 
 /* Theme Switcher Specific Styles */
