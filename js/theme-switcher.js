@@ -1,5 +1,7 @@
 // js/theme-switcher.js - Fixed Theme switcher with 3 themes only
 
+console.log('🚀 THEME SWITCHER FILE LOADING...');
+
 class ThemeSwitcher {
     constructor() {
         this.themes = [
