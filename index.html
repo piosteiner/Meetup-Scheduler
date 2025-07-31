@@ -347,6 +347,76 @@
         </div>
     </div>
 
+<script>
+// Simple fallback theme switcher
+window.cycleTheme = function() {
+    console.log('🔄 Theme button clicked!');
+    
+    if (window.themeSwitcher) {
+        // Use the full theme switcher if available
+        window.themeSwitcher.cycleTheme();
+    } else {
+        // Simple fallback
+        console.log('⚠️ ThemeSwitcher not found, using fallback');
+        const html = document.documentElement;
+        const currentTheme = html.getAttribute('data-theme') || 'light';
+        
+        const themes = ['light', 'dark', 'sepia'];
+        const currentIndex = themes.indexOf(currentTheme);
+        const nextIndex = (currentIndex + 1) % themes.length;
+        const nextTheme = themes[nextIndex];
+        
+        // Apply theme
+        html.setAttribute('data-theme', nextTheme);
+        
+        // Update button
+        const icons = { light: '☀️', dark: '🌙', sepia: '📜' };
+        const labels = { light: 'Light', dark: 'Dark', sepia: 'Sepia' };
+        
+        document.getElementById('themeIcon').textContent = icons[nextTheme];
+        document.getElementById('themeLabel').textContent = labels[nextTheme];
+        
+        // Save preference
+        try {
+            localStorage.setItem('piogino-theme-preference', nextTheme);
+        } catch (e) {
+            console.warn('Could not save theme preference');
+        }
+        
+        console.log('✅ Theme switched to:', nextTheme);
+    }
+};
+
+// Initialize theme on page load
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Initializing theme...');
+    
+    // Get saved theme or default to light
+    let savedTheme = 'light';
+    try {
+        savedTheme = localStorage.getItem('piogino-theme-preference') || 'light';
+    } catch (e) {
+        console.warn('Could not read theme preference');
+    }
+    
+    // Apply saved theme
+    const html = document.documentElement;
+    html.setAttribute('data-theme', savedTheme);
+    
+    // Update button to show current theme
+    const icons = { light: '☀️', dark: '🌙', sepia: '📜' };
+    const labels = { light: 'Light', dark: 'Dark', sepia: 'Sepia' };
+    
+    const themeIcon = document.getElementById('themeIcon');
+    const themeLabel = document.getElementById('themeLabel');
+    
+    if (themeIcon) themeIcon.textContent = icons[savedTheme];
+    if (themeLabel) themeLabel.textContent = labels[savedTheme];
+    
+    console.log('✅ Theme initialized:', savedTheme);
+});
+</script>
+
     <!-- JavaScript Files -->
     <script src="js/config.js"></script>
     <script src="js/utils.js"></script>
