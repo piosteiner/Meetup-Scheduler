@@ -21,9 +21,12 @@
     <!-- Theme Switcher -->
     <div id="themeSwitcher" class="fixed top-4 left-4 z-50 bg-white/90 backdrop-blur-sm border border-gray-300 rounded-xl p-3 shadow-lg transition-all duration-300 hover:shadow-xl">
         <div class="flex items-center gap-2">
-            <button id="themeButton" class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors duration-200" title="Switch theme">
-                <span id="themeIcon" class="text-lg">🌙</span>
-                <span id="themeLabel" class="text-sm font-medium text-gray-700 hidden sm:inline">Dark</span>
+            <button id="themeButton" 
+                    onclick="manualCycleTheme()" 
+                    class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors duration-200" 
+                    title="Switch theme">
+                <span id="themeIcon" class="text-lg">☀️</span>
+                <span id="themeLabel" class="text-sm font-medium text-gray-700 hidden sm:inline">Light</span>
             </button>
         </div>
     </div>
@@ -347,75 +350,134 @@
         </div>
     </div>
 
-<script>
-// Simple fallback theme switcher
-window.cycleTheme = function() {
-    console.log('🔄 Theme button clicked!');
+    <!-- Emergency Theme Switcher Script -->
+    <script>
+    console.log('🚀 Loading emergency theme switcher...');
     
-    if (window.themeSwitcher) {
-        // Use the full theme switcher if available
-        window.themeSwitcher.cycleTheme();
-    } else {
-        // Simple fallback
-        console.log('⚠️ ThemeSwitcher not found, using fallback');
+    // Ultra-simple direct theme handler
+    window.manualCycleTheme = function() {
+        console.log('🔄 Manual theme cycle triggered');
+        
         const html = document.documentElement;
-        const currentTheme = html.getAttribute('data-theme') || 'light';
+        const current = html.getAttribute('data-theme') || 'light';
         
         const themes = ['light', 'dark', 'sepia'];
-        const currentIndex = themes.indexOf(currentTheme);
-        const nextIndex = (currentIndex + 1) % themes.length;
-        const nextTheme = themes[nextIndex];
+        const nextIndex = (themes.indexOf(current) + 1) % 3;
+        const next = themes[nextIndex];
         
         // Apply theme
-        html.setAttribute('data-theme', nextTheme);
+        html.setAttribute('data-theme', next);
         
         // Update button
-        const icons = { light: '☀️', dark: '🌙', sepia: '📜' };
-        const labels = { light: 'Light', dark: 'Dark', sepia: 'Sepia' };
+        const icons = {light: '☀️', dark: '🌙', sepia: '📜'};
+        const labels = {light: 'Light', dark: 'Dark', sepia: 'Sepia'};
         
-        document.getElementById('themeIcon').textContent = icons[nextTheme];
-        document.getElementById('themeLabel').textContent = labels[nextTheme];
+        const iconEl = document.getElementById('themeIcon');
+        const labelEl = document.getElementById('themeLabel');
         
-        // Save preference
+        if (iconEl) iconEl.textContent = icons[next];
+        if (labelEl) labelEl.textContent = labels[next];
+        
+        // Update theme switcher appearance
+        updateThemeSwitcherAppearance(next);
+        
+        // Save
         try {
-            localStorage.setItem('piogino-theme-preference', nextTheme);
+            localStorage.setItem('piogino-theme-preference', next);
         } catch (e) {
             console.warn('Could not save theme preference');
         }
         
-        console.log('✅ Theme switched to:', nextTheme);
+        console.log('✅ Theme changed to:', next);
+    };
+    
+    // Initialize theme on page load
+    window.initializeTheme = function() {
+        console.log('🎨 Initializing theme...');
+        
+        // Get saved theme or default to light
+        let savedTheme = 'light';
+        try {
+            savedTheme = localStorage.getItem('piogino-theme-preference') || 'light';
+        } catch (e) {
+            console.warn('Could not read theme preference');
+        }
+        
+        // Apply saved theme
+        const html = document.documentElement;
+        html.setAttribute('data-theme', savedTheme);
+        
+        // Update button to show current theme
+        const icons = {light: '☀️', dark: '🌙', sepia: '📜'};
+        const labels = {light: 'Light', dark: 'Dark', sepia: 'Sepia'};
+        
+        const iconEl = document.getElementById('themeIcon');
+        const labelEl = document.getElementById('themeLabel');
+        
+        if (iconEl) iconEl.textContent = icons[savedTheme];
+        if (labelEl) labelEl.textContent = labels[savedTheme];
+        
+        // Update theme switcher appearance
+        updateThemeSwitcherAppearance(savedTheme);
+        
+        console.log('✅ Theme initialized:', savedTheme);
+    };
+    
+    // Update theme switcher appearance
+    function updateThemeSwitcherAppearance(themeKey) {
+        const themeSwitcher = document.getElementById('themeSwitcher');
+        const themeButton = document.getElementById('themeButton');
+        const themeLabel = document.getElementById('themeLabel');
+        
+        if (!themeSwitcher) return;
+        
+        // Reset classes
+        themeSwitcher.className = 'fixed top-4 left-4 z-50 rounded-xl p-3 shadow-lg transition-all duration-300 hover:shadow-xl';
+        
+        // Apply theme-specific styling
+        switch (themeKey) {
+            case 'dark':
+                themeSwitcher.classList.add('bg-gray-800/90', 'backdrop-blur-sm', 'border', 'border-gray-600');
+                if (themeButton) {
+                    themeButton.className = 'flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors duration-200';
+                }
+                if (themeLabel) {
+                    themeLabel.className = 'text-sm font-medium text-gray-200 hidden sm:inline';
+                }
+                break;
+                
+            case 'sepia':
+                themeSwitcher.classList.add('bg-amber-100/90', 'backdrop-blur-sm', 'border', 'border-amber-300');
+                if (themeButton) {
+                    themeButton.className = 'flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-200 hover:bg-amber-300 transition-colors duration-200';
+                }
+                if (themeLabel) {
+                    themeLabel.className = 'text-sm font-medium text-amber-800 hidden sm:inline';
+                }
+                break;
+                
+            case 'light':
+            default:
+                themeSwitcher.classList.add('bg-white/90', 'backdrop-blur-sm', 'border', 'border-gray-300');
+                if (themeButton) {
+                    themeButton.className = 'flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors duration-200';
+                }
+                if (themeLabel) {
+                    themeLabel.className = 'text-sm font-medium text-gray-700 hidden sm:inline';
+                }
+                break;
+        }
     }
-};
-
-// Initialize theme on page load
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Initializing theme...');
     
-    // Get saved theme or default to light
-    let savedTheme = 'light';
-    try {
-        savedTheme = localStorage.getItem('piogino-theme-preference') || 'light';
-    } catch (e) {
-        console.warn('Could not read theme preference');
+    // Initialize immediately if DOM is ready, or wait for it
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', window.initializeTheme);
+    } else {
+        window.initializeTheme();
     }
     
-    // Apply saved theme
-    const html = document.documentElement;
-    html.setAttribute('data-theme', savedTheme);
-    
-    // Update button to show current theme
-    const icons = { light: '☀️', dark: '🌙', sepia: '📜' };
-    const labels = { light: 'Light', dark: 'Dark', sepia: 'Sepia' };
-    
-    const themeIcon = document.getElementById('themeIcon');
-    const themeLabel = document.getElementById('themeLabel');
-    
-    if (themeIcon) themeIcon.textContent = icons[savedTheme];
-    if (themeLabel) themeLabel.textContent = labels[savedTheme];
-    
-    console.log('✅ Theme initialized:', savedTheme);
-});
-</script>
+    console.log('✅ Emergency theme switcher ready');
+    </script>
 
     <!-- JavaScript Files -->
     <script src="js/config.js"></script>
@@ -425,6 +487,6 @@ document.addEventListener('DOMContentLoaded', function() {
     <script src="js/calendar.js"></script>
     <script src="js/app.js"></script>
     <script src="js/emotes.js"></script>
-    <script src="js/theme-switcher.js"></script> <!-- NEW: Theme switcher JavaScript -->
+    <script src="js/theme-switcher.js"></script>
 </body>
 </html>
