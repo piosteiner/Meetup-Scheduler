@@ -18,6 +18,16 @@
     <link rel="stylesheet" href="css/emotes.css">
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <!-- Theme Switcher -->
+    <div id="themeSwitcher" class="fixed top-4 left-4 z-50 bg-white/90 backdrop-blur-sm border border-gray-300 rounded-xl p-3 shadow-lg transition-all duration-300 hover:shadow-xl">
+        <div class="flex items-center gap-2">
+            <button id="themeButton" class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors duration-200" title="Switch theme">
+                <span id="themeIcon" class="text-lg">🌙</span>
+                <span id="themeLabel" class="text-sm font-medium text-gray-700 hidden sm:inline">Dark</span>
+            </button>
+        </div>
+    </div>
+
     <div id="app" class="flex items-center justify-center min-h-screen p-4">
         <!-- Home Screen -->
         <div id="homeScreen" class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
@@ -182,7 +192,7 @@
                     </div>
                 </div>
 
-                <!-- NEW: Availability Calendar Section -->
+                <!-- Availability Calendar Section -->
                 <div class="bg-gray-50 rounded-xl p-6">
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">Availability Calendar</h3>
                     
@@ -342,8 +352,9 @@
     <script src="js/utils.js"></script>
     <script src="js/api.js"></script>
     <script src="js/components.js"></script>
-    <script src="js/calendar.js"></script>  <!-- NEW: Calendar component -->
+    <script src="js/calendar.js"></script>
     <script src="js/app.js"></script>
-    <script src="js/emotes.js"></script> <!-- NEW: Emotes system -->
+    <script src="js/emotes.js"></script>
+    <script src="js/theme-switcher.js"></script> <!-- NEW: Theme switcher JavaScript -->
 </body>
 </html>
