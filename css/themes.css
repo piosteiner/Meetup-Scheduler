@@ -1,5 +1,18 @@
 /* Theme System for Piogino Meetup App */
 
+/* Theme Transition Class */
+.theme-transition,
+.theme-transition *,
+.theme-transition *:before,
+.theme-transition *:after {
+    transition: 
+        background-color 0.3s ease,
+        color 0.3s ease,
+        border-color 0.3s ease,
+        box-shadow 0.3s ease,
+        backdrop-filter 0.3s ease !important;
+}
+
 /* Dark Theme */
 @media (prefers-color-scheme: dark) {
     :root {
@@ -18,7 +31,7 @@
         --bg-secondary: #374151;
         --bg-tertiary: #4b5563;
         
-        --text-primary: #001020;
+        --text-primary: #f9fafb;
         --text-secondary: #d1d5db;
         --text-tertiary: #9ca3af;
         
@@ -64,7 +77,8 @@
 }
 
 /* Light Theme (explicit) */
-[data-theme="light"] {
+[data-theme="light"],
+.theme-light {
     --primary-color: #6366f1;
     --primary-hover: #5b5bf6;
     --secondary-color: #6b7280;
@@ -88,12 +102,14 @@
     --border-focus: var(--primary-color);
 }
 
-[data-theme="light"] body {
+[data-theme="light"] body,
+.theme-light body {
     background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
 }
 
 /* Dark Theme (explicit) */
-[data-theme="dark"] {
+[data-theme="dark"],
+.theme-dark {
     --primary-color: #818cf8;
     --primary-hover: #6366f1;
     --secondary-color: #9ca3af;
@@ -117,26 +133,121 @@
     --border-focus: var(--primary-color);
 }
 
-[data-theme="dark"] body {
+[data-theme="dark"] body,
+.theme-dark body {
     background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
 }
 
-[data-theme="dark"] .success-icon {
+[data-theme="dark"] .success-icon,
+.theme-dark .success-icon {
     background: rgba(52, 211, 153, 0.2);
 }
 
-[data-theme="dark"] .participant-selection {
+[data-theme="dark"] .participant-selection,
+.theme-dark .participant-selection {
     background: rgba(129, 140, 248, 0.2);
     border-color: rgba(129, 140, 248, 0.3);
 }
 
-[data-theme="dark"] .proposal-card.today {
+[data-theme="dark"] .proposal-card.today,
+.theme-dark .proposal-card.today {
     background: rgba(129, 140, 248, 0.1);
     border-color: var(--primary-color);
 }
 
+[data-theme="dark"] .status-available,
+.theme-dark .status-available {
+    background: rgba(52, 211, 153, 0.2);
+    color: #6ee7b7;
+    border-color: rgba(52, 211, 153, 0.3);
+}
+
+[data-theme="dark"] .status-maybe,
+.theme-dark .status-maybe {
+    background: rgba(251, 191, 36, 0.2);
+    color: #fde047;
+    border-color: rgba(251, 191, 36, 0.3);
+}
+
+[data-theme="dark"] .status-unavailable,
+.theme-dark .status-unavailable {
+    background: rgba(248, 113, 113, 0.2);
+    color: #fca5a5;
+    border-color: rgba(248, 113, 113, 0.3);
+}
+
+/* Sepia Theme */
+[data-theme="sepia"],
+.theme-sepia {
+    --primary-color: #8b4513;
+    --primary-hover: #a0522d;
+    --secondary-color: #696969;
+    --secondary-hover: #556b2f;
+    --success-color: #556b2f;
+    --success-hover: #228b22;
+    --accent-color: #cd853f;
+    --accent-hover: #daa520;
+    --warning-color: #daa520;
+    --error-color: #b22222;
+    
+    --bg-primary: #fdf6e3;
+    --bg-secondary: #f5e6d3;
+    --bg-tertiary: #e6d5c0;
+    
+    --text-primary: #2f1b14;
+    --text-secondary: #5d4e37;
+    --text-tertiary: #8b7355;
+    
+    --border-color: #d2b48c;
+    --border-focus: var(--primary-color);
+}
+
+[data-theme="sepia"] body,
+.theme-sepia body {
+    background: linear-gradient(135deg, #fdf6e3 0%, #f5e6d3 100%);
+}
+
+[data-theme="sepia"] .success-icon,
+.theme-sepia .success-icon {
+    background: rgba(85, 107, 47, 0.2);
+}
+
+[data-theme="sepia"] .participant-selection,
+.theme-sepia .participant-selection {
+    background: rgba(139, 69, 19, 0.1);
+    border-color: rgba(139, 69, 19, 0.3);
+}
+
+[data-theme="sepia"] .proposal-card.today,
+.theme-sepia .proposal-card.today {
+    background: rgba(139, 69, 19, 0.05);
+    border-color: var(--primary-color);
+}
+
+[data-theme="sepia"] .status-available,
+.theme-sepia .status-available {
+    background: rgba(85, 107, 47, 0.15);
+    color: #556b2f;
+    border-color: rgba(85, 107, 47, 0.3);
+}
+
+[data-theme="sepia"] .status-maybe,
+.theme-sepia .status-maybe {
+    background: rgba(218, 165, 32, 0.15);
+    color: #b8860b;
+    border-color: rgba(218, 165, 32, 0.3);
+}
+
+[data-theme="sepia"] .status-unavailable,
+.theme-sepia .status-unavailable {
+    background: rgba(178, 34, 34, 0.15);
+    color: #8b0000;
+    border-color: rgba(178, 34, 34, 0.3);
+}
+
 /* High Contrast Theme */
-[data-theme="high-contrast"] {
+[data-theme="high-contrast"],
+.theme-high-contrast {
     --primary-color: #000000;
     --primary-hover: #333333;
     --secondary-color: #666666;
@@ -163,23 +274,32 @@
 [data-theme="high-contrast"] .btn-primary,
 [data-theme="high-contrast"] .btn-secondary,
 [data-theme="high-contrast"] .btn-success,
-[data-theme="high-contrast"] .btn-accent {
+[data-theme="high-contrast"] .btn-accent,
+.theme-high-contrast .btn-primary,
+.theme-high-contrast .btn-secondary,
+.theme-high-contrast .btn-success,
+.theme-high-contrast .btn-accent {
     border: 2px solid #000000;
     font-weight: 700;
 }
 
-[data-theme="high-contrast"] .input-primary {
+[data-theme="high-contrast"] .input-primary,
+.theme-high-contrast .input-primary {
     border: 2px solid #000000;
 }
 
 [data-theme="high-contrast"] .card-enhanced,
 [data-theme="high-contrast"] .section-card,
-[data-theme="high-contrast"] .proposal-card {
+[data-theme="high-contrast"] .proposal-card,
+.theme-high-contrast .card-enhanced,
+.theme-high-contrast .section-card,
+.theme-high-contrast .proposal-card {
     border: 2px solid #000000;
 }
 
 /* Color Blind Friendly Theme */
-[data-theme="colorblind"] {
+[data-theme="colorblind"],
+.theme-colorblind {
     --primary-color: #0066cc;
     --primary-hover: #0052a3;
     --secondary-color: #666666;
@@ -192,55 +312,30 @@
     --error-color: #cc0000;
 }
 
-[data-theme="colorblind"] .status-available {
+[data-theme="colorblind"] .status-available,
+.theme-colorblind .status-available {
     background: #e6f3ff;
     color: #0066cc;
     border-color: #b3d9ff;
 }
 
-[data-theme="colorblind"] .status-maybe {
+[data-theme="colorblind"] .status-maybe,
+.theme-colorblind .status-maybe {
     background: #fff2e6;
     color: #ff6600;
     border-color: #ffd9b3;
 }
 
-[data-theme="colorblind"] .status-unavailable {
+[data-theme="colorblind"] .status-unavailable,
+.theme-colorblind .status-unavailable {
     background: #ffe6e6;
     color: #cc0000;
     border-color: #ffb3b3;
 }
 
-/* Sepia Theme (for reduced eye strain) */
-[data-theme="sepia"] {
-    --primary-color: #8b4513;
-    --primary-hover: #a0522d;
-    --secondary-color: #696969;
-    --secondary-hover: #556b2f;
-    --success-color: #556b2f;
-    --success-hover: #228b22;
-    --accent-color: #cd853f;
-    --accent-hover: #daa520;
-    --warning-color: #daa520;
-    --error-color: #b22222;
-    
-    --bg-primary: #fdf6e3;
-    --bg-secondary: #f5e6d3;
-    --bg-tertiary: #e6d5c0;
-    
-    --text-primary: #2f1b14;
-    --text-secondary: #5d4e37;
-    --text-tertiary: #8b7355;
-    
-    --border-color: #d2b48c;
-    --border-focus: var(--primary-color);
-}
-
-[data-theme="sepia"] body {
-    background: linear-gradient(135deg, #fdf6e3 0%, #f5e6d3 100%);
-}
-
-/* Blue Light Filter Theme (for evening use) */
-[data-theme="blue-light-filter"] {
+/* Blue Light Filter Theme */
+[data-theme="blue-light-filter"],
+.theme-blue-light-filter {
     --primary-color: #ff6b35;
     --primary-hover: #e55a2b;
     --secondary-color: #8b7355;
@@ -256,7 +351,7 @@
     --bg-secondary: #3d2317;
     --bg-tertiary: #4a2c1c;
     
-    --text-primary: #3a2002;
+    --text-primary: #f5deb3;
     --text-secondary: #d4a574;
     --text-tertiary: #a67c52;
     
@@ -264,20 +359,31 @@
     --border-focus: var(--primary-color);
 }
 
-[data-theme="blue-light-filter"] body {
+[data-theme="blue-light-filter"] body,
+.theme-blue-light-filter body {
     background: linear-gradient(135deg, #2c1810 0%, #1f1008 100%);
 }
 
-/* Theme Toggle Animation */
-.theme-transition {
-    transition: 
-        background-color 0.3s ease,
-        color 0.3s ease,
-        border-color 0.3s ease,
-        box-shadow 0.3s ease;
+/* Theme Switcher Specific Styles */
+#themeSwitcher {
+    user-select: none;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
 }
 
-/* Apply transition to all themed elements */
+#themeSwitcher button {
+    user-select: none;
+    border: none;
+    outline: none;
+    cursor: pointer;
+}
+
+#themeSwitcher button:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Smooth transitions for all themed elements */
 body,
 .card-enhanced,
 .section-card,
@@ -287,7 +393,8 @@ body,
 .btn-success,
 .btn-accent,
 .input-primary,
-.notification {
+.notification,
+#themeSwitcher {
     transition: 
         background-color 0.3s ease,
         color 0.3s ease,
@@ -295,35 +402,144 @@ body,
         box-shadow 0.3s ease;
 }
 
-/* Theme switcher component styles */
-.theme-switcher {
-    position: fixed;
-    top: 1rem;
-    left: 1rem;
-    z-index: 1000;
-    background: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-lg);
-    padding: 0.5rem;
-    box-shadow: var(--shadow-md);
+/* Calendar theme adjustments */
+[data-theme="dark"] .calendar-day,
+.theme-dark .calendar-day {
+    border-color: #4b5563;
 }
 
-.theme-switcher select {
-    background: transparent;
-    border: none;
-    color: var(--text-primary);
-    font-size: 0.875rem;
-    cursor: pointer;
+[data-theme="dark"] .calendar-day.neutral,
+.theme-dark .calendar-day.neutral {
+    background-color: #374151;
+    color: #9ca3af;
+    border-color: #4b5563;
 }
 
-.theme-switcher select:focus {
-    outline: none;
+[data-theme="dark"] .calendar-day.other-month,
+.theme-dark .calendar-day.other-month {
+    background-color: #1f2937;
+    color: #6b7280;
 }
 
-/* Hide theme switcher on mobile to save space */
-@media (max-width: 575.98px) {
-    .theme-switcher {
-        display: none;
+[data-theme="sepia"] .calendar-day,
+.theme-sepia .calendar-day {
+    border-color: #d2b48c;
+}
+
+[data-theme="sepia"] .calendar-day.neutral,
+.theme-sepia .calendar-day.neutral {
+    background-color: #e6d5c0;
+    color: #8b7355;
+    border-color: #d2b48c;
+}
+
+[data-theme="sepia"] .calendar-day.other-month,
+.theme-sepia .calendar-day.other-month {
+    background-color: #f5e6d3;
+    color: #a0956b;
+}
+
+/* Emote suggestions theme support */
+[data-theme="dark"] #emote-suggestions,
+.theme-dark #emote-suggestions {
+    background: #1f2937;
+    border-color: #374151;
+    color: #f9fafb;
+}
+
+[data-theme="dark"] #emote-suggestions::before,
+.theme-dark #emote-suggestions::before {
+    background: #111827;
+    color: #9ca3af;
+    border-bottom-color: #374151;
+}
+
+[data-theme="dark"] .emote-suggestion:hover:not(.bg-indigo-600),
+.theme-dark .emote-suggestion:hover:not(.bg-indigo-600) {
+    background-color: #374151;
+    border-color: #4b5563;
+}
+
+[data-theme="dark"] .emote-suggestion span,
+.theme-dark .emote-suggestion span {
+    color: #f9fafb;
+}
+
+[data-theme="sepia"] #emote-suggestions,
+.theme-sepia #emote-suggestions {
+    background: #fdf6e3;
+    border-color: #d2b48c;
+    color: #2f1b14;
+}
+
+[data-theme="sepia"] #emote-suggestions::before,
+.theme-sepia #emote-suggestions::before {
+    background: #f5e6d3;
+    color: #8b7355;
+    border-bottom-color: #d2b48c;
+}
+
+[data-theme="sepia"] .emote-suggestion:hover:not(.bg-indigo-600),
+.theme-sepia .emote-suggestion:hover:not(.bg-indigo-600) {
+    background-color: #f5e6d3;
+    border-color: #d2b48c;
+}
+
+[data-theme="sepia"] .emote-suggestion span,
+.theme-sepia .emote-suggestion span {
+    color: #2f1b14;
+}
+
+/* Accessibility: Respect Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    .theme-transition,
+    .theme-transition *,
+    .theme-transition *:before,
+    .theme-transition *:after {
+        transition: none !important;
+    }
+    
+    #themeSwitcher {
+        transition: none !important;
+    }
+}
+
+/* Print Styles */
+@media print {
+    #themeSwitcher {
+        display: none !important;
+    }
+    
+    /* Force light theme for printing */
+    * {
+        background: white !important;
+        color: black !important;
+        border-color: black !important;
+    }
+}
+
+/* Mobile adjustments for theme switcher */
+@media (max-width: 640px) {
+    #themeSwitcher {
+        top: 0.75rem;
+        left: 0.75rem;
+        padding: 0.5rem;
+    }
+    
+    #themeButton {
+        padding: 0.5rem !important;
+        gap: 0.25rem !important;
+    }
+    
+    #themeIcon {
+        font-size: 1rem;
+    }
+}
+
+/* Hide theme label on very small screens */
+@media (max-width: 480px) {
+    #themeLabel {
+        display: none !important;
     }
 }
 
