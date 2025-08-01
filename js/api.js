@@ -1,4 +1,4 @@
-// api.js - Firebase API functions with enhanced features
+// api.js - Firebase API functions with enhanced features + FAVORITES
 
 class FirebaseAPI {
     constructor() {
@@ -59,13 +59,14 @@ class FirebaseAPI {
         try {
             await this.database.ref('meetups/' + key).set({
                 title: `Meetup ${key}`,
-                name: meetupData.name || 'Untitled Meetup', // NEW: Use 'name' field for consistency
-                description: meetupData.description || '', // NEW: Description field
+                name: meetupData.name || 'Untitled Meetup',
+                description: meetupData.description || '',
                 created: firebase.database.ServerValue.TIMESTAMP,
                 duration: meetupData.duration || 60,
                 participants: {},
                 messages: {},
                 proposals: {},
+                favorites: {}, // NEW: Initialize favorites
                 ...meetupData
             });
             return key;
@@ -94,7 +95,6 @@ class FirebaseAPI {
         }
     }
 
-    // NEW: Update meetup description
     async updateMeetupDescription(key, description) {
         try {
             await this.database.ref('meetups/' + key + '/description').set(description);
@@ -128,7 +128,6 @@ class FirebaseAPI {
         }
     }
 
-    // NEW: Update participant name
     async updateParticipantName(meetupKey, participantId, newName) {
         try {
             await this.database.ref('meetups/' + meetupKey + '/participants/' + participantId + '/name').set(newName);
@@ -183,6 +182,46 @@ class FirebaseAPI {
         });
     }
 
+    // NEW: Favorite operations
+    async addFavorite(meetupKey, participantId, proposalId) {
+        try {
+            await this.database.ref('meetups/' + meetupKey + '/favorites/' + participantId + '/' + proposalId).set({
+                favorited: true,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            });
+            console.log('✅ Favorite added:', participantId, proposalId);
+        } catch (error) {
+            console.error('Error adding favorite:', error);
+            throw new Error('Error adding favorite: ' + error.message);
+        }
+    }
+
+    async removeFavorite(meetupKey, participantId, proposalId) {
+        try {
+            await this.database.ref('meetups/' + meetupKey + '/favorites/' + participantId + '/' + proposalId).remove();
+            console.log('✅ Favorite removed:', participantId, proposalId);
+        } catch (error) {
+            console.error('Error removing favorite:', error);
+            throw new Error('Error removing favorite: ' + error.message);
+        }
+    }
+
+    // Listen to favorites changes for a specific participant
+    onFavoritesChange(meetupKey, participantId, callback) {
+        return this.database.ref('meetups/' + meetupKey + '/favorites/' + participantId).on('value', (snapshot) => {
+            const favorites = snapshot.val() || {};
+            callback(favorites);
+        });
+    }
+
+    // Listen to all favorites changes (for displaying star counts)
+    onAllFavoritesChange(meetupKey, callback) {
+        return this.database.ref('meetups/' + meetupKey + '/favorites').on('value', (snapshot) => {
+            const allFavorites = snapshot.val() || {};
+            callback(allFavorites);
+        });
+    }
+
     // Message operations
     async addMessage(meetupKey, messageId, messageData) {
         try {
@@ -197,12 +236,10 @@ class FirebaseAPI {
         }
     }
 
-    // NEW: Edit message
     async editMessage(meetupKey, messageId, editData) {
         try {
             const messageRef = this.database.ref('meetups/' + meetupKey + '/messages/' + messageId);
             
-            // Get current message data
             const snapshot = await messageRef.once('value');
             const currentData = snapshot.val();
             
@@ -210,7 +247,6 @@ class FirebaseAPI {
                 throw new Error('Message not found');
             }
             
-            // Update message with edit information
             await messageRef.update({
                 message: editData.message,
                 editedAt: editData.editedAt,

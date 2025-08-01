@@ -1,4 +1,4 @@
-/* Theme System for Piogino Meetup App - COMPREHENSIVE DARK MODE FIX WITH IMPROVED COLORS */
+/* Theme System for Piogino Meetup App - COMPREHENSIVE DARK MODE FIX WITH IMPROVED COLORS + FAVORITES */
 
 /* Theme Transition Class */
 .theme-transition,
@@ -27,6 +27,8 @@
     --accent-hover: #7c3aed;
     --warning-color: #f59e0b;
     --error-color: #ef4444;
+    --favorite-color: #eab308;
+    --favorite-hover: #ca8a04;
     
     --bg-primary: #ffffff;
     --bg-secondary: #f9fafb;
@@ -58,6 +60,8 @@
     --accent-hover: #8b5cf6;
     --warning-color: #fbbf24;
     --error-color: #f87171;
+    --favorite-color: #fbbf24; /* Brighter yellow for dark theme */
+    --favorite-hover: #f59e0b;
     
     --bg-primary: #1f2937;
     --bg-secondary: #374151;
@@ -219,6 +223,72 @@
 [data-theme="dark"] .bg-gray-600:hover,
 .theme-dark .bg-gray-600:hover {
     background: var(--secondary-color) !important;
+}
+
+/* NEW: Dark theme favorite/star button styles */
+[data-theme="dark"] .bg-yellow-500,
+[data-theme="dark"] .bg-yellow-600,
+.theme-dark .bg-yellow-500,
+.theme-dark .bg-yellow-600 {
+    background: var(--favorite-color) !important;
+    color: var(--bg-primary) !important; /* Dark text on bright yellow */
+}
+
+[data-theme="dark"] .bg-yellow-500:hover,
+[data-theme="dark"] .bg-yellow-600:hover,
+.theme-dark .bg-yellow-500:hover,
+.theme-dark .bg-yellow-600:hover {
+    background: var(--favorite-hover) !important;
+}
+
+[data-theme="dark"] .hover\\:bg-yellow-100,
+.theme-dark .hover\\:bg-yellow-100 {
+    background: var(--bg-secondary) !important;
+}
+
+[data-theme="dark"] .hover\\:bg-yellow-100:hover,
+.theme-dark .hover\\:bg-yellow-100:hover {
+    background: rgba(251, 191, 36, 0.2) !important;
+}
+
+[data-theme="dark"] .border-yellow-400,
+[data-theme="dark"] .hover\\:border-yellow-400,
+.theme-dark .border-yellow-400,
+.theme-dark .hover\\:border-yellow-400 {
+    border-color: var(--favorite-color) !important;
+}
+
+[data-theme="dark"] .text-yellow-600,
+[data-theme="dark"] .text-yellow-700,
+[data-theme="dark"] .hover\\:text-yellow-700,
+.theme-dark .text-yellow-600,
+.theme-dark .text-yellow-700,
+.theme-dark .hover\\:text-yellow-700 {
+    color: var(--favorite-color) !important;
+}
+
+[data-theme="dark"] .hover\\:text-yellow-700:hover,
+.theme-dark .hover\\:text-yellow-700:hover {
+    color: var(--favorite-hover) !important;
+}
+
+/* NEW: Dark theme favorite proposal backgrounds */
+[data-theme="dark"] .bg-yellow-50,
+.theme-dark .bg-yellow-50 {
+    background: rgba(251, 191, 36, 0.1) !important;
+    border-color: rgba(251, 191, 36, 0.3) !important;
+}
+
+[data-theme="dark"] .border-yellow-200,
+.theme-dark .border-yellow-200 {
+    border-color: rgba(251, 191, 36, 0.2) !important;
+}
+
+/* NEW: Dark theme star indicators */
+[data-theme="dark"] .text-yellow-500,
+.theme-dark .text-yellow-500 {
+    color: var(--favorite-color) !important;
+    text-shadow: 0 0 8px rgba(251, 191, 36, 0.5) !important;
 }
 
 /* Borders */
@@ -439,6 +509,8 @@
     --accent-hover: #daa520;
     --warning-color: #daa520;
     --error-color: #b22222;
+    --favorite-color: #daa520; /* Gold color for sepia theme */
+    --favorite-hover: #b8860b;
     
     --bg-primary: #fdf6e3;
     --bg-secondary: #f5e6d3;
@@ -493,6 +565,69 @@
     background: rgba(178, 34, 34, 0.15);
     color: #8b0000;
     border-color: rgba(178, 34, 34, 0.3);
+}
+
+/* NEW: Sepia theme favorite/star styles */
+[data-theme="sepia"] .bg-yellow-500,
+[data-theme="sepia"] .bg-yellow-600,
+.theme-sepia .bg-yellow-500,
+.theme-sepia .bg-yellow-600 {
+    background: var(--favorite-color) !important;
+    color: var(--bg-primary) !important;
+}
+
+[data-theme="sepia"] .bg-yellow-500:hover,
+[data-theme="sepia"] .bg-yellow-600:hover,
+.theme-sepia .bg-yellow-500:hover,
+.theme-sepia .bg-yellow-600:hover {
+    background: var(--favorite-hover) !important;
+}
+
+[data-theme="sepia"] .hover\\:bg-yellow-100,
+.theme-sepia .hover\\:bg-yellow-100 {
+    background: var(--bg-secondary) !important;
+}
+
+[data-theme="sepia"] .hover\\:bg-yellow-100:hover,
+.theme-sepia .hover\\:bg-yellow-100:hover {
+    background: rgba(218, 165, 32, 0.2) !important;
+}
+
+[data-theme="sepia"] .border-yellow-400,
+[data-theme="sepia"] .hover\\:border-yellow-400,
+.theme-sepia .border-yellow-400,
+.theme-sepia .hover\\:border-yellow-400 {
+    border-color: var(--favorite-color) !important;
+}
+
+[data-theme="sepia"] .text-yellow-600,
+[data-theme="sepia"] .text-yellow-700,
+[data-theme="sepia"] .hover\\:text-yellow-700,
+.theme-sepia .text-yellow-600,
+.theme-sepia .text-yellow-700,
+.theme-sepia .hover\\:text-yellow-700 {
+    color: var(--favorite-color) !important;
+}
+
+[data-theme="sepia"] .hover\\:text-yellow-700:hover,
+.theme-sepia .hover\\:text-yellow-700:hover {
+    color: var(--favorite-hover) !important;
+}
+
+[data-theme="sepia"] .bg-yellow-50,
+.theme-sepia .bg-yellow-50 {
+    background: rgba(218, 165, 32, 0.1) !important;
+    border-color: rgba(218, 165, 32, 0.3) !important;
+}
+
+[data-theme="sepia"] .border-yellow-200,
+.theme-sepia .border-yellow-200 {
+    border-color: rgba(218, 165, 32, 0.2) !important;
+}
+
+[data-theme="sepia"] .text-yellow-500,
+.theme-sepia .text-yellow-500 {
+    color: var(--favorite-color) !important;
 }
 
 /* Calendar sepia adjustments */
@@ -643,6 +778,11 @@ body,
     #themeSwitcher {
         transition: none !important;
     }
+    
+    /* NEW: Remove star glow animation for reduced motion */
+    .star-indicator {
+        animation: none !important;
+    }
 }
 
 /* High Contrast Mode Support */
@@ -652,6 +792,8 @@ body,
         --text-secondary: #000000;
         --bg-secondary: #ffffff;
         --bg-tertiary: #f0f0f0;
+        --favorite-color: #ffff00; /* Bright yellow for high contrast */
+        --favorite-hover: #cccc00;
     }
     
     .btn-primary,
@@ -670,6 +812,16 @@ body,
     .proposal-card {
         border: 2px solid #000000;
     }
+    
+    /* NEW: High contrast star buttons */
+    .star-button {
+        border: 2px solid #000000 !important;
+    }
+    
+    .star-indicator {
+        color: #000000 !important;
+        text-shadow: 2px 2px 0px #ffffff !important;
+    }
 }
 
 /* Print Styles */
@@ -683,6 +835,24 @@ body,
         background: white !important;
         color: black !important;
         border-color: black !important;
+    }
+    
+    /* NEW: Print star indicators clearly */
+    .star-indicator::after {
+        content: " [FAVORITE]";
+        font-size: 0.75rem;
+        font-weight: bold;
+        color: black !important;
+    }
+    
+    .star-button {
+        display: none !important;
+    }
+    
+    .star-count::after {
+        content: " (" attr(data-star-count) " stars)";
+        font-size: 0.75rem;
+        color: black !important;
     }
 }
 
@@ -722,5 +892,11 @@ body,
 
 .input-primary:focus {
     outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* NEW: Focus styles for star buttons */
+.star-button:focus-visible {
+    outline: 2px solid var(--favorite-color);
     outline-offset: 2px;
 }

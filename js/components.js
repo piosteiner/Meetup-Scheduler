@@ -1,4 +1,4 @@
-// components.js - UI components and notifications (with enhanced features)
+// components.js - UI components and notifications (with enhanced features + FAVORITES)
 
 class UIComponents {
     constructor() {
@@ -138,8 +138,24 @@ class UIComponents {
         return '<option value="">Choose participant...</option>' + options;
     }
 
-    // UPDATED: Render proposal card with hover delete button
-    renderProposalCard(proposalId, proposal, allParticipants, selectedParticipantId, meetingDuration) {
+    // NEW: Calculate star count for a proposal
+    calculateStarCount(proposalId, allFavorites) {
+        let starCount = 0;
+        Object.values(allFavorites).forEach(participantFavorites => {
+            if (participantFavorites && participantFavorites[proposalId]) {
+                starCount++;
+            }
+        });
+        return starCount;
+    }
+
+    // NEW: Check if proposal is favorited by current participant
+    isProposalFavorited(proposalId, currentFavorites) {
+        return currentFavorites && currentFavorites[proposalId];
+    }
+
+    // UPDATED: Render proposal card with star/favorite functionality
+    renderProposalCard(proposalId, proposal, allParticipants, selectedParticipantId, meetingDuration, currentFavorites = {}, allFavorites = {}) {
         const startTime = new Date(proposal.dateTime);
         const endTime = new Date(startTime.getTime() + meetingDuration * 60 * 1000);
         
@@ -159,9 +175,26 @@ class UIComponents {
         const isToday = window.Utils.isToday(startTime);
         const isPast = window.Utils.isPast(startTime);
         
+        // NEW: Calculate favorites data
+        const starCount = this.calculateStarCount(proposalId, allFavorites);
+        const isFavorited = this.isProposalFavorited(proposalId, currentFavorites);
+        const hasParticipantSelected = !!selectedParticipantId;
+        
+        // NEW: Determine if this is a favorited proposal (for special styling)
+        const isFavoritedProposal = isFavorited;
+        const favoriteBorderClass = isFavoritedProposal ? 'border-yellow-400 bg-yellow-50' : '';
+        const favoriteHeaderClass = isFavoritedProposal ? 'border-b border-yellow-200 pb-2 mb-3' : '';
+        
         return `
-            <div class="bg-white p-4 rounded-lg shadow-sm border ${isPast ? 'opacity-75 border-gray-300' : isToday ? 'border-indigo-300 bg-indigo-50' : 'border-gray-200'} group relative">
-                <!-- Hover delete button in top right corner -->
+            <div class="bg-white p-4 rounded-lg shadow-sm border ${isPast ? 'opacity-75 border-gray-300' : isToday ? 'border-indigo-300 bg-indigo-50' : 'border-gray-200'} ${favoriteBorderClass} group relative">
+                <!-- NEW: Favorite indicator at top left -->
+                ${isFavoritedProposal ? `
+                    <div class="absolute top-2 left-2 text-yellow-500 text-lg z-10" title="You starred this proposal">
+                        ⭐
+                    </div>
+                ` : ''}
+                
+                <!-- Delete button in top right corner -->
                 <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                     <button onclick="window.app.deleteProposal('${proposalId}', '${this.escapeHtml(proposerName)}')" 
                             class="text-red-500 hover:text-red-700 p-1 rounded transition-colors duration-200"
@@ -170,7 +203,7 @@ class UIComponents {
                     </button>
                 </div>
                 
-                <div class="mb-4 pr-8">
+                <div class="mb-4 ${isFavoritedProposal ? 'pl-8' : 'pr-8'} ${favoriteHeaderClass}">
                     <div class="font-semibold text-gray-900 text-lg ${isToday ? 'text-indigo-900' : ''}">${formattedDate}</div>
                     <div class="font-medium text-lg ${isToday ? 'text-indigo-700' : 'text-indigo-600'}">
                         ${timeRange}
@@ -181,6 +214,39 @@ class UIComponents {
                     <div class="text-sm text-gray-600 mt-1">Proposed by ${proposerName}</div>
                     ${isPast ? '<div class="text-xs text-red-500 mt-1">⏰ Past</div>' : ''}
                     ${isToday ? '<div class="text-xs text-indigo-600 mt-1 font-semibold">📅 Today</div>' : ''}
+                    
+                    <!-- NEW: Star count and favorite button section -->
+                    <div class="flex items-center justify-between mt-2">
+                        <div class="flex items-center gap-2">
+                            ${starCount > 0 ? `
+                                <div class="flex items-center gap-1 text-sm text-yellow-600">
+                                    <span class="text-yellow-500">⭐</span>
+                                    <span class="font-medium">${starCount}</span>
+                                    <span class="text-gray-500">${starCount === 1 ? 'star' : 'stars'}</span>
+                                </div>
+                            ` : '<div class="text-xs text-gray-400">No stars yet</div>'}
+                        </div>
+                        
+                        ${hasParticipantSelected ? `
+                            <div class="flex items-center gap-1">
+                                ${isFavorited ? `
+                                    <button onclick="window.removeFromFavorites('${proposalId}', '${this.escapeHtml(proposerName)}', '${this.escapeHtml(formattedDate)} at ${this.escapeHtml(window.Utils.formatTime(startTime))}')" 
+                                            class="flex items-center gap-1 px-2 py-1 text-xs bg-yellow-500 hover:bg-yellow-600 text-white rounded-md transition-colors duration-200"
+                                            title="Remove from favorites">
+                                        <span>⭐</span>
+                                        <span>Remove Star</span>
+                                    </button>
+                                ` : `
+                                    <button onclick="window.addToFavorites('${proposalId}', '${this.escapeHtml(proposerName)}', '${this.escapeHtml(formattedDate)} at ${this.escapeHtml(window.Utils.formatTime(startTime))}')" 
+                                            class="flex items-center gap-1 px-2 py-1 text-xs bg-gray-100 hover:bg-yellow-100 border border-gray-300 hover:border-yellow-400 text-gray-700 hover:text-yellow-700 rounded-md transition-all duration-200"
+                                            title="Add to favorites">
+                                        <span>☆</span>
+                                        <span>Add Star</span>
+                                    </button>
+                                `}
+                            </div>
+                        ` : ''}
+                    </div>
                 </div>
                 
                 ${this.renderResponseSummary(availableCount, maybeCount, unavailableCount)}
@@ -355,15 +421,9 @@ class UIComponents {
             .join('');
     }
 
-    // Render proposals list
-    renderProposalsList(proposals, allParticipants, selectedParticipantId, meetingDuration, deletedProposals = {}) {
-        const proposalArray = Object.entries(proposals)
-            .sort((a, b) => {
-                const dateA = new Date(a[1].dateTime);
-                const dateB = new Date(b[1].dateTime);
-                return dateA - dateB;
-            });
-        
+    // UPDATED: Render proposals list with favorites support and priority sorting
+    renderProposalsList(proposals, allParticipants, selectedParticipantId, meetingDuration, deletedProposals = {}, currentFavorites = {}, allFavorites = {}) {
+        const proposalArray = Object.entries(proposals);
         const deletedArray = Object.entries(deletedProposals)
             .sort((a, b) => (b[1].deletedAt || 0) - (a[1].deletedAt || 0));
         
@@ -372,14 +432,33 @@ class UIComponents {
         if (proposalArray.length === 0 && deletedArray.length === 0) {
             html = '<p class="text-gray-500 text-center col-span-full">No proposals yet</p>';
         } else {
-            // Active proposals
-            html += proposalArray
+            // NEW: Sort proposals with favorites first, then by date
+            const sortedProposals = proposalArray.sort((a, b) => {
+                const [proposalIdA, proposalA] = a;
+                const [proposalIdB, proposalB] = b;
+                
+                // Check if either proposal is favorited by current participant
+                const isFavoritedA = this.isProposalFavorited(proposalIdA, currentFavorites);
+                const isFavoritedB = this.isProposalFavorited(proposalIdB, currentFavorites);
+                
+                // Favorites always come first
+                if (isFavoritedA && !isFavoritedB) return -1;
+                if (!isFavoritedA && isFavoritedB) return 1;
+                
+                // Within same favorite status, sort by date (earliest first)
+                const dateA = new Date(proposalA.dateTime);
+                const dateB = new Date(proposalB.dateTime);
+                return dateA - dateB;
+            });
+            
+            // Render active proposals
+            html += sortedProposals
                 .map(([proposalId, proposal]) => 
-                    this.renderProposalCard(proposalId, proposal, allParticipants, selectedParticipantId, meetingDuration)
+                    this.renderProposalCard(proposalId, proposal, allParticipants, selectedParticipantId, meetingDuration, currentFavorites, allFavorites)
                 )
                 .join('');
             
-            // Deleted proposals
+            // Render deleted proposals
             html += deletedArray
                 .map(([deletedId, deletedProposal]) => 
                     this.renderDeletedProposalMessage(deletedProposal)
