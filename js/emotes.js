@@ -737,6 +737,35 @@ class EmoteEnabledMeetupApp extends MeetupApp {
         });
     }
 
+    // FIXED: Override selectParticipant to include message refresh
+    selectParticipant() {
+        // Call parent method first
+        super.selectParticipant();
+        
+        // Then refresh messages for edit button visibility
+        this.refreshMessagesDisplay();
+    }
+
+    // NEW: Add refreshMessagesDisplay method
+    refreshMessagesDisplay() {
+        if (!this.currentMessages || Object.keys(this.currentMessages).length === 0) return;
+        
+        console.log('🔄 Refreshing messages display for selected participant:', this.selectedParticipantId);
+        
+        // Re-render messages with current selected participant
+        const newMessagesList = window.uiComponents.renderMessagesList(
+            Object.entries(this.currentMessages).sort((a, b) => (b[1].timestamp || 0) - (a[1].timestamp || 0)),
+            this.allParticipants,
+            this.selectedParticipantId // Pass selected participant for edit permissions
+        );
+        
+        // Force update the DOM (don't check for changes since we want to show/hide edit buttons)
+        window.uiComponents.updateHTML('messagesList', newMessagesList);
+        this.lastMessagesRender = newMessagesList;
+        
+        console.log('✅ Messages refreshed - edit buttons updated for participant:', this.selectedParticipantId);
+    }
+
     setupMeetupListeners() {
         this.cleanupListeners();
 
@@ -773,8 +802,9 @@ class EmoteEnabledMeetupApp extends MeetupApp {
             this.allParticipants = participants;
             this.updateParticipantsUI(participants);
             
+            // Re-render messages when participants change (for updated names and edit permissions)
             if (Object.keys(this.currentMessages).length > 0) {
-                this.renderMessages(this.currentMessages);
+                this.refreshMessagesDisplay();
             }
         });
         this.listeners.set('participants', participantsListener);
