@@ -328,11 +328,13 @@ class UIComponents {
                                     ✏️
                                 </button>
                             ` : ''}
-                            <button onclick="window.deleteMessage('${messageId}', '${this.escapeHtml(senderName)}', '${this.escapeHtml(message.message)}')" 
-                                    class="text-red-500 hover:text-red-700 text-xs transition-colors duration-200"
-                                    title="Delete message">
-                                🗑️
-                            </button>
+                            ${canEdit ? `
+                                <button onclick="window.deleteMessage('${messageId}', '${this.escapeHtml(senderName)}', '${this.escapeHtml(message.message)}')" 
+                                        class="text-red-500 hover:text-red-700 text-xs transition-colors duration-200"
+                                        title="Delete message">
+                                    🗑️
+                                </button>
+                            ` : ''}
                         </div>
                     </div>
                 </div>
