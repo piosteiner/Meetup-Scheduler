@@ -1,4 +1,4 @@
-/* Theme System for Piogino Meetup App - COMPREHENSIVE DARK MODE FIX */
+/* Theme System for Piogino Meetup App - COMPREHENSIVE DARK MODE FIX WITH IMPROVED COLORS */
 
 /* Theme Transition Class */
 .theme-transition,
@@ -129,6 +129,30 @@
 .theme-dark .text-gray-500,
 .theme-dark .text-gray-400 {
     color: var(--text-secondary) !important;
+}
+
+/* IMPROVED: Proposal time colors for better dark mode visibility */
+[data-theme="dark"] .text-indigo-600,
+.theme-dark .text-indigo-600 {
+    color: #93c5fd !important; /* Much brighter blue for proposal times */
+}
+
+[data-theme="dark"] .text-indigo-700,
+.theme-dark .text-indigo-700 {
+    color: #bfdbfe !important; /* Even brighter for "today" proposals */
+}
+
+[data-theme="dark"] .text-indigo-900,
+.theme-dark .text-indigo-900 {
+    color: #dbeafe !important; /* Brightest for today's date text */
+}
+
+/* IMPROVED: Message sender names in bright purple for better readability */
+[data-theme="dark"] .border-l-4.border-indigo-500 .text-indigo-600,
+[data-theme="dark"] #messagesList .text-indigo-600,
+.theme-dark .border-l-4.border-indigo-500 .text-indigo-600,
+.theme-dark #messagesList .text-indigo-600 {
+    color: #c084fc !important; /* Bright purple for message sender names */
 }
 
 /* Headings */
