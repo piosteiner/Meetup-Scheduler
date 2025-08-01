@@ -1,4 +1,4 @@
-// app.js - Main application logic with enhanced features
+// app.js - Main application logic with custom modal dialogs
 
 class MeetupApp {
     constructor() {
@@ -234,34 +234,52 @@ class MeetupApp {
         this.refreshProposalsDisplay();
     }
 
-    // NEW: Edit participant name
+    // UPDATED: Edit participant name with custom modal
     async editParticipantName(participantId) {
         try {
             const currentName = this.allParticipants[participantId]?.name;
             if (!currentName) {
-                window.uiComponents.showNotification('Participant not found', 'error');
+                await window.safeAlert('Participant not found', 'Error', { type: 'error', icon: '❌' });
                 return;
             }
 
-            const newName = prompt(`Edit participant name:\n\nCurrent: ${currentName}\n\nEnter new name:`, currentName);
+            const newName = await window.safePrompt(
+                `Current name: ${currentName}\n\nEnter new name:`,
+                'Edit Participant Name',
+                currentName,
+                {
+                    placeholder: 'Enter participant name',
+                    maxLength: 50
+                }
+            );
             
             if (newName === null) return; // User cancelled
             
             const trimmedName = newName.trim();
             if (!trimmedName) {
-                window.uiComponents.showNotification('Name cannot be empty', 'warning');
+                await window.safeAlert('Name cannot be empty', 'Invalid Name', { type: 'warning', icon: '⚠️' });
                 return;
             }
 
             if (trimmedName === currentName) return; // No change
             
             if (!window.Utils.isValidName(trimmedName)) {
-                window.uiComponents.showNotification('Name must be between 2 and 50 characters', 'warning');
+                await window.safeAlert('Name must be between 2 and 50 characters', 'Invalid Name', { type: 'warning', icon: '⚠️' });
                 return;
             }
 
-            // Confirmation dialog
-            const confirmed = confirm(`Are you sure you want to change "${currentName}" to "${trimmedName}"?`);
+            // Confirmation dialog with custom styling
+            const confirmed = await window.safeConfirm(
+                `Change participant name from "${currentName}" to "${trimmedName}"?`,
+                'Confirm Name Change',
+                {
+                    confirmText: 'Change Name',
+                    cancelText: 'Cancel',
+                    icon: '✏️',
+                    confirmClass: 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                }
+            );
+            
             if (!confirmed) return;
 
             await window.firebaseAPI.updateParticipantName(this.currentMeetupKey, participantId, trimmedName);
@@ -271,7 +289,7 @@ class MeetupApp {
             
         } catch (error) {
             console.error('❌ Error updating participant name:', error);
-            window.uiComponents.showNotification('Error updating participant name: ' + error.message, 'error');
+            await window.safeAlert('Error updating participant name: ' + error.message, 'Error', { type: 'error', icon: '❌' });
         }
     }
 
@@ -307,22 +325,30 @@ class MeetupApp {
         this.refreshProposalsDisplay();
     }
 
-    // Edit meetup name
+    // UPDATED: Edit meetup name with custom modal
     async editMeetupName() {
         try {
             if (!this.currentMeetupKey) {
-                window.uiComponents.showNotification('No meetup selected', 'error');
+                await window.safeAlert('No meetup selected', 'Error', { type: 'error', icon: '❌' });
                 return;
             }
 
             const currentName = document.getElementById('meetupTitle').textContent;
-            const newName = prompt('Enter meetup name:', currentName);
+            const newName = await window.safePrompt(
+                'Enter meetup name:',
+                'Edit Meetup Name',
+                currentName,
+                {
+                    placeholder: 'Enter meetup name',
+                    maxLength: 100
+                }
+            );
             
             if (newName === null) return; // User cancelled
             
             const trimmedName = newName.trim();
             if (!trimmedName) {
-                window.uiComponents.showNotification('Meetup name cannot be empty', 'warning');
+                await window.safeAlert('Meetup name cannot be empty', 'Invalid Name', { type: 'warning', icon: '⚠️' });
                 return;
             }
 
@@ -336,7 +362,7 @@ class MeetupApp {
             
         } catch (error) {
             console.error('❌ Error updating meetup name:', error);
-            window.uiComponents.showNotification('Error updating meetup name: ' + error.message, 'error');
+            await window.safeAlert('Error updating meetup name: ' + error.message, 'Error', { type: 'error', icon: '❌' });
         }
     }
 
@@ -468,19 +494,23 @@ class MeetupApp {
         }
     }
 
-    // Clear availability response with confirmation
+    // UPDATED: Clear availability response with custom modal
     async clearAvailabilityResponse(proposalId, participantName, proposalDate) {
         try {
             // Show confirmation dialog
-            const confirmClear = confirm(
-                `Are you sure you want to clear ${participantName}'s availability response for:\n\n` +
-                `${proposalDate}\n\n` +
-                `This will remove their current availability status.`
+            const confirmClear = await window.safeConfirm(
+                `Clear ${participantName}'s availability response for:\n\n${proposalDate}\n\nThis will remove their current availability status.`,
+                'Clear Availability Response',
+                {
+                    confirmText: 'Clear Response',
+                    cancelText: 'Cancel',
+                    icon: '🗑️',
+                    confirmClass: 'bg-red-600 hover:bg-red-700 text-white',
+                    dangerMode: true
+                }
             );
             
-            if (!confirmClear) {
-                return; // User cancelled
-            }
+            if (!confirmClear) return; // User cancelled
             
             if (!this.selectedParticipantId) {
                 window.uiComponents.showNotification('Please select a participant first', 'warning');
@@ -506,14 +536,22 @@ class MeetupApp {
         }
     }
 
-    // Delete proposal with confirmation
+    // UPDATED: Delete proposal with custom modal
     async deleteProposal(proposalId, proposerName) {
         try {
-            const confirmation = prompt('To delete this proposal, type DELETE in capital letters:');
+            const confirmation = await window.safePrompt(
+                `⚠️ DANGEROUS ACTION\n\nYou are about to permanently delete the proposal by ${proposerName}.\n\nTo confirm deletion, type DELETE in capital letters:`,
+                'Delete Proposal - Confirmation Required',
+                '',
+                {
+                    placeholder: 'Type DELETE to confirm',
+                    maxLength: 10
+                }
+            );
             
             if (confirmation !== 'DELETE') {
                 if (confirmation !== null) { // User didn't cancel
-                    window.uiComponents.showNotification('Deletion cancelled. You must type "DELETE" exactly.', 'warning');
+                    await window.safeAlert('Deletion cancelled. You must type "DELETE" exactly.', 'Deletion Cancelled', { type: 'warning', icon: '⚠️' });
                 }
                 return;
             }
@@ -528,7 +566,7 @@ class MeetupApp {
             const proposalData = proposalSnapshot.val();
             
             if (!proposalData) {
-                window.uiComponents.showNotification('Proposal not found', 'error');
+                await window.safeAlert('Proposal not found', 'Error', { type: 'error', icon: '❌' });
                 return;
             }
             
@@ -551,7 +589,7 @@ class MeetupApp {
             
         } catch (error) {
             console.error('❌ Error deleting proposal:', error);
-            window.uiComponents.showNotification('Error deleting proposal: ' + error.message, 'error');
+            await window.safeAlert('Error deleting proposal: ' + error.message, 'Error', { type: 'error', icon: '❌' });
         }
     }
 
@@ -591,7 +629,7 @@ class MeetupApp {
         }
     }
 
-    // NEW: Edit message
+    // UPDATED: Edit message with custom modal
     async editMessage(messageId, currentMessage) {
         try {
             if (!this.selectedParticipantId) {
@@ -607,24 +645,32 @@ class MeetupApp {
             // Check if the selected participant is the message sender
             const messageData = this.currentMessages[messageId];
             if (!messageData || messageData.participantId !== this.selectedParticipantId) {
-                window.uiComponents.showNotification('You can only edit your own messages', 'warning');
+                await window.safeAlert('You can only edit your own messages', 'Permission Denied', { type: 'warning', icon: '⚠️' });
                 return;
             }
 
-            const newMessage = prompt('Edit your message:', currentMessage);
+            const newMessage = await window.safePrompt(
+                'Edit your message:',
+                'Edit Message',
+                currentMessage,
+                {
+                    placeholder: 'Enter your message',
+                    maxLength: 500
+                }
+            );
             
             if (newMessage === null) return; // User cancelled
             
             const trimmedMessage = newMessage.trim();
             if (!trimmedMessage) {
-                window.uiComponents.showNotification('Message cannot be empty', 'warning');
+                await window.safeAlert('Message cannot be empty', 'Invalid Message', { type: 'warning', icon: '⚠️' });
                 return;
             }
 
             if (trimmedMessage === currentMessage) return; // No change
             
             if (!window.Utils.isValidMessage(trimmedMessage)) {
-                window.uiComponents.showNotification('Message is too long', 'warning');
+                await window.safeAlert('Message is too long', 'Invalid Message', { type: 'warning', icon: '⚠️' });
                 return;
             }
 
@@ -637,24 +683,29 @@ class MeetupApp {
             window.uiComponents.showNotification('Message edited!', 'success');
         } catch (error) {
             console.error('Error editing message:', error);
-            window.uiComponents.showNotification(error.message, 'error');
+            await window.safeAlert('Error editing message: ' + error.message, 'Error', { type: 'error', icon: '❌' });
         }
     }
 
-    // Delete message with confirmation
+    // UPDATED: Delete message with custom modal
     async deleteMessage(messageId, senderName, messageText) {
         try {
             // Show confirmation dialog
-            const confirmDelete = confirm(
-                `Are you sure you want to delete this message?\n\n` +
-                `From: ${senderName}\n` +
-                `Message: "${messageText.length > 50 ? messageText.substring(0, 50) + '...' : messageText}"\n\n` +
-                `This action cannot be undone.`
+            const truncatedMessage = messageText.length > 50 ? messageText.substring(0, 50) + '...' : messageText;
+            
+            const confirmDelete = await window.safeConfirm(
+                `Delete this message?\n\nFrom: ${senderName}\nMessage: "${truncatedMessage}"\n\nThis action cannot be undone.`,
+                'Delete Message',
+                {
+                    confirmText: 'Delete Message',
+                    cancelText: 'Cancel',
+                    icon: '🗑️',
+                    confirmClass: 'bg-red-600 hover:bg-red-700 text-white',
+                    dangerMode: true
+                }
             );
             
-            if (!confirmDelete) {
-                return; // User cancelled
-            }
+            if (!confirmDelete) return; // User cancelled
             
             if (!this.currentMeetupKey) {
                 window.uiComponents.showNotification('No meetup selected', 'error');
@@ -666,7 +717,7 @@ class MeetupApp {
             const messageData = messageSnapshot.val();
             
             if (!messageData) {
-                window.uiComponents.showNotification('Message not found', 'error');
+                await window.safeAlert('Message not found', 'Error', { type: 'error', icon: '❌' });
                 return;
             }
             
@@ -688,7 +739,7 @@ class MeetupApp {
             
         } catch (error) {
             console.error('❌ Error deleting message:', error);
-            window.uiComponents.showNotification('Error deleting message: ' + error.message, 'error');
+            await window.safeAlert('Error deleting message: ' + error.message, 'Error', { type: 'error', icon: '❌' });
         }
     }
 
