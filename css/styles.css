@@ -1,4 +1,4 @@
-/* Main Styles for Piogino Meetup App + FAVORITES */
+/* Main Styles for Piogino Meetup App + FAVORITES + ICS DOWNLOAD */
 
 /* CSS Custom Properties (Variables) */
 :root {
@@ -12,8 +12,10 @@
     --accent-hover: #7c3aed;
     --warning-color: #f59e0b;
     --error-color: #ef4444;
-    --favorite-color: #eab308; /* NEW: Favorite/star color */
-    --favorite-hover: #ca8a04; /* NEW: Favorite hover color */
+    --favorite-color: #eab308; /* Favorite/star color */
+    --favorite-hover: #ca8a04; /* Favorite hover color */
+    --download-color: #3b82f6; /* NEW: ICS download button color */
+    --download-hover: #2563eb; /* NEW: ICS download button hover color */
     
     --bg-primary: #ffffff;
     --bg-secondary: #f9fafb;
@@ -256,7 +258,7 @@ body {
     box-shadow: var(--shadow-md);
 }
 
-/* NEW: Favorite/Star Button Styles */
+/* Favorite/Star Button Styles */
 .btn-favorite {
     background: var(--favorite-color);
     color: white;
@@ -300,6 +302,61 @@ body {
     color: white;
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(234, 179, 8, 0.3);
+}
+
+/* NEW: ICS Download Button Styles */
+.btn-download {
+    background: var(--download-color);
+    color: white;
+    border: none;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--border-radius-md);
+    font-weight: 500;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    margin-right: 0.25rem;
+}
+
+.btn-download:hover {
+    background: var(--download-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+.btn-download:active {
+    transform: translateY(0);
+}
+
+/* ICS Download Button - Alternative class names for broader compatibility */
+.ics-download-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: var(--border-radius-md);
+    transition: all var(--transition-fast);
+    cursor: pointer;
+    border: 1px solid transparent;
+    background: var(--download-color);
+    color: white;
+    margin-right: 0.25rem;
+}
+
+.ics-download-btn:hover {
+    background: var(--download-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+.ics-download-btn:active {
+    transform: translateY(0);
 }
 
 /* Input Styles */
@@ -554,7 +611,7 @@ body {
     border-color: var(--text-tertiary);
 }
 
-/* NEW: Favorite Proposal Styles */
+/* Favorite Proposal Styles */
 .proposal-card.favorited {
     border-color: var(--favorite-color);
     background: #fefce8;
@@ -566,7 +623,7 @@ body {
     transform: translateY(-2px);
 }
 
-/* NEW: Star/Favorite Indicator */
+/* Star/Favorite Indicator */
 .star-indicator {
     color: var(--favorite-color);
     font-size: 1.25rem;
@@ -583,7 +640,7 @@ body {
     }
 }
 
-/* NEW: Star Count Display */
+/* Star Count Display */
 .star-count {
     display: inline-flex;
     align-items: center;
@@ -597,7 +654,7 @@ body {
     border: 1px solid rgba(234, 179, 8, 0.2);
 }
 
-/* NEW: Star Button (Add/Remove) */
+/* Star Button (Add/Remove) */
 .star-button {
     display: inline-flex;
     align-items: center;
@@ -636,7 +693,7 @@ body {
     transform: translateY(-1px);
 }
 
-/* NEW: Favorite Header Styling */
+/* Favorite Header Styling */
 .favorite-header {
     border-bottom: 1px solid rgba(234, 179, 8, 0.2);
     padding-bottom: 0.75rem;
@@ -763,9 +820,11 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
     opacity: 1;
 }
 
-/* NEW: Responsive adjustments for favorites */
+/* Responsive adjustments for favorites and downloads */
 @media (max-width: 640px) {
-    .star-button {
+    .star-button,
+    .btn-download,
+    .ics-download-btn {
         padding: 0.25rem 0.5rem;
         font-size: 0.7rem;
     }
@@ -780,7 +839,7 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
     }
 }
 
-/* NEW: High contrast mode for stars */
+/* High contrast mode for stars and downloads */
 @media (prefers-contrast: high) {
     .star-indicator {
         color: #000000;
@@ -804,11 +863,25 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
         color: #ffffff;
         border-color: #000000;
     }
+    
+    .btn-download,
+    .ics-download-btn {
+        border: 2px solid #000000 !important;
+        background: #0000ff !important;
+        color: #ffffff !important;
+    }
+    
+    .btn-download:hover,
+    .ics-download-btn:hover {
+        background: #000080 !important;
+    }
 }
 
 /* Print Styles */
 @media print {
-    .no-print {
+    .no-print,
+    .btn-download,
+    .ics-download-btn {
         display: none !important;
     }
     
@@ -829,7 +902,7 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
         display: none !important;
     }
     
-    /* NEW: Show favorites clearly in print */
+    /* Show favorites clearly in print */
     .star-indicator::after {
         content: " [FAVORITE]";
         font-size: 0.75rem;

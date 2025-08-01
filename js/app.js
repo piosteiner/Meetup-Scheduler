@@ -1,4 +1,4 @@
-// app.js - Main application logic with custom modal dialogs + FAVORITES
+// app.js - Main application logic with custom modal dialogs + FAVORITES + ICS DOWNLOAD
 
 class MeetupApp {
     constructor() {
@@ -11,8 +11,8 @@ class MeetupApp {
         this.currentProposals = {}; // Store current proposals for deleted proposals listener
         this.currentMessages = {}; // Store current messages for re-rendering
         this.lastMessagesRender = ''; // Track last rendered messages HTML to prevent duplicates
-        this.currentFavorites = {}; // NEW: Store current favorites for selected participant
-        this.allFavorites = {}; // NEW: Store all favorites for star counts
+        this.currentFavorites = {}; // Store current favorites for selected participant
+        this.allFavorites = {}; // Store all favorites for star counts
     }
 
     // Initialize the application
@@ -236,7 +236,7 @@ class MeetupApp {
         this.refreshProposalsDisplay();
     }
 
-    // NEW: Add to favorites
+    // Add to favorites
     async addToFavorites(proposalId, proposerName, proposalDate) {
         try {
             if (!this.selectedParticipantId) {
@@ -260,7 +260,7 @@ class MeetupApp {
         }
     }
 
-    // NEW: Remove from favorites with confirmation
+    // Remove from favorites with confirmation
     async removeFromFavorites(proposalId, proposerName, proposalDate) {
         try {
             if (!this.selectedParticipantId) {
@@ -300,7 +300,55 @@ class MeetupApp {
         }
     }
 
-    // UPDATED: Edit participant name with custom modal
+    // NEW: Download ICS file for starred proposal
+    async downloadProposalICS(proposalId, proposalData, proposerName) {
+        try {
+            if (!proposalData || !proposalData.dateTime) {
+                window.uiComponents.showNotification('Invalid proposal data', 'error');
+                return;
+            }
+
+            // Get meetup data
+            const meetupData = await window.firebaseAPI.getMeetup(this.currentMeetupKey);
+            if (!meetupData) {
+                window.uiComponents.showNotification('Could not fetch meetup data', 'error');
+                return;
+            }
+
+            const startDate = new Date(proposalData.dateTime);
+            const endDate = new Date(startDate.getTime() + this.meetingDuration * 60 * 1000);
+            
+            // Prepare event data for ICS
+            const eventData = {
+                title: meetupData.name || 'Untitled Meetup',
+                description: `${meetupData.description || 'No description provided'}\n\nProposed by: ${proposerName}\nMeetup Key: ${this.currentMeetupKey}`,
+                startDate: startDate,
+                endDate: endDate,
+                location: '', // You can add location field to meetup data if needed
+                organizer: proposerName
+            };
+
+            // Generate filename
+            const dateStr = window.Utils.formatDate(startDate).replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
+            const timeStr = window.Utils.formatTime(startDate).replace(/[^\w]/g, '');
+            const filename = `${meetupData.name ? meetupData.name.replace(/[^\w\s-]/g, '').replace(/\s+/g, '-') : 'meetup'}-${dateStr}-${timeStr}.ics`;
+
+            // Download the ICS file
+            const success = window.Utils.downloadICSFile(eventData, filename);
+            
+            if (success) {
+                window.uiComponents.showNotification('📅 Calendar event downloaded!', 'success');
+            } else {
+                window.uiComponents.showNotification('Failed to download calendar event', 'error');
+            }
+            
+        } catch (error) {
+            console.error('Error downloading ICS file:', error);
+            window.uiComponents.showNotification('Error downloading calendar event: ' + error.message, 'error');
+        }
+    }
+
+    // Edit participant name with custom modal
     async editParticipantName(participantId) {
         try {
             const currentName = this.allParticipants[participantId]?.name;
@@ -391,7 +439,7 @@ class MeetupApp {
         this.refreshProposalsDisplay();
     }
 
-    // UPDATED: Edit meetup name with custom modal
+    // Edit meetup name with custom modal
     async editMeetupName() {
         try {
             if (!this.currentMeetupKey) {
@@ -484,7 +532,7 @@ class MeetupApp {
         }
     }
 
-    // UPDATED: Propose date and time (now requires participant selection)
+    // Propose date and time (now requires participant selection)
     async proposeDateTime(dateTimeValue = null) {
         try {
             // Check if participant is selected first
@@ -519,7 +567,7 @@ class MeetupApp {
         }
     }
 
-    // NEW: Propose date from calendar
+    // Propose date from calendar
     async proposeDateFromCalendar(date, time = '18:00') {
         try {
             if (!this.selectedParticipantId) {
@@ -560,7 +608,7 @@ class MeetupApp {
         }
     }
 
-    // UPDATED: Clear availability response with custom modal
+    // Clear availability response with custom modal
     async clearAvailabilityResponse(proposalId, participantName, proposalDate) {
         try {
             // Show confirmation dialog
@@ -602,7 +650,7 @@ class MeetupApp {
         }
     }
 
-    // UPDATED: Delete proposal with custom modal
+    // Delete proposal with custom modal
     async deleteProposal(proposalId, proposerName) {
         try {
             const confirmation = await window.safePrompt(
@@ -709,7 +757,7 @@ class MeetupApp {
         }
     }
 
-    // UPDATED: Edit message with custom modal
+    // Edit message with custom modal
     async editMessage(messageId, currentMessage) {
         try {
             if (!this.selectedParticipantId) {
@@ -767,7 +815,7 @@ class MeetupApp {
         }
     }
 
-    // UPDATED: Delete message with custom modal
+    // Delete message with custom modal
     async deleteMessage(messageId, senderName, messageText) {
         try {
             // Show confirmation dialog
@@ -988,7 +1036,7 @@ class MeetupApp {
         });
         this.listeners.set('proposals', proposalsListener);
 
-        // NEW: Favorites listener for selected participant
+        // Favorites listener for selected participant
         const favoritesListener = window.firebaseAPI.onAllFavoritesChange(this.currentMeetupKey, (allFavorites) => {
             this.allFavorites = allFavorites;
             // Update current user's favorites
@@ -1033,7 +1081,7 @@ class MeetupApp {
         }
     }
 
-    // UPDATED: Update proposals UI with favorites support
+    // Update proposals UI with favorites support
     updateProposalsUI(proposals, deletedProposals = {}) {
         this.currentProposals = proposals; // Store for deleted proposals listener
         
@@ -1047,8 +1095,8 @@ class MeetupApp {
                     this.selectedParticipantId, 
                     this.meetingDuration,
                     currentDeleted,
-                    this.currentFavorites, // NEW: Pass current favorites
-                    this.allFavorites // NEW: Pass all favorites for star counts
+                    this.currentFavorites, // Pass current favorites
+                    this.allFavorites // Pass all favorites for star counts
                 );
                 window.uiComponents.updateHTML('proposalsList', proposalsList);
             });
@@ -1059,8 +1107,8 @@ class MeetupApp {
                 this.selectedParticipantId, 
                 this.meetingDuration,
                 deletedProposals,
-                this.currentFavorites, // NEW: Pass current favorites
-                this.allFavorites // NEW: Pass all favorites for star counts
+                this.currentFavorites, // Pass current favorites
+                this.allFavorites // Pass all favorites for star counts
             );
             window.uiComponents.updateHTML('proposalsList', proposalsList);
         }
@@ -1149,9 +1197,18 @@ window.clearAvailabilityResponse = (proposalId, participantName, proposalDate) =
 window.editMeetupName = () => window.app?.editMeetupName();
 window.proposeDateFromCalendar = (date, time) => window.app?.proposeDateFromCalendar(date, time);
 
-// NEW: Global functions for favorites
+// Favorites global functions
 window.addToFavorites = (proposalId, proposerName, proposalDate) => window.app?.addToFavorites(proposalId, proposerName, proposalDate);
 window.removeFromFavorites = (proposalId, proposerName, proposalDate) => window.app?.removeFromFavorites(proposalId, proposerName, proposalDate);
+
+// NEW: Global function for ICS download
+window.downloadProposalICS = (proposalId, proposerName, proposalDateTime) => {
+    if (window.app && window.app.currentProposals && window.app.currentProposals[proposalId]) {
+        window.app.downloadProposalICS(proposalId, window.app.currentProposals[proposalId], proposerName);
+    } else {
+        window.uiComponents.showNotification('Proposal data not found', 'error');
+    }
+};
 
 // Initialize app when DOM is loaded
 document.addEventListener('DOMContentLoaded', async () => {

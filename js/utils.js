@@ -215,6 +215,104 @@ function handleError(error, context = 'Unknown') {
     }
 }
 
+// NEW: ICS file generation utilities
+function generateICSContent(eventData) {
+    const {
+        title,
+        description = '',
+        startDate,
+        endDate,
+        location = '',
+        organizer = ''
+    } = eventData;
+    
+    // Format dates for ICS (YYYYMMDDTHHMMSSZ format in UTC)
+    function formatICSDate(date) {
+        if (!date) return '';
+        const d = new Date(date);
+        return d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+    }
+    
+    // Generate unique ID
+    const uid = `piogino-${Date.now()}-${Math.random().toString(36).substr(2, 9)}@piogino.ch`;
+    
+    // Current timestamp for DTSTAMP
+    const now = formatICSDate(new Date());
+    
+    // Escape special characters in text fields
+    function escapeICSText(text) {
+        if (!text) return '';
+        return text
+            .replace(/\\/g, '\\\\')
+            .replace(/;/g, '\\;')
+            .replace(/,/g, '\\,')
+            .replace(/\n/g, '\\n')
+            .replace(/\r/g, '');
+    }
+    
+    // Build ICS content
+    const icsLines = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//Piogino//Piogino Meetup//EN',
+        'METHOD:PUBLISH',
+        'CALSCALE:GREGORIAN',
+        'BEGIN:VEVENT',
+        `UID:${uid}`,
+        `DTSTAMP:${now}`,
+        `DTSTART:${formatICSDate(startDate)}`,
+        `DTEND:${formatICSDate(endDate)}`,
+        `SUMMARY:${escapeICSText(title)}`,
+        `DESCRIPTION:${escapeICSText(description)}`,
+        `STATUS:TENTATIVE`,
+        `TRANSP:OPAQUE`
+    ];
+    
+    if (location) {
+        icsLines.push(`LOCATION:${escapeICSText(location)}`);
+    }
+    
+    if (organizer) {
+        icsLines.push(`ORGANIZER:CN=${escapeICSText(organizer)}`);
+    }
+    
+    icsLines.push('END:VEVENT');
+    icsLines.push('END:VCALENDAR');
+    
+    // Join with CRLF line endings as per RFC 5545
+    return icsLines.join('\r\n');
+}
+
+function downloadICSFile(eventData, filename = 'meeting.ics') {
+    try {
+        const icsContent = generateICSContent(eventData);
+        
+        // Create blob with ICS content
+        const blob = new Blob([icsContent], { 
+            type: 'text/calendar;charset=utf-8' 
+        });
+        
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        
+        // Trigger download
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Clean up
+        window.URL.revokeObjectURL(url);
+        
+        return true;
+    } catch (error) {
+        console.error('Error generating ICS file:', error);
+        return false;
+    }
+}
+
 // Make utilities globally available
 window.Utils = {
     generateMeetupKey,
@@ -236,7 +334,9 @@ window.Utils = {
     isValidMessage,
     sortByDate,
     debounce,
-    handleError
+    handleError,
+    generateICSContent,
+    downloadICSFile
 };
 
 console.log('✅ Utils loaded successfully');

@@ -1,4 +1,4 @@
-// components.js - UI components and notifications (with enhanced features + FAVORITES)
+// components.js - UI components and notifications (with enhanced features + FAVORITES + ICS DOWNLOAD)
 
 class UIComponents {
     constructor() {
@@ -72,7 +72,7 @@ class UIComponents {
         element.innerHTML = originalContent;
     }
 
-    // NEW: Update description display
+    // Update description display
     updateDescriptionDisplay(description) {
         const textElement = document.getElementById('descriptionText');
         if (textElement) {
@@ -88,7 +88,7 @@ class UIComponents {
         }
     }
 
-    // UPDATED: Render participant card with edit name functionality
+    // Render participant card with edit name functionality
     renderParticipantCard(participant, participantId, isSelected = false) {
         const selectedClass = isSelected ? 'bg-indigo-100 border-indigo-500 text-indigo-900' : 'bg-white hover:bg-gray-50 border-gray-200';
         const cursorClass = 'cursor-pointer';
@@ -138,7 +138,7 @@ class UIComponents {
         return '<option value="">Choose participant...</option>' + options;
     }
 
-    // NEW: Calculate star count for a proposal
+    // Calculate star count for a proposal
     calculateStarCount(proposalId, allFavorites) {
         let starCount = 0;
         Object.values(allFavorites).forEach(participantFavorites => {
@@ -149,12 +149,12 @@ class UIComponents {
         return starCount;
     }
 
-    // NEW: Check if proposal is favorited by current participant
+    // Check if proposal is favorited by current participant
     isProposalFavorited(proposalId, currentFavorites) {
         return currentFavorites && currentFavorites[proposalId];
     }
 
-    // UPDATED: Render proposal card with star/favorite functionality
+    // UPDATED: Render proposal card with star/favorite functionality and ICS download
     renderProposalCard(proposalId, proposal, allParticipants, selectedParticipantId, meetingDuration, currentFavorites = {}, allFavorites = {}) {
         const startTime = new Date(proposal.dateTime);
         const endTime = new Date(startTime.getTime() + meetingDuration * 60 * 1000);
@@ -175,19 +175,19 @@ class UIComponents {
         const isToday = window.Utils.isToday(startTime);
         const isPast = window.Utils.isPast(startTime);
         
-        // NEW: Calculate favorites data
+        // Calculate favorites data
         const starCount = this.calculateStarCount(proposalId, allFavorites);
         const isFavorited = this.isProposalFavorited(proposalId, currentFavorites);
         const hasParticipantSelected = !!selectedParticipantId;
         
-        // NEW: Determine if this is a favorited proposal (for special styling)
+        // Determine if this is a favorited proposal (for special styling)
         const isFavoritedProposal = isFavorited;
         const favoriteBorderClass = isFavoritedProposal ? 'border-yellow-400 bg-yellow-50' : '';
         const favoriteHeaderClass = isFavoritedProposal ? 'border-b border-yellow-200 pb-2 mb-3' : '';
         
         return `
             <div class="bg-white p-4 rounded-lg shadow-sm border ${isPast ? 'opacity-75 border-gray-300' : isToday ? 'border-indigo-300 bg-indigo-50' : 'border-gray-200'} ${favoriteBorderClass} group relative">
-                <!-- NEW: Favorite indicator at top left -->
+                <!-- Favorite indicator at top left -->
                 ${isFavoritedProposal ? `
                     <div class="absolute top-2 left-2 text-yellow-500 text-lg z-10" title="You starred this proposal">
                         ⭐
@@ -215,7 +215,7 @@ class UIComponents {
                     ${isPast ? '<div class="text-xs text-red-500 mt-1">⏰ Past</div>' : ''}
                     ${isToday ? '<div class="text-xs text-indigo-600 mt-1 font-semibold">📅 Today</div>' : ''}
                     
-                    <!-- NEW: Star count and favorite button section -->
+                    <!-- Star count, favorite button, and download section -->
                     <div class="flex items-center justify-between mt-2">
                         <div class="flex items-center gap-2">
                             ${starCount > 0 ? `
@@ -229,6 +229,16 @@ class UIComponents {
                         
                         ${hasParticipantSelected ? `
                             <div class="flex items-center gap-1">
+                                <!-- NEW: Download ICS button for starred proposals -->
+                                ${isFavorited ? `
+                                    <button onclick="window.downloadProposalICS('${proposalId}', '${this.escapeHtml(proposerName)}', '${proposal.dateTime}')" 
+                                            class="flex items-center gap-1 px-2 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors duration-200 mr-1"
+                                            title="Download calendar event (.ics file)">
+                                        <span>📅</span>
+                                        <span>Download</span>
+                                    </button>
+                                ` : ''}
+                                
                                 ${isFavorited ? `
                                     <button onclick="window.removeFromFavorites('${proposalId}', '${this.escapeHtml(proposerName)}', '${this.escapeHtml(formattedDate)} at ${this.escapeHtml(window.Utils.formatTime(startTime))}')" 
                                             class="flex items-center gap-1 px-2 py-1 text-xs bg-yellow-500 hover:bg-yellow-600 text-white rounded-md transition-colors duration-200"
@@ -356,7 +366,7 @@ class UIComponents {
         `;
     }
 
-    // UPDATED: Render message with edit and delete functionality
+    // Render message with edit and delete functionality
     renderMessage(messageId, message, allParticipants, selectedParticipantId = null) {
         // More robust name lookup
         let senderName = 'Unknown';
@@ -410,7 +420,7 @@ class UIComponents {
         `;
     }
 
-    // UPDATED: Render messages list with edit permissions
+    // Render messages list with edit permissions
     renderMessagesList(messageArray, allParticipants, selectedParticipantId = null) {
         if (messageArray.length === 0) {
             return '<p class="text-gray-500 text-center text-sm">No messages yet</p>';
@@ -421,7 +431,7 @@ class UIComponents {
             .join('');
     }
 
-    // UPDATED: Render proposals list with favorites support and priority sorting
+    // Render proposals list with favorites support and priority sorting
     renderProposalsList(proposals, allParticipants, selectedParticipantId, meetingDuration, deletedProposals = {}, currentFavorites = {}, allFavorites = {}) {
         const proposalArray = Object.entries(proposals);
         const deletedArray = Object.entries(deletedProposals)
@@ -432,7 +442,7 @@ class UIComponents {
         if (proposalArray.length === 0 && deletedArray.length === 0) {
             html = '<p class="text-gray-500 text-center col-span-full">No proposals yet</p>';
         } else {
-            // NEW: Sort proposals with favorites first, then by date
+            // Sort proposals with favorites first, then by date
             const sortedProposals = proposalArray.sort((a, b) => {
                 const [proposalIdA, proposalA] = a;
                 const [proposalIdB, proposalB] = b;
