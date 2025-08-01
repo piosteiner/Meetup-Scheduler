@@ -1,4 +1,4 @@
-// components.js - UI components and notifications (with message delete feature)
+// components.js - UI components and notifications (with enhanced features)
 
 class UIComponents {
     constructor() {
@@ -88,17 +88,27 @@ class UIComponents {
         }
     }
 
-    // Render participant card with click functionality
+    // UPDATED: Render participant card with edit name functionality
     renderParticipantCard(participant, participantId, isSelected = false) {
         const selectedClass = isSelected ? 'bg-indigo-100 border-indigo-500 text-indigo-900' : 'bg-white hover:bg-gray-50 border-gray-200';
         const cursorClass = 'cursor-pointer';
         
         return `
             <div onclick="window.app.selectParticipantById('${participantId}')" 
-                 class="participant-card ${selectedClass} ${cursorClass} p-3 rounded-lg shadow-sm text-center text-sm font-medium transition-all duration-200 border-2"
+                 class="participant-card ${selectedClass} ${cursorClass} p-3 rounded-lg shadow-sm text-center text-sm font-medium transition-all duration-200 border-2 group relative"
                  data-participant-id="${participantId}">
-                ${participant.name}
+                <div class="participant-name" ondblclick="event.stopPropagation(); window.editParticipantName('${participantId}')" 
+                     title="Double-click to edit name" class="hover:text-indigo-600 transition-colors">
+                    ${participant.name}
+                </div>
                 ${isSelected ? '<div class="text-xs text-indigo-600 mt-1">Selected</div>' : ''}
+                <div class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onclick="event.stopPropagation(); window.editParticipantName('${participantId}')" 
+                            class="text-xs text-gray-400 hover:text-indigo-600 transition-colors"
+                            title="Edit name">
+                        ✏️
+                    </button>
+                </div>
             </div>
         `;
     }
@@ -128,7 +138,7 @@ class UIComponents {
         return '<option value="">Choose participant...</option>' + options;
     }
 
-    // Render proposal card
+    // UPDATED: Render proposal card with hover delete button
     renderProposalCard(proposalId, proposal, allParticipants, selectedParticipantId, meetingDuration) {
         const startTime = new Date(proposal.dateTime);
         const endTime = new Date(startTime.getTime() + meetingDuration * 60 * 1000);
@@ -150,8 +160,17 @@ class UIComponents {
         const isPast = window.Utils.isPast(startTime);
         
         return `
-            <div class="bg-white p-4 rounded-lg shadow-sm border ${isPast ? 'opacity-75 border-gray-300' : isToday ? 'border-indigo-300 bg-indigo-50' : 'border-gray-200'}">
-                <div class="mb-4">
+            <div class="bg-white p-4 rounded-lg shadow-sm border ${isPast ? 'opacity-75 border-gray-300' : isToday ? 'border-indigo-300 bg-indigo-50' : 'border-gray-200'} group relative">
+                <!-- Hover delete button in top right corner -->
+                <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <button onclick="window.app.deleteProposal('${proposalId}', '${this.escapeHtml(proposerName)}')" 
+                            class="text-red-500 hover:text-red-700 p-1 rounded transition-colors duration-200"
+                            title="Delete this proposal">
+                        🗑️
+                    </button>
+                </div>
+                
+                <div class="mb-4 pr-8">
                     <div class="font-semibold text-gray-900 text-lg ${isToday ? 'text-indigo-900' : ''}">${formattedDate}</div>
                     <div class="font-medium text-lg ${isToday ? 'text-indigo-700' : 'text-indigo-600'}">
                         ${timeRange}
@@ -170,7 +189,6 @@ class UIComponents {
                     this.renderParticipantResponseSection(proposalId, selectedParticipantName, selectedResponse, proposal.dateTime) :
                     this.renderNoParticipantSelected()
                 }
-                ${this.renderDeleteButton(proposalId, proposerName)}
             </div>
         `;
     }
@@ -255,18 +273,6 @@ class UIComponents {
         return classes[response] || 'bg-gray-100 text-gray-700';
     }
 
-    // Render delete button for proposals
-    renderDeleteButton(proposalId, proposerName) {
-        return `
-            <div class="mt-3 pt-3 border-t border-gray-200">
-                <button onclick="window.app.deleteProposal('${proposalId}', '${proposerName}')" 
-                        class="text-red-600 hover:text-red-800 text-xs font-medium transition-colors duration-200">
-                    🗑️ Delete this proposal
-                </button>
-            </div>
-        `;
-    }
-
     // Render deleted proposal message
     renderDeletedProposalMessage(deletedProposal) {
         const deletedDate = new Date(deletedProposal.deletedAt).toLocaleString();
@@ -284,8 +290,8 @@ class UIComponents {
         `;
     }
 
-    // UPDATED: Render message with delete button
-    renderMessage(messageId, message, allParticipants) {
+    // UPDATED: Render message with edit and delete functionality
+    renderMessage(messageId, message, allParticipants, selectedParticipantId = null) {
         // More robust name lookup
         let senderName = 'Unknown';
         if (message.participantId && allParticipants[message.participantId]) {
@@ -298,32 +304,52 @@ class UIComponents {
         const timestamp = message.timestamp ? new Date(message.timestamp).toLocaleString() : '';
         const escapedMessage = this.escapeHtml(message.message);
         
+        // Check if this message was edited
+        const editedInfo = message.editedAt ? `
+            <div class="text-xs text-gray-400 mt-1 italic">
+                Edited ${new Date(message.editedAt).toLocaleString()}
+            </div>
+        ` : '';
+        
+        // Check if the selected participant can edit this message
+        const canEdit = selectedParticipantId && selectedParticipantId === message.participantId;
+        
         return `
             <div class="bg-gray-50 p-3 rounded-lg border-l-4 border-indigo-500 group">
                 <div class="flex items-center justify-between mb-1">
                     <div class="font-semibold text-sm text-indigo-600">${senderName}</div>
                     <div class="flex items-center gap-2">
                         <div class="text-xs text-gray-400">${timestamp}</div>
-                        <button onclick="window.deleteMessage('${messageId}', '${this.escapeHtml(senderName)}', '${this.escapeHtml(message.message)}')" 
-                                class="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 text-xs transition-all duration-200 ml-2"
-                                title="Delete message">
-                            🗑️
-                        </button>
+                        <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-1">
+                            ${canEdit ? `
+                                <button onclick="window.editMessage('${messageId}', '${this.escapeHtml(message.message)}')" 
+                                        class="text-blue-500 hover:text-blue-700 text-xs transition-colors duration-200"
+                                        title="Edit message">
+                                    ✏️
+                                </button>
+                            ` : ''}
+                            <button onclick="window.deleteMessage('${messageId}', '${this.escapeHtml(senderName)}', '${this.escapeHtml(message.message)}')" 
+                                    class="text-red-500 hover:text-red-700 text-xs transition-colors duration-200"
+                                    title="Delete message">
+                                🗑️
+                            </button>
+                        </div>
                     </div>
                 </div>
-                <div class="text-gray-900">${escapedMessage}</div>
+                <div class="text-gray-900 break-words">${escapedMessage}</div>
+                ${editedInfo}
             </div>
         `;
     }
 
-    // IMPROVED: Render messages list with better handling for newest-first
-    renderMessagesList(messageArray, allParticipants) {
+    // UPDATED: Render messages list with edit permissions
+    renderMessagesList(messageArray, allParticipants, selectedParticipantId = null) {
         if (messageArray.length === 0) {
             return '<p class="text-gray-500 text-center text-sm">No messages yet</p>';
         }
         
         return messageArray
-            .map(([id, message]) => this.renderMessage(id, message, allParticipants))
+            .map(([id, message]) => this.renderMessage(id, message, allParticipants, selectedParticipantId))
             .join('');
     }
 

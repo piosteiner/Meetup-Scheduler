@@ -1,4 +1,4 @@
-// app.js - Main application logic with duplicate message fix
+// app.js - Main application logic with enhanced features
 
 class MeetupApp {
     constructor() {
@@ -220,6 +220,9 @@ class MeetupApp {
             window.uiComponents.hide('messageAsParticipant');
             window.uiComponents.show('noParticipantMessage');
             
+            // Hide propose form when no participant selected
+            window.uiComponents.hide('proposeForm');
+            
             // Reset calendar
             window.calendar.updateSelectedParticipant(null);
         }
@@ -229,6 +232,47 @@ class MeetupApp {
         
         // Refresh proposals display
         this.refreshProposalsDisplay();
+    }
+
+    // NEW: Edit participant name
+    async editParticipantName(participantId) {
+        try {
+            const currentName = this.allParticipants[participantId]?.name;
+            if (!currentName) {
+                window.uiComponents.showNotification('Participant not found', 'error');
+                return;
+            }
+
+            const newName = prompt(`Edit participant name:\n\nCurrent: ${currentName}\n\nEnter new name:`, currentName);
+            
+            if (newName === null) return; // User cancelled
+            
+            const trimmedName = newName.trim();
+            if (!trimmedName) {
+                window.uiComponents.showNotification('Name cannot be empty', 'warning');
+                return;
+            }
+
+            if (trimmedName === currentName) return; // No change
+            
+            if (!window.Utils.isValidName(trimmedName)) {
+                window.uiComponents.showNotification('Name must be between 2 and 50 characters', 'warning');
+                return;
+            }
+
+            // Confirmation dialog
+            const confirmed = confirm(`Are you sure you want to change "${currentName}" to "${trimmedName}"?`);
+            if (!confirmed) return;
+
+            await window.firebaseAPI.updateParticipantName(this.currentMeetupKey, participantId, trimmedName);
+            
+            window.uiComponents.showNotification('Participant name updated!', 'success');
+            console.log('✅ Participant name updated:', trimmedName);
+            
+        } catch (error) {
+            console.error('❌ Error updating participant name:', error);
+            window.uiComponents.showNotification('Error updating participant name: ' + error.message, 'error');
+        }
     }
 
     // Update meeting duration
@@ -348,10 +392,16 @@ class MeetupApp {
         }
     }
 
-    // Propose date and time
-    async proposeDateTime() {
+    // UPDATED: Propose date and time (now requires participant selection)
+    async proposeDateTime(dateTimeValue = null) {
         try {
-            const dateTime = window.uiComponents.getValue('dateTimeInput');
+            // Check if participant is selected first
+            if (!this.selectedParticipantId) {
+                window.uiComponents.showNotification('Please select a participant first to propose a date', 'warning');
+                return;
+            }
+
+            const dateTime = dateTimeValue || window.uiComponents.getValue('dateTimeInput');
             if (!dateTime) {
                 window.uiComponents.showNotification('Please select a date and time', 'warning');
                 return;
@@ -365,7 +415,7 @@ class MeetupApp {
             const proposalId = Date.now().toString();
             
             await window.firebaseAPI.addProposal(this.currentMeetupKey, proposalId, {
-                participantId: this.currentParticipantId || 'anonymous',
+                participantId: this.selectedParticipantId,
                 dateTime: dateTime
             });
             
@@ -374,6 +424,22 @@ class MeetupApp {
         } catch (error) {
             console.error('Error proposing date:', error);
             window.uiComponents.showNotification(error.message, 'error');
+        }
+    }
+
+    // NEW: Propose date from calendar
+    async proposeDateFromCalendar(date, time = '18:00') {
+        try {
+            if (!this.selectedParticipantId) {
+                window.uiComponents.showNotification('Please select a participant first to propose a date', 'warning');
+                return;
+            }
+
+            const dateTimeString = `${date}T${time}`;
+            await this.proposeDateTime(dateTimeString);
+        } catch (error) {
+            console.error('Error proposing date from calendar:', error);
+            window.uiComponents.showNotification('Error proposing date: ' + error.message, 'error');
         }
     }
 
@@ -521,6 +587,56 @@ class MeetupApp {
             window.uiComponents.showNotification('Message sent!', 'success');
         } catch (error) {
             console.error('Error sending message:', error);
+            window.uiComponents.showNotification(error.message, 'error');
+        }
+    }
+
+    // NEW: Edit message
+    async editMessage(messageId, currentMessage) {
+        try {
+            if (!this.selectedParticipantId) {
+                window.uiComponents.showNotification('Please select a participant first', 'warning');
+                return;
+            }
+            
+            if (!this.currentMeetupKey) {
+                window.uiComponents.showNotification('No meetup selected', 'error');
+                return;
+            }
+
+            // Check if the selected participant is the message sender
+            const messageData = this.currentMessages[messageId];
+            if (!messageData || messageData.participantId !== this.selectedParticipantId) {
+                window.uiComponents.showNotification('You can only edit your own messages', 'warning');
+                return;
+            }
+
+            const newMessage = prompt('Edit your message:', currentMessage);
+            
+            if (newMessage === null) return; // User cancelled
+            
+            const trimmedMessage = newMessage.trim();
+            if (!trimmedMessage) {
+                window.uiComponents.showNotification('Message cannot be empty', 'warning');
+                return;
+            }
+
+            if (trimmedMessage === currentMessage) return; // No change
+            
+            if (!window.Utils.isValidMessage(trimmedMessage)) {
+                window.uiComponents.showNotification('Message is too long', 'warning');
+                return;
+            }
+
+            await window.firebaseAPI.editMessage(this.currentMeetupKey, messageId, {
+                message: trimmedMessage,
+                editedAt: firebase.database.ServerValue.TIMESTAMP,
+                originalMessage: currentMessage
+            });
+            
+            window.uiComponents.showNotification('Message edited!', 'success');
+        } catch (error) {
+            console.error('Error editing message:', error);
             window.uiComponents.showNotification(error.message, 'error');
         }
     }
@@ -717,7 +833,8 @@ class MeetupApp {
             // Generate HTML and only update if it's different
             const newMessagesList = window.uiComponents.renderMessagesList(
                 Object.entries(messages).sort((a, b) => (b[1].timestamp || 0) - (a[1].timestamp || 0)),
-                this.allParticipants
+                this.allParticipants,
+                this.selectedParticipantId // Pass selected participant for edit permissions
             );
             
             // Only update DOM if the HTML actually changed
@@ -764,9 +881,11 @@ class MeetupApp {
         const participantOptions = window.uiComponents.renderParticipantOptions(participants);
         window.uiComponents.updateHTML('participantSelect', participantOptions);
 
-        // Show propose form if there are participants
-        if (count > 0) {
+        // Show propose form only if there are participants AND one is selected
+        if (count > 0 && this.selectedParticipantId) {
             window.uiComponents.show('proposeForm');
+        } else {
+            window.uiComponents.hide('proposeForm');
         }
     }
 
@@ -874,8 +993,11 @@ window.goToMeetup = () => window.app?.goToMeetup();
 window.goHome = () => window.app?.goHome();
 window.deleteProposal = (proposalId, proposerName) => window.app?.deleteProposal(proposalId, proposerName);
 window.deleteMessage = (messageId, senderName, messageText) => window.app?.deleteMessage(messageId, senderName, messageText);
+window.editMessage = (messageId, currentMessage) => window.app?.editMessage(messageId, currentMessage);
+window.editParticipantName = (participantId) => window.app?.editParticipantName(participantId);
 window.clearAvailabilityResponse = (proposalId, participantName, proposalDate) => window.app?.clearAvailabilityResponse(proposalId, participantName, proposalDate);
 window.editMeetupName = () => window.app?.editMeetupName();
+window.proposeDateFromCalendar = (date, time) => window.app?.proposeDateFromCalendar(date, time);
 
 // Initialize app when DOM is loaded
 document.addEventListener('DOMContentLoaded', async () => {

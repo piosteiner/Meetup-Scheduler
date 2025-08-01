@@ -1,4 +1,4 @@
-// js/emotes.js - Fixed 7TV Emote System with Working Keyboard Navigation
+// js/emotes.js - Enhanced 7TV Emote System Compatible with New Features
 
 class EmoteSystem {
     constructor() {
@@ -337,7 +337,8 @@ class EmoteEnabledUIComponents extends UIComponents {
         this.suggestionClickHandler = null;
     }
 
-    renderMessage(messageId, message, allParticipants) {
+    // UPDATED: Render message with emotes and edit/delete functionality
+    renderMessage(messageId, message, allParticipants, selectedParticipantId = null) {
         let senderName = 'Unknown';
         if (message.participantId && allParticipants[message.participantId]) {
             senderName = allParticipants[message.participantId].name;
@@ -348,20 +349,68 @@ class EmoteEnabledUIComponents extends UIComponents {
         const timestamp = message.timestamp ? new Date(message.timestamp).toLocaleString() : '';
         const processedMessage = this.emoteSystem.processText(message.message, 'message');
         
+        // Check if this message was edited
+        const editedInfo = message.editedAt ? `
+            <div class="text-xs text-gray-400 mt-1 italic">
+                Edited ${new Date(message.editedAt).toLocaleString()}
+            </div>
+        ` : '';
+        
+        // Check if the selected participant can edit this message
+        const canEdit = selectedParticipantId && selectedParticipantId === message.participantId;
+        
         return `
             <div class="bg-gray-50 p-3 rounded-lg border-l-4 border-indigo-500 group">
                 <div class="flex items-center justify-between mb-1">
                     <div class="font-semibold text-sm text-indigo-600">${senderName}</div>
                     <div class="flex items-center gap-2">
                         <div class="text-xs text-gray-400">${timestamp}</div>
-                        <button onclick="window.deleteMessage('${messageId}', '${this.escapeHtml(senderName)}', '${this.escapeHtml(message.message)}')" 
-                                class="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 text-xs transition-all duration-200 ml-2"
-                                title="Delete message">
-                            🗑️
-                        </button>
+                        <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-1">
+                            ${canEdit ? `
+                                <button onclick="window.editMessage('${messageId}', '${this.escapeHtml(message.message)}')" 
+                                        class="text-blue-500 hover:text-blue-700 text-xs transition-colors duration-200"
+                                        title="Edit message">
+                                    ✏️
+                                </button>
+                            ` : ''}
+                            <button onclick="window.deleteMessage('${messageId}', '${this.escapeHtml(senderName)}', '${this.escapeHtml(message.message)}')" 
+                                    class="text-red-500 hover:text-red-700 text-xs transition-colors duration-200"
+                                    title="Delete message">
+                                🗑️
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div class="text-gray-900 break-words leading-relaxed">${processedMessage}</div>
+                ${editedInfo}
+            </div>
+        `;
+    }
+
+    // UPDATED: Render participant card with emotes and edit functionality
+    renderParticipantCard(participant, participantId, isSelected = false) {
+        const selectedClass = isSelected ? 'bg-indigo-100 border-indigo-500 text-indigo-900' : 'bg-white hover:bg-gray-50 border-gray-200';
+        const cursorClass = 'cursor-pointer';
+        
+        // Process name for emotes
+        const processedName = this.emoteSystem.processText(participant.name, 'message');
+        
+        return `
+            <div onclick="window.app.selectParticipantById('${participantId}')" 
+                 class="participant-card ${selectedClass} ${cursorClass} p-3 rounded-lg shadow-sm text-center text-sm font-medium transition-all duration-200 border-2 group relative"
+                 data-participant-id="${participantId}">
+                <div class="participant-name" ondblclick="event.stopPropagation(); window.editParticipantName('${participantId}')" 
+                     title="Double-click to edit name" class="hover:text-indigo-600 transition-colors">
+                    ${processedName}
+                </div>
+                ${isSelected ? '<div class="text-xs text-indigo-600 mt-1">Selected</div>' : ''}
+                <div class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onclick="event.stopPropagation(); window.editParticipantName('${participantId}')" 
+                            class="text-xs text-gray-400 hover:text-indigo-600 transition-colors"
+                            title="Edit name">
+                        ✏️
+                    </button>
+                </div>
             </div>
         `;
     }
@@ -619,7 +668,7 @@ class EmoteEnabledUIComponents extends UIComponents {
     }
 }
 
-// Enhanced MeetupApp with emote-aware title processing
+// Enhanced MeetupApp with emote-aware title processing and new features
 class EmoteEnabledMeetupApp extends MeetupApp {
     setupEventListeners() {
         super.setupEventListeners();
@@ -735,7 +784,8 @@ class EmoteEnabledMeetupApp extends MeetupApp {
             
             const newMessagesList = window.uiComponents.renderMessagesList(
                 Object.entries(messages).sort((a, b) => (b[1].timestamp || 0) - (a[1].timestamp || 0)),
-                this.allParticipants
+                this.allParticipants,
+                this.selectedParticipantId // Pass selected participant for edit permissions
             );
             
             if (newMessagesList !== this.lastMessagesRender) {
@@ -801,4 +851,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     await window.app.init();
 });
 
-console.log('✅ Fixed emote system with keyboard navigation loaded');
+console.log('✅ Enhanced emote system with new features loaded');

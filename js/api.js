@@ -1,4 +1,4 @@
-// api.js - Firebase API functions
+// api.js - Firebase API functions with enhanced features
 
 class FirebaseAPI {
     constructor() {
@@ -128,6 +128,17 @@ class FirebaseAPI {
         }
     }
 
+    // NEW: Update participant name
+    async updateParticipantName(meetupKey, participantId, newName) {
+        try {
+            await this.database.ref('meetups/' + meetupKey + '/participants/' + participantId + '/name').set(newName);
+            console.log('✅ Participant name updated in Firebase:', participantId, newName);
+        } catch (error) {
+            console.error('Error updating participant name:', error);
+            throw new Error('Error updating participant name. Please try again.');
+        }
+    }
+
     // Listen to participants changes
     onParticipantsChange(meetupKey, callback) {
         return this.database.ref('meetups/' + meetupKey + '/participants').on('value', (snapshot) => {
@@ -183,6 +194,33 @@ class FirebaseAPI {
         } catch (error) {
             console.error('Error sending message:', error);
             throw new Error('Error sending message: ' + error.message);
+        }
+    }
+
+    // NEW: Edit message
+    async editMessage(meetupKey, messageId, editData) {
+        try {
+            const messageRef = this.database.ref('meetups/' + meetupKey + '/messages/' + messageId);
+            
+            // Get current message data
+            const snapshot = await messageRef.once('value');
+            const currentData = snapshot.val();
+            
+            if (!currentData) {
+                throw new Error('Message not found');
+            }
+            
+            // Update message with edit information
+            await messageRef.update({
+                message: editData.message,
+                editedAt: editData.editedAt,
+                originalMessage: editData.originalMessage || currentData.message
+            });
+            
+            console.log('✅ Message edited successfully:', messageId);
+        } catch (error) {
+            console.error('Error editing message:', error);
+            throw new Error('Error editing message: ' + error.message);
         }
     }
 

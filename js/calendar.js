@@ -1,4 +1,4 @@
-// calendar.js - Availability Calendar Component
+// calendar.js - Availability Calendar Component with Date Proposal
 
 class AvailabilityCalendar {
     constructor() {
@@ -274,10 +274,104 @@ class AvailabilityCalendar {
             commentInput.value = dayData.comment || '';
         }
         
+        // Update modal with propose date functionality
+        this.updateModalWithProposeDate(dateKey);
+        
         // Show modal
         const modal = document.getElementById('dayModal');
         if (modal) {
             modal.classList.remove('hidden');
+        }
+    }
+
+    // NEW: Update modal to include propose date functionality
+    updateModalWithProposeDate(dateKey) {
+        // Find the modal content container
+        const modal = document.getElementById('dayModal');
+        const modalContent = modal?.querySelector('.bg-white');
+        
+        if (!modalContent) return;
+        
+        // Check if we already have the propose section
+        let proposeSection = modalContent.querySelector('#proposeDateSection');
+        
+        if (!proposeSection) {
+            // Create propose date section
+            proposeSection = document.createElement('div');
+            proposeSection.id = 'proposeDateSection';
+            proposeSection.className = 'mb-6 border-t pt-4';
+            
+            // Insert before the action buttons
+            const actionButtons = modalContent.querySelector('.flex.gap-3');
+            if (actionButtons) {
+                modalContent.insertBefore(proposeSection, actionButtons);
+            }
+        }
+        
+        // Check if the selected date is in the past
+        const selectedDate = new Date(dateKey);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Reset time for accurate comparison
+        selectedDate.setHours(0, 0, 0, 0);
+        
+        const isPastDate = selectedDate < today;
+        
+        if (isPastDate) {
+            proposeSection.innerHTML = `
+                <div class="text-center text-gray-500 text-sm italic">
+                    Cannot propose dates in the past
+                </div>
+            `;
+        } else {
+            proposeSection.innerHTML = `
+                <label class="block text-sm font-medium text-gray-700 mb-3">Propose this date for the meetup:</label>
+                <div class="flex flex-col gap-3">
+                    <div class="flex items-center gap-2">
+                        <input type="time" id="proposeTimeInput" 
+                               class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
+                               value="18:00">
+                        <button onclick="window.calendar.proposeDateFromModal('${dateKey}')" 
+                                class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 text-sm whitespace-nowrap">
+                            📅 Propose Date
+                        </button>
+                    </div>
+                    <div class="text-xs text-gray-500">
+                        Select a time and click "Propose Date" to add this date/time to the proposals list
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    // NEW: Propose date from modal
+    async proposeDateFromModal(dateKey) {
+        try {
+            const timeInput = document.getElementById('proposeTimeInput');
+            const time = timeInput ? timeInput.value : '18:00';
+            
+            if (!time) {
+                window.uiComponents.showNotification('Please select a time', 'warning');
+                return;
+            }
+            
+            // Check if participant is selected
+            if (!this.selectedParticipantId) {
+                window.uiComponents.showNotification('Please select a participant first', 'warning');
+                return;
+            }
+            
+            // Create the datetime string
+            const dateTimeString = `${dateKey}T${time}`;
+            
+            // Call the app's propose function
+            await window.app.proposeDateTime(dateTimeString);
+            
+            // Close the modal
+            this.closeDayModal();
+            
+        } catch (error) {
+            console.error('Error proposing date from modal:', error);
+            window.uiComponents.showNotification('Error proposing date: ' + error.message, 'error');
         }
     }
 
@@ -469,4 +563,4 @@ class AvailabilityCalendar {
 // Create singleton instance
 window.calendar = new AvailabilityCalendar();
 
-console.log('✅ Calendar component loaded successfully');
+console.log('✅ Enhanced calendar component loaded successfully');
