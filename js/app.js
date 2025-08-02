@@ -1,4 +1,4 @@
-// app.js - Main application logic with custom modal dialogs + FAVORITES + ICS DOWNLOAD - FIXED
+// app.js - Main application logic with custom modal dialogs + GLOBAL FAVORITES + ICS DOWNLOAD - UPDATED
 
 class MeetupApp {
     constructor() {
@@ -11,8 +11,8 @@ class MeetupApp {
         this.currentProposals = {}; // Store current proposals for deleted proposals listener
         this.currentMessages = {}; // Store current messages for re-rendering
         this.lastMessagesRender = ''; // Track last rendered messages HTML to prevent duplicates
-        this.currentFavorites = {}; // Store current favorites for selected participant
-        this.allFavorites = {}; // Store all favorites for star counts
+        this.currentFavorites = {}; // Store current user's favorites derived from global favorites
+        this.globalFavorites = {}; // Store all global favorites
     }
 
     // Initialize the application
@@ -217,12 +217,8 @@ class MeetupApp {
             // Update calendar for selected participant
             window.calendar.updateSelectedParticipant(this.selectedParticipantId);
             
-            // FIXED: Update favorites for selected participant
-            if (this.allFavorites[this.selectedParticipantId]) {
-                this.currentFavorites = this.allFavorites[this.selectedParticipantId];
-            } else {
-                this.currentFavorites = {};
-            }
+            // Update current favorites for selected participant from global favorites
+            this.updateCurrentFavorites();
         } else {
             // Hide forms when no participant selected
             window.uiComponents.hide('messageForm');
@@ -235,18 +231,30 @@ class MeetupApp {
             // Reset calendar
             window.calendar.updateSelectedParticipant(null);
             
-            // FIXED: Clear current favorites when no participant selected
+            // Clear current favorites when no participant selected
             this.currentFavorites = {};
         }
         
         // Refresh participants display to show selection
         this.updateParticipantsUI(this.allParticipants);
         
-        // FIXED: Refresh proposals display with new participant context
+        // Refresh proposals display with new participant context
         this.refreshProposalsDisplay();
     }
 
-    // Add to favorites
+    // Update current user's favorites from global favorites
+    updateCurrentFavorites() {
+        this.currentFavorites = {};
+        if (this.selectedParticipantId && this.globalFavorites) {
+            Object.keys(this.globalFavorites).forEach(proposalId => {
+                if (this.globalFavorites[proposalId] && this.globalFavorites[proposalId][this.selectedParticipantId]) {
+                    this.currentFavorites[proposalId] = true;
+                }
+            });
+        }
+    }
+
+    // Add to global favorites
     async addToFavorites(proposalId, proposerName, proposalDate) {
         try {
             if (!this.selectedParticipantId) {
@@ -259,10 +267,10 @@ class MeetupApp {
                 return;
             }
 
-            await window.firebaseAPI.addFavorite(this.currentMeetupKey, this.selectedParticipantId, proposalId);
+            await window.firebaseAPI.addGlobalFavorite(this.currentMeetupKey, proposalId, this.selectedParticipantId);
             
             window.uiComponents.showNotification(`⭐ Added "${proposalDate}" to favorites!`, 'success');
-            console.log('✅ Added to favorites:', proposalId);
+            console.log('✅ Added to global favorites:', proposalId);
             
         } catch (error) {
             console.error('❌ Error adding to favorites:', error);
@@ -270,7 +278,7 @@ class MeetupApp {
         }
     }
 
-    // Remove from favorites with confirmation
+    // Remove from global favorites with confirmation
     async removeFromFavorites(proposalId, proposerName, proposalDate) {
         try {
             if (!this.selectedParticipantId) {
@@ -287,7 +295,7 @@ class MeetupApp {
             const participantName = this.allParticipants[this.selectedParticipantId]?.name || 'Unknown';
             
             const confirmRemove = await window.safeConfirm(
-                `Remove "${proposalDate}" from ${participantName}'s favorites?\n\nThis will remove the star from this proposal.`,
+                `Remove "${proposalDate}" from favorites?\n\nThis will remove your star from this proposal.`,
                 'Remove from Favorites',
                 {
                     confirmText: 'Remove Star',
@@ -299,10 +307,10 @@ class MeetupApp {
             
             if (!confirmRemove) return; // User cancelled
 
-            await window.firebaseAPI.removeFavorite(this.currentMeetupKey, this.selectedParticipantId, proposalId);
+            await window.firebaseAPI.removeGlobalFavorite(this.currentMeetupKey, proposalId, this.selectedParticipantId);
             
             window.uiComponents.showNotification(`Removed "${proposalDate}" from favorites`, 'info');
-            console.log('✅ Removed from favorites:', proposalId);
+            console.log('✅ Removed from global favorites:', proposalId);
             
         } catch (error) {
             console.error('❌ Error removing from favorites:', error);
@@ -702,18 +710,13 @@ class MeetupApp {
                 deletedAt: firebase.database.ServerValue.TIMESTAMP
             };
             
-            // Also clean up any favorites for this proposal
-            const favoritesSnapshot = await window.firebaseAPI.database.ref('meetups/' + this.currentMeetupKey + '/favorites').once('value');
-            const allFavorites = favoritesSnapshot.val() || {};
-            
+            // Also clean up any global favorites for this proposal
             const favoritesToRemove = [];
-            Object.entries(allFavorites).forEach(([participantId, participantFavorites]) => {
-                if (participantFavorites && participantFavorites[proposalId]) {
-                    favoritesToRemove.push(
-                        window.firebaseAPI.database.ref('meetups/' + this.currentMeetupKey + '/favorites/' + participantId + '/' + proposalId).remove()
-                    );
-                }
-            });
+            if (this.globalFavorites[proposalId]) {
+                favoritesToRemove.push(
+                    window.firebaseAPI.database.ref('meetups/' + this.currentMeetupKey + '/globalFavorites/' + proposalId).remove()
+                );
+            }
             
             // Execute all operations
             await Promise.all([
@@ -920,7 +923,7 @@ class MeetupApp {
         this.currentMessages = {};
         this.lastMessagesRender = ''; // Reset message render tracking
         this.currentFavorites = {}; // Reset favorites
-        this.allFavorites = {}; // Reset all favorites
+        this.globalFavorites = {}; // Reset global favorites
         
         // Clear URL
         window.Utils.clearUrl();
@@ -952,7 +955,7 @@ class MeetupApp {
         window.uiComponents.setValue('dateTimeInput', '');
     }
 
-    // FIXED: Load meetup data and set up listeners
+    // Load meetup data and set up listeners
     async loadMeetupData() {
         if (!this.currentMeetupKey) return;
 
@@ -962,17 +965,17 @@ class MeetupApp {
             // Initialize calendar for this meetup
             window.calendar.init(this.currentMeetupKey, this.selectedParticipantId);
             
-            // FIXED: Load initial favorites data immediately
-            console.log('🌟 Loading initial favorites data...');
+            // Load initial global favorites data immediately
+            console.log('🌟 Loading initial global favorites data...');
             try {
-                const favoritesSnapshot = await window.firebaseAPI.database.ref('meetups/' + this.currentMeetupKey + '/favorites').once('value');
+                const favoritesSnapshot = await window.firebaseAPI.database.ref('meetups/' + this.currentMeetupKey + '/globalFavorites').once('value');
                 const initialFavorites = favoritesSnapshot.val() || {};
-                console.log('🌟 Initial favorites loaded:', initialFavorites);
-                this.allFavorites = initialFavorites;
+                console.log('🌟 Initial global favorites loaded:', initialFavorites);
+                this.globalFavorites = initialFavorites;
                 this.currentFavorites = {}; // No participant selected yet
             } catch (error) {
-                console.warn('Could not load initial favorites:', error);
-                this.allFavorites = {};
+                console.warn('Could not load initial global favorites:', error);
+                this.globalFavorites = {};
                 this.currentFavorites = {};
             }
             
@@ -985,7 +988,7 @@ class MeetupApp {
         }
     }
 
-    // FIXED: Set up Firebase listeners for real-time updates
+    // Set up Firebase listeners for real-time updates
     setupMeetupListeners() {
         // Clean up existing listeners first
         this.cleanupListeners();
@@ -1023,7 +1026,7 @@ class MeetupApp {
             this.allParticipants = participants;
             this.updateParticipantsUI(participants);
             
-            // FIXED: Only re-render messages if participants actually changed
+            // Only re-render messages if participants actually changed
             // This prevents duplicate rendering when messages update
             if (Object.keys(this.currentMessages).length > 0) {
                 this.renderMessages(this.currentMessages);
@@ -1031,7 +1034,7 @@ class MeetupApp {
         });
         this.listeners.set('participants', participantsListener);
 
-        // Messages listener - FIXED: Only render if content actually changed
+        // Messages listener
         const messagesListener = window.firebaseAPI.onMessagesChange(this.currentMeetupKey, (messages) => {
             this.currentMessages = messages;
             
@@ -1060,26 +1063,21 @@ class MeetupApp {
         });
         this.listeners.set('proposals', proposalsListener);
 
-        // FIXED: All favorites listener - ALWAYS active, not just when participant selected
-        const favoritesListener = window.firebaseAPI.onAllFavoritesChange(this.currentMeetupKey, (allFavorites) => {
-            console.log('🌟 All favorites updated:', allFavorites);
-            this.allFavorites = allFavorites;
+        // Global favorites listener - ALWAYS active
+        const globalFavoritesListener = window.firebaseAPI.onGlobalFavoritesChange(this.currentMeetupKey, (globalFavorites) => {
+            console.log('🌟 Global favorites updated:', globalFavorites);
+            this.globalFavorites = globalFavorites;
             
             // Update current user's favorites if participant is selected
-            if (this.selectedParticipantId && allFavorites[this.selectedParticipantId]) {
-                this.currentFavorites = allFavorites[this.selectedParticipantId];
-                console.log('🌟 Current participant favorites:', this.currentFavorites);
-            } else {
-                this.currentFavorites = {};
-            }
+            this.updateCurrentFavorites();
             
-            // FIXED: Always refresh proposals display to show stars, even when no participant selected
-            console.log('🌟 Refreshing proposals with favorites data');
+            // Always refresh proposals display to show stars
+            console.log('🌟 Refreshing proposals with global favorites data');
             this.updateProposalsUI(this.currentProposals || {});
         });
-        this.listeners.set('favorites', favoritesListener);
+        this.listeners.set('globalFavorites', globalFavoritesListener);
 
-        // Deleted proposals listener - CHANGED: Always show, regardless of participant selection
+        // Deleted proposals listener
         const deletedProposalsListener = window.firebaseAPI.database.ref('meetups/' + this.currentMeetupKey + '/deletedProposals').on('value', (snapshot) => {
             const deletedProposals = snapshot.val() || {};
             console.log('🗑️ Deleted proposals updated:', Object.keys(deletedProposals).length, 'deleted');
@@ -1110,7 +1108,7 @@ class MeetupApp {
         }
     }
 
-    // Update proposals UI with favorites support
+    // Update proposals UI with global favorites support
     updateProposalsUI(proposals, deletedProposals = {}) {
         this.currentProposals = proposals; // Store for deleted proposals listener
         
@@ -1125,7 +1123,7 @@ class MeetupApp {
                     this.meetingDuration,
                     currentDeleted,
                     this.currentFavorites, // Pass current favorites
-                    this.allFavorites // Pass all favorites for star counts
+                    this.globalFavorites // Pass global favorites
                 );
                 window.uiComponents.updateHTML('proposalsList', proposalsList);
             });
@@ -1137,7 +1135,7 @@ class MeetupApp {
                 this.meetingDuration,
                 deletedProposals,
                 this.currentFavorites, // Pass current favorites
-                this.allFavorites // Pass all favorites for star counts
+                this.globalFavorites // Pass global favorites
             );
             window.uiComponents.updateHTML('proposalsList', proposalsList);
         }
@@ -1187,8 +1185,8 @@ class MeetupApp {
                     window.firebaseAPI.database.ref('meetups/' + this.currentMeetupKey + '/duration').off('value', listener);
                 } else if (key === 'description') {
                     window.firebaseAPI.database.ref('meetups/' + this.currentMeetupKey + '/description').off('value', listener);
-                } else if (key === 'favorites') {
-                    window.firebaseAPI.database.ref('meetups/' + this.currentMeetupKey + '/favorites').off('value', listener);
+                } else if (key === 'globalFavorites') {
+                    window.firebaseAPI.database.ref('meetups/' + this.currentMeetupKey + '/globalFavorites').off('value', listener);
                 } else if (key === 'deletedProposals') {
                     window.firebaseAPI.database.ref('meetups/' + this.currentMeetupKey + '/deletedProposals').off('value', listener);
                 }
@@ -1226,11 +1224,11 @@ window.clearAvailabilityResponse = (proposalId, participantName, proposalDate) =
 window.editMeetupName = () => window.app?.editMeetupName();
 window.proposeDateFromCalendar = (date, time) => window.app?.proposeDateFromCalendar(date, time);
 
-// Favorites global functions
+// Global favorites functions
 window.addToFavorites = (proposalId, proposerName, proposalDate) => window.app?.addToFavorites(proposalId, proposerName, proposalDate);
 window.removeFromFavorites = (proposalId, proposerName, proposalDate) => window.app?.removeFromFavorites(proposalId, proposerName, proposalDate);
 
-// NEW: Global function for ICS download
+// ICS download global function
 window.downloadProposalICS = (proposalId, proposerName, proposalDateTime) => {
     if (window.app && window.app.currentProposals && window.app.currentProposals[proposalId]) {
         window.app.downloadProposalICS(proposalId, window.app.currentProposals[proposalId], proposerName);
@@ -1239,57 +1237,26 @@ window.downloadProposalICS = (proposalId, proposerName, proposalDateTime) => {
     }
 };
 
-// FIXED: Debug favorites function
-window.debugFavorites = function() {
-    console.log('🔍 FAVORITES DEBUG INFO:');
+// Debug global favorites function
+window.debugGlobalFavorites = function() {
+    console.log('🔍 GLOBAL FAVORITES DEBUG INFO:');
     console.log('Current meetup key:', window.app.currentMeetupKey);
     console.log('Selected participant ID:', window.app.selectedParticipantId);
     console.log('Current favorites (selected participant):', window.app.currentFavorites);
-    console.log('All favorites (all participants):', window.app.allFavorites);
+    console.log('Global favorites (all participants):', window.app.globalFavorites);
     console.log('Current proposals:', Object.keys(window.app.currentProposals || {}));
     
     // Check globally favorited proposals
-    const globallyFavorited = [];
-    Object.entries(window.app.allFavorites || {}).forEach(([participantId, participantFavorites]) => {
-        Object.keys(participantFavorites || {}).forEach(proposalId => {
-            if (!globallyFavorited.includes(proposalId)) {
-                globallyFavorited.push(proposalId);
-            }
-        });
-    });
+    const globallyFavorited = Object.keys(window.app.globalFavorites || {});
     console.log('Globally favorited proposal IDs:', globallyFavorited);
     
     // Check star counts
     Object.keys(window.app.currentProposals || {}).forEach(proposalId => {
-        let starCount = 0;
-        Object.values(window.app.allFavorites || {}).forEach(participantFavorites => {
-            if (participantFavorites && participantFavorites[proposalId]) {
-                starCount++;
-            }
-        });
+        const starCount = window.app.globalFavorites[proposalId] ? Object.keys(window.app.globalFavorites[proposalId]).length : 0;
         if (starCount > 0) {
             console.log(`Proposal ${proposalId}: ${starCount} stars`);
         }
     });
-};
-
-// Also add shortcuts for testing
-window.testFavorites = function() {
-    console.log('🧪 Testing favorites functionality...');
-    window.debugFavorites();
-    
-    // Check if UI elements exist
-    const proposalCards = document.querySelectorAll('.bg-yellow-50, .border-yellow-400');
-    console.log('Found favorited proposal cards:', proposalCards.length);
-    
-    const starIndicators = document.querySelectorAll('[title*="starred"]');
-    console.log('Found star indicators:', starIndicators.length);
-    
-    if (proposalCards.length === 0 && Object.keys(window.app.allFavorites || {}).length > 0) {
-        console.warn('⚠️ Favorites exist but no favorited cards found in UI!');
-        console.log('Try refreshing the proposals...');
-        window.app.refreshProposalsDisplay();
-    }
 };
 
 // Initialize app when DOM is loaded

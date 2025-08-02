@@ -1,4 +1,4 @@
-// api.js - Firebase API functions with enhanced features + FAVORITES
+// api.js - Firebase API functions with enhanced features + GLOBAL FAVORITES
 
 class FirebaseAPI {
     constructor() {
@@ -66,7 +66,7 @@ class FirebaseAPI {
                 participants: {},
                 messages: {},
                 proposals: {},
-                favorites: {}, // NEW: Initialize favorites
+                globalFavorites: {}, // NEW: Initialize global favorites
                 ...meetupData
             });
             return key;
@@ -182,43 +182,35 @@ class FirebaseAPI {
         });
     }
 
-    // NEW: Favorite operations
-    async addFavorite(meetupKey, participantId, proposalId) {
+    // NEW: Global favorite operations
+    async addGlobalFavorite(meetupKey, proposalId, participantId) {
         try {
-            await this.database.ref('meetups/' + meetupKey + '/favorites/' + participantId + '/' + proposalId).set({
+            await this.database.ref('meetups/' + meetupKey + '/globalFavorites/' + proposalId + '/' + participantId).set({
                 favorited: true,
                 timestamp: firebase.database.ServerValue.TIMESTAMP
             });
-            console.log('✅ Favorite added:', participantId, proposalId);
+            console.log('✅ Global favorite added:', proposalId, 'by', participantId);
         } catch (error) {
-            console.error('Error adding favorite:', error);
+            console.error('Error adding global favorite:', error);
             throw new Error('Error adding favorite: ' + error.message);
         }
     }
 
-    async removeFavorite(meetupKey, participantId, proposalId) {
+    async removeGlobalFavorite(meetupKey, proposalId, participantId) {
         try {
-            await this.database.ref('meetups/' + meetupKey + '/favorites/' + participantId + '/' + proposalId).remove();
-            console.log('✅ Favorite removed:', participantId, proposalId);
+            await this.database.ref('meetups/' + meetupKey + '/globalFavorites/' + proposalId + '/' + participantId).remove();
+            console.log('✅ Global favorite removed:', proposalId, 'by', participantId);
         } catch (error) {
-            console.error('Error removing favorite:', error);
+            console.error('Error removing global favorite:', error);
             throw new Error('Error removing favorite: ' + error.message);
         }
     }
 
-    // Listen to favorites changes for a specific participant
-    onFavoritesChange(meetupKey, participantId, callback) {
-        return this.database.ref('meetups/' + meetupKey + '/favorites/' + participantId).on('value', (snapshot) => {
-            const favorites = snapshot.val() || {};
-            callback(favorites);
-        });
-    }
-
-    // Listen to all favorites changes (for displaying star counts)
-    onAllFavoritesChange(meetupKey, callback) {
-        return this.database.ref('meetups/' + meetupKey + '/favorites').on('value', (snapshot) => {
-            const allFavorites = snapshot.val() || {};
-            callback(allFavorites);
+    // Listen to global favorites changes
+    onGlobalFavoritesChange(meetupKey, callback) {
+        return this.database.ref('meetups/' + meetupKey + '/globalFavorites').on('value', (snapshot) => {
+            const globalFavorites = snapshot.val() || {};
+            callback(globalFavorites);
         });
     }
 

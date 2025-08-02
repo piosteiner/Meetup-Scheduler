@@ -1,4 +1,4 @@
-// components.js - UI components and notifications (with enhanced features + FAVORITES + ICS DOWNLOAD) - FIXED
+// components.js - UI components and notifications (with enhanced features + GLOBAL FAVORITES + ICS DOWNLOAD) - UPDATED
 
 class UIComponents {
     constructor() {
@@ -138,15 +138,10 @@ class UIComponents {
         return '<option value="">Choose participant...</option>' + options;
     }
 
-    // Calculate star count for a proposal
-    calculateStarCount(proposalId, allFavorites) {
-        let starCount = 0;
-        Object.values(allFavorites).forEach(participantFavorites => {
-            if (participantFavorites && participantFavorites[proposalId]) {
-                starCount++;
-            }
-        });
-        return starCount;
+    // Calculate star count for a proposal (from global favorites structure)
+    calculateStarCount(proposalId, globalFavorites) {
+        if (!globalFavorites[proposalId]) return 0;
+        return Object.keys(globalFavorites[proposalId]).length;
     }
 
     // Check if proposal is favorited by current participant
@@ -154,8 +149,13 @@ class UIComponents {
         return currentFavorites && currentFavorites[proposalId];
     }
 
-    // FIXED: Render proposal card with star/favorite functionality and ICS download
-    renderProposalCard(proposalId, proposal, allParticipants, selectedParticipantId, meetingDuration, currentFavorites = {}, allFavorites = {}) {
+    // Check if proposal is globally favorited (any participant has starred it)
+    isGloballyFavorited(proposalId, globalFavorites) {
+        return globalFavorites[proposalId] && Object.keys(globalFavorites[proposalId]).length > 0;
+    }
+
+    // Render proposal card with global star/favorite functionality and ICS download
+    renderProposalCard(proposalId, proposal, allParticipants, selectedParticipantId, meetingDuration, currentFavorites = {}, globalFavorites = {}) {
         const startTime = new Date(proposal.dateTime);
         const endTime = new Date(startTime.getTime() + meetingDuration * 60 * 1000);
         
@@ -175,35 +175,23 @@ class UIComponents {
         const isToday = window.Utils.isToday(startTime);
         const isPast = window.Utils.isPast(startTime);
         
-        // FIXED: Calculate favorites data properly for both selected and global views
-        const starCount = this.calculateStarCount(proposalId, allFavorites);
+        // Calculate favorites data using global favorites structure
+        const starCount = this.calculateStarCount(proposalId, globalFavorites);
         const isFavoritedByCurrentParticipant = this.isProposalFavorited(proposalId, currentFavorites);
-        
-        // FIXED: Check if globally favorited (any participant has starred it)
-        const isGloballyFavorited = Object.values(allFavorites).some(participantFavorites => 
-            participantFavorites && participantFavorites[proposalId]
-        );
+        const isGloballyFavorited = this.isGloballyFavorited(proposalId, globalFavorites);
         
         const hasParticipantSelected = !!selectedParticipantId;
         
-        // FIXED: Determine if this proposal should be highlighted
-        let isFavoritedProposal;
-        if (selectedParticipantId) {
-            // If participant selected, use their favorites
-            isFavoritedProposal = isFavoritedByCurrentParticipant;
-        } else {
-            // If no participant selected, highlight if any participant has favorited it
-            isFavoritedProposal = isGloballyFavorited;
-        }
-        
+        // Always highlight if globally favorited (any participant has starred it)
+        const isFavoritedProposal = isGloballyFavorited;
         const favoriteBorderClass = isFavoritedProposal ? 'border-yellow-400 bg-yellow-50' : '';
         const favoriteHeaderClass = isFavoritedProposal ? 'border-b border-yellow-200 pb-2 mb-3' : '';
         
         return `
             <div class="bg-white p-4 rounded-lg shadow-sm border ${isPast ? 'opacity-75 border-gray-300' : isToday ? 'border-indigo-300 bg-indigo-50' : 'border-gray-200'} ${favoriteBorderClass} group relative">
-                <!-- FIXED: Favorite indicator shows for globally favorited proposals -->
+                <!-- Star indicator shows for globally favorited proposals -->
                 ${isFavoritedProposal ? `
-                    <div class="absolute top-2 left-2 text-yellow-500 text-lg z-10" title="${selectedParticipantId ? 'You starred this proposal' : 'This proposal is starred'}">
+                    <div class="absolute top-2 left-2 text-yellow-500 text-lg z-10" title="This proposal is starred by ${starCount} participant${starCount === 1 ? '' : 's'}">
                         ⭐
                     </div>
                 ` : ''}
@@ -229,7 +217,7 @@ class UIComponents {
                     ${isPast ? '<div class="text-xs text-red-500 mt-1">⏰ Past</div>' : ''}
                     ${isToday ? '<div class="text-xs text-indigo-600 mt-1 font-semibold">📅 Today</div>' : ''}
                     
-                    <!-- FIXED: Star count and favorite actions section -->
+                    <!-- Star count and favorite actions section - UPDATED to remove unwanted text -->
                     <div class="flex items-center justify-between mt-2">
                         <div class="flex items-center gap-2">
                             ${starCount > 0 ? `
@@ -238,7 +226,7 @@ class UIComponents {
                                     <span class="font-medium">${starCount}</span>
                                     <span class="text-gray-500">${starCount === 1 ? 'star' : 'stars'}</span>
                                 </div>
-                            ` : '<div class="text-xs text-gray-400">No stars yet</div>'}
+                            ` : ''}
                         </div>
                         
                         ${hasParticipantSelected ? `
@@ -269,12 +257,7 @@ class UIComponents {
                                     </button>
                                 `}
                             </div>
-                        ` : (starCount > 0 ? `
-                            <!-- FIXED: Show star count and info when no participant selected -->
-                            <div class="text-xs text-gray-500 italic">
-                                Select a participant to star proposals
-                            </div>
-                        ` : '')}
+                        ` : ''}
                     </div>
                 </div>
                 
@@ -450,8 +433,8 @@ class UIComponents {
             .join('');
     }
 
-    // FIXED: Render proposals list with favorites support and priority sorting
-    renderProposalsList(proposals, allParticipants, selectedParticipantId, meetingDuration, deletedProposals = {}, currentFavorites = {}, allFavorites = {}) {
+    // Render proposals list with global favorites support and priority sorting
+    renderProposalsList(proposals, allParticipants, selectedParticipantId, meetingDuration, deletedProposals = {}, currentFavorites = {}, globalFavorites = {}) {
         const proposalArray = Object.entries(proposals);
         const deletedArray = Object.entries(deletedProposals)
             .sort((a, b) => (b[1].deletedAt || 0) - (a[1].deletedAt || 0));
@@ -461,48 +444,31 @@ class UIComponents {
         if (proposalArray.length === 0 && deletedArray.length === 0) {
             html = '<p class="text-gray-500 text-center col-span-full">No proposals yet</p>';
         } else {
-            // FIXED: Calculate total star count for each proposal to show global favorites
+            // Calculate total star count for each proposal
             const getProposalStarCount = (proposalId) => {
-                let count = 0;
-                Object.values(allFavorites).forEach(participantFavorites => {
-                    if (participantFavorites && participantFavorites[proposalId]) {
-                        count++;
-                    }
-                });
-                return count;
+                return this.calculateStarCount(proposalId, globalFavorites);
             };
 
-            // FIXED: Check if any participant has favorited this proposal (for global highlighting)
+            // Check if any participant has favorited this proposal (for global highlighting)
             const isGloballyFavorited = (proposalId) => {
-                return Object.values(allFavorites).some(participantFavorites => 
-                    participantFavorites && participantFavorites[proposalId]
-                );
+                return this.isGloballyFavorited(proposalId, globalFavorites);
             };
 
-            // Sort proposals with favorites first, then by date
+            // Sort proposals with favorites first, then by star count, then by date
             const sortedProposals = proposalArray.sort((a, b) => {
                 const [proposalIdA, proposalA] = a;
                 const [proposalIdB, proposalB] = b;
                 
-                // FIXED: Check favorites status properly
-                let isFavoritedA, isFavoritedB;
+                // Check favorites status
+                const isFavoritedA = isGloballyFavorited(proposalIdA);
+                const isFavoritedB = isGloballyFavorited(proposalIdB);
                 
-                if (selectedParticipantId) {
-                    // If participant selected, use their favorites
-                    isFavoritedA = this.isProposalFavorited(proposalIdA, currentFavorites);
-                    isFavoritedB = this.isProposalFavorited(proposalIdB, currentFavorites);
-                } else {
-                    // FIXED: If no participant selected, show globally favorited proposals first
-                    isFavoritedA = isGloballyFavorited(proposalIdA);
-                    isFavoritedB = isGloballyFavorited(proposalIdB);
-                }
-                
-                // Favorites always come first
+                // Globally favorited proposals always come first
                 if (isFavoritedA && !isFavoritedB) return -1;
                 if (!isFavoritedA && isFavoritedB) return 1;
                 
-                // FIXED: For globally favorited proposals, prioritize by star count when no participant selected
-                if (!selectedParticipantId && isFavoritedA && isFavoritedB) {
+                // For globally favorited proposals, prioritize by star count
+                if (isFavoritedA && isFavoritedB) {
                     const countA = getProposalStarCount(proposalIdA);
                     const countB = getProposalStarCount(proposalIdB);
                     if (countA !== countB) return countB - countA; // More stars first
@@ -517,7 +483,7 @@ class UIComponents {
             // Render active proposals
             html += sortedProposals
                 .map(([proposalId, proposal]) => 
-                    this.renderProposalCard(proposalId, proposal, allParticipants, selectedParticipantId, meetingDuration, currentFavorites, allFavorites)
+                    this.renderProposalCard(proposalId, proposal, allParticipants, selectedParticipantId, meetingDuration, currentFavorites, globalFavorites)
                 )
                 .join('');
             
