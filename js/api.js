@@ -182,24 +182,24 @@ class FirebaseAPI {
         });
     }
 
-    // NEW: Global favorite operations
-    async addGlobalFavorite(meetupKey, proposalId, participantId) {
+    // NEW: Global favorite operations - simplified structure
+    async addGlobalFavorite(meetupKey, proposalId) {
         try {
-            await this.database.ref('meetups/' + meetupKey + '/globalFavorites/' + proposalId + '/' + participantId).set({
-                favorited: true,
+            await this.database.ref('meetups/' + meetupKey + '/globalFavorites/' + proposalId).set({
+                starred: true,
                 timestamp: firebase.database.ServerValue.TIMESTAMP
             });
-            console.log('✅ Global favorite added:', proposalId, 'by', participantId);
+            console.log('✅ Global favorite added:', proposalId);
         } catch (error) {
             console.error('Error adding global favorite:', error);
             throw new Error('Error adding favorite: ' + error.message);
         }
     }
 
-    async removeGlobalFavorite(meetupKey, proposalId, participantId) {
+    async removeGlobalFavorite(meetupKey, proposalId) {
         try {
-            await this.database.ref('meetups/' + meetupKey + '/globalFavorites/' + proposalId + '/' + participantId).remove();
-            console.log('✅ Global favorite removed:', proposalId, 'by', participantId);
+            await this.database.ref('meetups/' + meetupKey + '/globalFavorites/' + proposalId).remove();
+            console.log('✅ Global favorite removed:', proposalId);
         } catch (error) {
             console.error('Error removing global favorite:', error);
             throw new Error('Error removing favorite: ' + error.message);

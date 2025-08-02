@@ -11,8 +11,8 @@ class MeetupApp {
         this.currentProposals = {}; // Store current proposals for deleted proposals listener
         this.currentMessages = {}; // Store current messages for re-rendering
         this.lastMessagesRender = ''; // Track last rendered messages HTML to prevent duplicates
-        this.currentFavorites = {}; // Store current user's favorites derived from global favorites
-        this.globalFavorites = {}; // Store all global favorites
+        this.currentFavorites = {}; // Store which proposals are starred (simple true/false)
+        this.globalFavorites = {}; // Store all global favorites (proposalId -> starred status)
     }
 
     // Initialize the application
@@ -216,9 +216,6 @@ class MeetupApp {
             
             // Update calendar for selected participant
             window.calendar.updateSelectedParticipant(this.selectedParticipantId);
-            
-            // Update current favorites for selected participant from global favorites
-            this.updateCurrentFavorites();
         } else {
             // Hide forms when no participant selected
             window.uiComponents.hide('messageForm');
@@ -242,19 +239,7 @@ class MeetupApp {
         this.refreshProposalsDisplay();
     }
 
-    // Update current user's favorites from global favorites
-    updateCurrentFavorites() {
-        this.currentFavorites = {};
-        if (this.selectedParticipantId && this.globalFavorites) {
-            Object.keys(this.globalFavorites).forEach(proposalId => {
-                if (this.globalFavorites[proposalId] && this.globalFavorites[proposalId][this.selectedParticipantId]) {
-                    this.currentFavorites[proposalId] = true;
-                }
-            });
-        }
-    }
-
-    // Add to global favorites
+    // Add to global favorites (simplified)
     async addToFavorites(proposalId, proposerName, proposalDate) {
         try {
             if (!this.selectedParticipantId) {
@@ -267,7 +252,7 @@ class MeetupApp {
                 return;
             }
 
-            await window.firebaseAPI.addGlobalFavorite(this.currentMeetupKey, proposalId, this.selectedParticipantId);
+            await window.firebaseAPI.addGlobalFavorite(this.currentMeetupKey, proposalId);
             
             window.uiComponents.showNotification(`⭐ Added "${proposalDate}" to favorites!`, 'success');
             console.log('✅ Added to global favorites:', proposalId);
@@ -291,11 +276,8 @@ class MeetupApp {
                 return;
             }
 
-            // Show confirmation dialog
-            const participantName = this.allParticipants[this.selectedParticipantId]?.name || 'Unknown';
-            
             const confirmRemove = await window.safeConfirm(
-                `Remove "${proposalDate}" from favorites?\n\nThis will remove your star from this proposal.`,
+                `Remove "${proposalDate}" from favorites?\n\nThis will remove the star from this proposal for everyone.`,
                 'Remove from Favorites',
                 {
                     confirmText: 'Remove Star',
@@ -307,7 +289,7 @@ class MeetupApp {
             
             if (!confirmRemove) return; // User cancelled
 
-            await window.firebaseAPI.removeGlobalFavorite(this.currentMeetupKey, proposalId, this.selectedParticipantId);
+            await window.firebaseAPI.removeGlobalFavorite(this.currentMeetupKey, proposalId);
             
             window.uiComponents.showNotification(`Removed "${proposalDate}" from favorites`, 'info');
             console.log('✅ Removed from global favorites:', proposalId);
@@ -1067,9 +1049,6 @@ class MeetupApp {
         const globalFavoritesListener = window.firebaseAPI.onGlobalFavoritesChange(this.currentMeetupKey, (globalFavorites) => {
             console.log('🌟 Global favorites updated:', globalFavorites);
             this.globalFavorites = globalFavorites;
-            
-            // Update current user's favorites if participant is selected
-            this.updateCurrentFavorites();
             
             // Always refresh proposals display to show stars
             console.log('🌟 Refreshing proposals with global favorites data');

@@ -138,23 +138,12 @@ class UIComponents {
         return '<option value="">Choose participant...</option>' + options;
     }
 
-    // Calculate star count for a proposal (from global favorites structure)
-    calculateStarCount(proposalId, globalFavorites) {
-        if (!globalFavorites[proposalId]) return 0;
-        return Object.keys(globalFavorites[proposalId]).length;
+    // Check if proposal is globally starred (simplified)
+    isGloballyStarred(proposalId, globalFavorites) {
+        return globalFavorites[proposalId] && globalFavorites[proposalId].starred === true;
     }
 
-    // Check if proposal is favorited by current participant
-    isProposalFavorited(proposalId, currentFavorites) {
-        return currentFavorites && currentFavorites[proposalId];
-    }
-
-    // Check if proposal is globally favorited (any participant has starred it)
-    isGloballyFavorited(proposalId, globalFavorites) {
-        return globalFavorites[proposalId] && Object.keys(globalFavorites[proposalId]).length > 0;
-    }
-
-    // Render proposal card with global star/favorite functionality and ICS download
+    // Render proposal card with simplified global star/favorite functionality and ICS download
     renderProposalCard(proposalId, proposal, allParticipants, selectedParticipantId, meetingDuration, currentFavorites = {}, globalFavorites = {}) {
         const startTime = new Date(proposal.dateTime);
         const endTime = new Date(startTime.getTime() + meetingDuration * 60 * 1000);
@@ -175,23 +164,20 @@ class UIComponents {
         const isToday = window.Utils.isToday(startTime);
         const isPast = window.Utils.isPast(startTime);
         
-        // Calculate favorites data using global favorites structure
-        const starCount = this.calculateStarCount(proposalId, globalFavorites);
-        const isFavoritedByCurrentParticipant = this.isProposalFavorited(proposalId, currentFavorites);
-        const isGloballyFavorited = this.isGloballyFavorited(proposalId, globalFavorites);
+        // Check if proposal is globally starred (simplified)
+        const isGloballyStarred = this.isGloballyStarred(proposalId, globalFavorites);
         
         const hasParticipantSelected = !!selectedParticipantId;
         
-        // Always highlight if globally favorited (any participant has starred it)
-        const isFavoritedProposal = isGloballyFavorited;
-        const favoriteBorderClass = isFavoritedProposal ? 'border-yellow-400 bg-yellow-50' : '';
-        const favoriteHeaderClass = isFavoritedProposal ? 'border-b border-yellow-200 pb-2 mb-3' : '';
+        // Highlight if globally starred
+        const favoriteBorderClass = isGloballyStarred ? 'border-yellow-400 bg-yellow-50' : '';
+        const favoriteHeaderClass = isGloballyStarred ? 'border-b border-yellow-200 pb-2 mb-3' : '';
         
         return `
             <div class="bg-white p-4 rounded-lg shadow-sm border ${isPast ? 'opacity-75 border-gray-300' : isToday ? 'border-indigo-300 bg-indigo-50' : 'border-gray-200'} ${favoriteBorderClass} group relative">
-                <!-- Star indicator shows for globally favorited proposals -->
-                ${isFavoritedProposal ? `
-                    <div class="absolute top-2 left-2 text-yellow-500 text-lg z-10" title="This proposal is starred by ${starCount} participant${starCount === 1 ? '' : 's'}">
+                <!-- Star indicator shows for globally starred proposals -->
+                ${isGloballyStarred ? `
+                    <div class="absolute top-2 left-2 text-yellow-500 text-lg z-10" title="This proposal is starred">
                         ⭐
                     </div>
                 ` : ''}
@@ -205,7 +191,7 @@ class UIComponents {
                     </button>
                 </div>
                 
-                <div class="mb-4 ${isFavoritedProposal ? 'pl-8' : 'pr-8'} ${favoriteHeaderClass}">
+                <div class="mb-4 ${isGloballyStarred ? 'pl-8' : 'pr-8'} ${favoriteHeaderClass}">
                     <div class="font-semibold text-gray-900 text-lg ${isToday ? 'text-indigo-900' : ''}">${formattedDate}</div>
                     <div class="font-medium text-lg ${isToday ? 'text-indigo-700' : 'text-indigo-600'}">
                         ${timeRange}
@@ -217,47 +203,37 @@ class UIComponents {
                     ${isPast ? '<div class="text-xs text-red-500 mt-1">⏰ Past</div>' : ''}
                     ${isToday ? '<div class="text-xs text-indigo-600 mt-1 font-semibold">📅 Today</div>' : ''}
                     
-                    <!-- Star count and favorite actions section - UPDATED to remove unwanted text -->
-                    <div class="flex items-center justify-between mt-2">
-                        <div class="flex items-center gap-2">
-                            ${starCount > 0 ? `
-                                <div class="flex items-center gap-1 text-sm text-yellow-600">
-                                    <span class="text-yellow-500">⭐</span>
-                                    <span class="font-medium">${starCount}</span>
-                                    <span class="text-gray-500">${starCount === 1 ? 'star' : 'stars'}</span>
-                                </div>
+                    <!-- Star and favorite actions section -->
+                    <div class="flex items-center justify-end mt-2">
+                        <div class="flex items-center gap-1">
+                            <!-- Download ICS button for ALL starred proposals -->
+                            ${isGloballyStarred ? `
+                                <button onclick="window.downloadProposalICS('${proposalId}', '${this.escapeHtml(proposerName)}', '${proposal.dateTime}')" 
+                                        class="flex items-center gap-1 px-2 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors duration-200 mr-1"
+                                        title="Download calendar event (.ics file)">
+                                    <span>📅</span>
+                                    <span>Download</span>
+                                </button>
                             ` : ''}
-                        </div>
-                        
-                        ${hasParticipantSelected ? `
-                            <div class="flex items-center gap-1">
-                                <!-- Download ICS button for starred proposals -->
-                                ${isFavoritedByCurrentParticipant ? `
-                                    <button onclick="window.downloadProposalICS('${proposalId}', '${this.escapeHtml(proposerName)}', '${proposal.dateTime}')" 
-                                            class="flex items-center gap-1 px-2 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors duration-200 mr-1"
-                                            title="Download calendar event (.ics file)">
-                                        <span>📅</span>
-                                        <span>Download</span>
-                                    </button>
-                                ` : ''}
-                                
-                                ${isFavoritedByCurrentParticipant ? `
+                            
+                            ${hasParticipantSelected ? `
+                                ${isGloballyStarred ? `
                                     <button onclick="window.removeFromFavorites('${proposalId}', '${this.escapeHtml(proposerName)}', '${this.escapeHtml(formattedDate)} at ${this.escapeHtml(window.Utils.formatTime(startTime))}')" 
                                             class="flex items-center gap-1 px-2 py-1 text-xs bg-yellow-500 hover:bg-yellow-600 text-white rounded-md transition-colors duration-200"
-                                            title="Remove from favorites">
+                                            title="Remove star from this proposal">
                                         <span>⭐</span>
                                         <span>Remove Star</span>
                                     </button>
                                 ` : `
                                     <button onclick="window.addToFavorites('${proposalId}', '${this.escapeHtml(proposerName)}', '${this.escapeHtml(formattedDate)} at ${this.escapeHtml(window.Utils.formatTime(startTime))}')" 
                                             class="flex items-center gap-1 px-2 py-1 text-xs bg-gray-100 hover:bg-yellow-100 border border-gray-300 hover:border-yellow-400 text-gray-700 hover:text-yellow-700 rounded-md transition-all duration-200"
-                                            title="Add to favorites">
+                                            title="Add star to this proposal">
                                         <span>☆</span>
                                         <span>Add Star</span>
                                     </button>
                                 `}
-                            </div>
-                        ` : ''}
+                            ` : ''}
+                        </div>
                     </div>
                 </div>
                 
@@ -433,7 +409,7 @@ class UIComponents {
             .join('');
     }
 
-    // Render proposals list with global favorites support and priority sorting
+    // Render proposals list with simplified global favorites support and priority sorting
     renderProposalsList(proposals, allParticipants, selectedParticipantId, meetingDuration, deletedProposals = {}, currentFavorites = {}, globalFavorites = {}) {
         const proposalArray = Object.entries(proposals);
         const deletedArray = Object.entries(deletedProposals)
@@ -444,37 +420,20 @@ class UIComponents {
         if (proposalArray.length === 0 && deletedArray.length === 0) {
             html = '<p class="text-gray-500 text-center col-span-full">No proposals yet</p>';
         } else {
-            // Calculate total star count for each proposal
-            const getProposalStarCount = (proposalId) => {
-                return this.calculateStarCount(proposalId, globalFavorites);
-            };
-
-            // Check if any participant has favorited this proposal (for global highlighting)
-            const isGloballyFavorited = (proposalId) => {
-                return this.isGloballyFavorited(proposalId, globalFavorites);
-            };
-
-            // Sort proposals with favorites first, then by star count, then by date
+            // Sort proposals with starred ones first, then by date
             const sortedProposals = proposalArray.sort((a, b) => {
                 const [proposalIdA, proposalA] = a;
                 const [proposalIdB, proposalB] = b;
                 
-                // Check favorites status
-                const isFavoritedA = isGloballyFavorited(proposalIdA);
-                const isFavoritedB = isGloballyFavorited(proposalIdB);
+                // Check if proposals are starred
+                const isStarredA = this.isGloballyStarred(proposalIdA, globalFavorites);
+                const isStarredB = this.isGloballyStarred(proposalIdB, globalFavorites);
                 
-                // Globally favorited proposals always come first
-                if (isFavoritedA && !isFavoritedB) return -1;
-                if (!isFavoritedA && isFavoritedB) return 1;
+                // Starred proposals always come first
+                if (isStarredA && !isStarredB) return -1;
+                if (!isStarredA && isStarredB) return 1;
                 
-                // For globally favorited proposals, prioritize by star count
-                if (isFavoritedA && isFavoritedB) {
-                    const countA = getProposalStarCount(proposalIdA);
-                    const countB = getProposalStarCount(proposalIdB);
-                    if (countA !== countB) return countB - countA; // More stars first
-                }
-                
-                // Within same favorite status, sort by date (earliest first)
+                // Within same starred status, sort by date (earliest first)
                 const dateA = new Date(proposalA.dateTime);
                 const dateB = new Date(proposalB.dateTime);
                 return dateA - dateB;
