@@ -1,4 +1,4 @@
-/* Theme System for Piogino Meetup App - COMPREHENSIVE DARK MODE FIX WITH IMPROVED COLORS + FAVORITES + ICS DOWNLOAD */
+/* Theme System for Piogino Meetup App - COMPREHENSIVE DARK MODE FIX WITH IMPROVED COLORS + FAVORITES + ICS DOWNLOAD - ENHANCED */
 
 /* Theme Transition Class */
 .theme-transition,
@@ -307,23 +307,41 @@
     color: var(--favorite-hover) !important;
 }
 
-/* Dark theme favorite proposal backgrounds */
+/* ENHANCED: Dark theme favorite proposal backgrounds */
 [data-theme="dark"] .bg-yellow-50,
 .theme-dark .bg-yellow-50 {
-    background: rgba(251, 191, 36, 0.1) !important;
-    border-color: rgba(251, 191, 36, 0.3) !important;
+    background: rgba(251, 191, 36, 0.15) !important;
+    border: 2px solid rgba(251, 191, 36, 0.4) !important;
+    color: var(--text-primary) !important;
+    box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.2), var(--shadow-md) !important;
+}
+
+[data-theme="dark"] .border-yellow-400,
+.theme-dark .border-yellow-400 {
+    border-color: var(--favorite-color) !important;
+    border-width: 2px !important;
 }
 
 [data-theme="dark"] .border-yellow-200,
 .theme-dark .border-yellow-200 {
-    border-color: rgba(251, 191, 36, 0.2) !important;
+    border-color: rgba(251, 191, 36, 0.4) !important;
 }
 
-/* Dark theme star indicators */
+/* ENHANCED: Dark theme star indicators */
 [data-theme="dark"] .text-yellow-500,
 .theme-dark .text-yellow-500 {
     color: var(--favorite-color) !important;
-    text-shadow: 0 0 8px rgba(251, 191, 36, 0.5) !important;
+    text-shadow: 0 0 12px rgba(251, 191, 36, 0.7) !important;
+    filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.6)) !important;
+}
+
+/* ENHANCED: Dark theme star count styling */
+[data-theme="dark"] .star-count,
+.theme-dark .star-count {
+    background: rgba(251, 191, 36, 0.2) !important;
+    color: var(--favorite-color) !important;
+    border-color: rgba(251, 191, 36, 0.4) !important;
+    box-shadow: 0 1px 3px rgba(251, 191, 36, 0.3) !important;
 }
 
 /* Borders */
@@ -682,20 +700,40 @@
     color: var(--favorite-hover) !important;
 }
 
+/* ENHANCED: Sepia theme favorite proposal backgrounds */
 [data-theme="sepia"] .bg-yellow-50,
 .theme-sepia .bg-yellow-50 {
-    background: rgba(218, 165, 32, 0.1) !important;
-    border-color: rgba(218, 165, 32, 0.3) !important;
+    background: rgba(218, 165, 32, 0.12) !important;
+    border: 2px solid rgba(218, 165, 32, 0.3) !important;
+    color: var(--text-primary) !important;
+    box-shadow: 0 0 0 1px rgba(218, 165, 32, 0.2), var(--shadow-md) !important;
+}
+
+[data-theme="sepia"] .border-yellow-400,
+.theme-sepia .border-yellow-400 {
+    border-color: var(--favorite-color) !important;
+    border-width: 2px !important;
 }
 
 [data-theme="sepia"] .border-yellow-200,
 .theme-sepia .border-yellow-200 {
-    border-color: rgba(218, 165, 32, 0.2) !important;
+    border-color: rgba(218, 165, 32, 0.3) !important;
 }
 
+/* ENHANCED: Sepia theme star indicators */
 [data-theme="sepia"] .text-yellow-500,
 .theme-sepia .text-yellow-500 {
     color: var(--favorite-color) !important;
+    text-shadow: 0 0 8px rgba(218, 165, 32, 0.6) !important;
+}
+
+/* ENHANCED: Sepia theme star count styling */
+[data-theme="sepia"] .star-count,
+.theme-sepia .star-count {
+    background: rgba(218, 165, 32, 0.2) !important;
+    color: var(--favorite-color) !important;
+    border-color: rgba(218, 165, 32, 0.4) !important;
+    box-shadow: 0 1px 3px rgba(218, 165, 32, 0.3) !important;
 }
 
 /* Calendar sepia adjustments */

@@ -1,4 +1,4 @@
-// js/emotes.js - Enhanced 7TV Emote System Compatible with New Features + FAVORITES + ICS DOWNLOAD
+// js/emotes.js - Enhanced 7TV Emote System Compatible with New Features + FAVORITES + ICS DOWNLOAD - FIXED
 
 class EmoteSystem {
     constructor() {
@@ -324,7 +324,7 @@ class EmoteSystem {
     }
 }
 
-// Enhanced UI Components with emote support and autocomplete + FAVORITES + ICS DOWNLOAD
+// Enhanced UI Components with emote support and autocomplete + FAVORITES + ICS DOWNLOAD - FIXED
 class EmoteEnabledUIComponents extends UIComponents {
     constructor() {
         super();
@@ -337,7 +337,7 @@ class EmoteEnabledUIComponents extends UIComponents {
         this.suggestionClickHandler = null;
     }
 
-    // UPDATED: Render message with emotes and edit/delete functionality
+    // FIXED: Render message with emotes and edit/delete functionality
     renderMessage(messageId, message, allParticipants, selectedParticipantId = null) {
         let senderName = 'Unknown';
         if (message.participantId && allParticipants[message.participantId]) {
@@ -389,7 +389,7 @@ class EmoteEnabledUIComponents extends UIComponents {
         `;
     }
 
-    // UPDATED: Render participant card with emotes and edit functionality
+    // FIXED: Render participant card with emotes and edit functionality
     renderParticipantCard(participant, participantId, isSelected = false) {
         const selectedClass = isSelected ? 'bg-indigo-100 border-indigo-500 text-indigo-900' : 'bg-white hover:bg-gray-50 border-gray-200';
         const cursorClass = 'cursor-pointer';
@@ -433,7 +433,7 @@ class EmoteEnabledUIComponents extends UIComponents {
         }
     }
 
-    // UPDATED: Render proposal card with star/favorite functionality, emotes, and ICS download
+    // FIXED: Render proposal card with star/favorite functionality, emotes, and ICS download
     renderProposalCard(proposalId, proposal, allParticipants, selectedParticipantId, meetingDuration, currentFavorites = {}, allFavorites = {}) {
         const startTime = new Date(proposal.dateTime);
         const endTime = new Date(startTime.getTime() + meetingDuration * 60 * 1000);
@@ -457,21 +457,35 @@ class EmoteEnabledUIComponents extends UIComponents {
         const isToday = window.Utils.isToday(startTime);
         const isPast = window.Utils.isPast(startTime);
         
-        // Calculate favorites data
+        // FIXED: Calculate favorites data properly for both selected and global views
         const starCount = this.calculateStarCount(proposalId, allFavorites);
-        const isFavorited = this.isProposalFavorited(proposalId, currentFavorites);
+        const isFavoritedByCurrentParticipant = this.isProposalFavorited(proposalId, currentFavorites);
+        
+        // FIXED: Check if globally favorited (any participant has starred it)
+        const isGloballyFavorited = Object.values(allFavorites).some(participantFavorites => 
+            participantFavorites && participantFavorites[proposalId]
+        );
+        
         const hasParticipantSelected = !!selectedParticipantId;
         
-        // Determine if this is a favorited proposal (for special styling)
-        const isFavoritedProposal = isFavorited;
+        // FIXED: Determine if this proposal should be highlighted
+        let isFavoritedProposal;
+        if (selectedParticipantId) {
+            // If participant selected, use their favorites
+            isFavoritedProposal = isFavoritedByCurrentParticipant;
+        } else {
+            // If no participant selected, highlight if any participant has favorited it
+            isFavoritedProposal = isGloballyFavorited;
+        }
+        
         const favoriteBorderClass = isFavoritedProposal ? 'border-yellow-400 bg-yellow-50' : '';
         const favoriteHeaderClass = isFavoritedProposal ? 'border-b border-yellow-200 pb-2 mb-3' : '';
         
         return `
             <div class="bg-white p-4 rounded-lg shadow-sm border ${isPast ? 'opacity-75 border-gray-300' : isToday ? 'border-indigo-300 bg-indigo-50' : 'border-gray-200'} ${favoriteBorderClass} group relative">
-                <!-- Favorite indicator at top left -->
+                <!-- FIXED: Favorite indicator shows for globally favorited proposals -->
                 ${isFavoritedProposal ? `
-                    <div class="absolute top-2 left-2 text-yellow-500 text-lg z-10" title="You starred this proposal">
+                    <div class="absolute top-2 left-2 text-yellow-500 text-lg z-10" title="${selectedParticipantId ? 'You starred this proposal' : 'This proposal is starred'}">
                         ⭐
                     </div>
                 ` : ''}
@@ -497,7 +511,7 @@ class EmoteEnabledUIComponents extends UIComponents {
                     ${isPast ? '<div class="text-xs text-red-500 mt-1">⏰ Past</div>' : ''}
                     ${isToday ? '<div class="text-xs text-indigo-600 mt-1 font-semibold">📅 Today</div>' : ''}
                     
-                    <!-- Star count, favorite button, and download section -->
+                    <!-- FIXED: Star count and favorite actions section -->
                     <div class="flex items-center justify-between mt-2">
                         <div class="flex items-center gap-2">
                             ${starCount > 0 ? `
@@ -511,8 +525,8 @@ class EmoteEnabledUIComponents extends UIComponents {
                         
                         ${hasParticipantSelected ? `
                             <div class="flex items-center gap-1">
-                                <!-- NEW: Download ICS button for starred proposals -->
-                                ${isFavorited ? `
+                                <!-- Download ICS button for starred proposals -->
+                                ${isFavoritedByCurrentParticipant ? `
                                     <button onclick="window.downloadProposalICS('${proposalId}', '${this.escapeHtml(proposerName)}', '${proposal.dateTime}')" 
                                             class="flex items-center gap-1 px-2 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors duration-200 mr-1"
                                             title="Download calendar event (.ics file)">
@@ -521,7 +535,7 @@ class EmoteEnabledUIComponents extends UIComponents {
                                     </button>
                                 ` : ''}
                                 
-                                ${isFavorited ? `
+                                ${isFavoritedByCurrentParticipant ? `
                                     <button onclick="window.removeFromFavorites('${proposalId}', '${this.escapeHtml(proposerName)}', '${this.escapeHtml(formattedDate)} at ${this.escapeHtml(window.Utils.formatTime(startTime))}')" 
                                             class="flex items-center gap-1 px-2 py-1 text-xs bg-yellow-500 hover:bg-yellow-600 text-white rounded-md transition-colors duration-200"
                                             title="Remove from favorites">
@@ -537,7 +551,12 @@ class EmoteEnabledUIComponents extends UIComponents {
                                     </button>
                                 `}
                             </div>
-                        ` : ''}
+                        ` : (starCount > 0 ? `
+                            <!-- FIXED: Show star count and info when no participant selected -->
+                            <div class="text-xs text-gray-500 italic">
+                                Select a participant to star proposals
+                            </div>
+                        ` : '')}
                     </div>
                 </div>
                 
@@ -788,7 +807,7 @@ class EmoteEnabledUIComponents extends UIComponents {
     }
 }
 
-// Enhanced MeetupApp with emote-aware title processing and favorites features
+// Enhanced MeetupApp with emote-aware title processing and favorites features - FIXED
 class EmoteEnabledMeetupApp extends MeetupApp {
     setupEventListeners() {
         super.setupEventListeners();
@@ -886,6 +905,7 @@ class EmoteEnabledMeetupApp extends MeetupApp {
         console.log('✅ Messages refreshed - edit buttons updated for participant:', this.selectedParticipantId);
     }
 
+    // FIXED: Set up Firebase listeners for real-time updates with emote support
     setupMeetupListeners() {
         this.cleanupListeners();
 
@@ -951,16 +971,21 @@ class EmoteEnabledMeetupApp extends MeetupApp {
         });
         this.listeners.set('proposals', proposalsListener);
 
-        // Favorites listener for selected participant
+        // FIXED: All favorites listener - ALWAYS active, not just when participant selected
         const favoritesListener = window.firebaseAPI.onAllFavoritesChange(this.currentMeetupKey, (allFavorites) => {
+            console.log('🌟 All favorites updated:', allFavorites);
             this.allFavorites = allFavorites;
-            // Update current user's favorites
+            
+            // Update current user's favorites if participant is selected
             if (this.selectedParticipantId && allFavorites[this.selectedParticipantId]) {
                 this.currentFavorites = allFavorites[this.selectedParticipantId];
+                console.log('🌟 Current participant favorites:', this.currentFavorites);
             } else {
                 this.currentFavorites = {};
             }
-            // Refresh proposals display to show stars
+            
+            // FIXED: Always refresh proposals display to show stars, even when no participant selected
+            console.log('🌟 Refreshing proposals with favorites data');
             this.updateProposalsUI(this.currentProposals || {});
         });
         this.listeners.set('favorites', favoritesListener);
@@ -1017,4 +1042,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     await window.app.init();
 });
 
-console.log('✅ Enhanced emote system with favorites and ICS download support loaded');
+console.log('✅ Enhanced emote system with favorites and ICS download support loaded - FIXED');
