@@ -851,35 +851,6 @@ class EmoteEnabledMeetupApp extends MeetupApp {
         });
     }
 
-    // Override selectParticipant to include message refresh
-    selectParticipant() {
-        // Call parent method first
-        super.selectParticipant();
-        
-        // Then refresh messages for edit button visibility
-        this.refreshMessagesDisplay();
-    }
-
-    // Add refreshMessagesDisplay method
-    refreshMessagesDisplay() {
-        if (!this.currentMessages || Object.keys(this.currentMessages).length === 0) return;
-        
-        console.log('🔄 Refreshing messages display for selected participant:', this.selectedParticipantId);
-        
-        // Re-render messages with current selected participant
-        const newMessagesList = window.uiComponents.renderMessagesList(
-            Object.entries(this.currentMessages).sort((a, b) => (b[1].timestamp || 0) - (a[1].timestamp || 0)),
-            this.allParticipants,
-            this.selectedParticipantId // Pass selected participant for edit permissions
-        );
-        
-        // Force update the DOM (don't check for changes since we want to show/hide edit buttons)
-        window.uiComponents.updateHTML('messagesList', newMessagesList);
-        this.lastMessagesRender = newMessagesList;
-        
-        console.log('✅ Messages refreshed - edit buttons updated for participant:', this.selectedParticipantId);
-    }
-
     // Set up Firebase listeners for real-time updates with emote support and global favorites
     setupMeetupListeners() {
         this.cleanupListeners();
@@ -999,14 +970,20 @@ window.testEmoteNavigation = () => {
 
 window.refreshEmotes = () => window.emoteSystem.refreshEmotes();
 
+// IMPROVED: App initialization that ensures the enhanced version is used
 document.addEventListener('DOMContentLoaded', async () => {
-    // Only initialize once
-    if (window.app && window.app.constructor.name === 'EmoteEnabledMeetupApp') {
-        return;
+    // Clear any existing basic app instance
+    if (window.app && window.app.constructor.name === 'MeetupApp') {
+        console.log('🔄 Replacing basic MeetupApp with enhanced EmoteEnabledMeetupApp');
+        window.app = null;
     }
     
-    window.app = new EmoteEnabledMeetupApp();
-    await window.app.init();
+    // Always use the enhanced version
+    if (!window.app || window.app.constructor.name !== 'EmoteEnabledMeetupApp') {
+        console.log('🚀 Initializing EmoteEnabledMeetupApp with message editing features');
+        window.app = new EmoteEnabledMeetupApp();
+        await window.app.init();
+    }
 });
 
-console.log('✅ Enhanced emote system with global favorites and ICS download support loaded - UPDATED');
+console.log('✅ Enhanced emote system with global favorites, ICS download, and message editing support loaded - UPDATED');

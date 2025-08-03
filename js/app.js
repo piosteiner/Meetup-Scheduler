@@ -237,6 +237,29 @@ class MeetupApp {
         
         // Refresh proposals display with new participant context
         this.refreshProposalsDisplay();
+        
+        // IMPORTANT: Refresh messages display to show/hide edit buttons
+        this.refreshMessagesDisplay();
+    }
+
+    // Add refreshMessagesDisplay method to base class
+    refreshMessagesDisplay() {
+        if (!this.currentMessages || Object.keys(this.currentMessages).length === 0) return;
+        
+        console.log('🔄 Refreshing messages display for selected participant:', this.selectedParticipantId);
+        
+        // Re-render messages with current selected participant
+        const newMessagesList = window.uiComponents.renderMessagesList(
+            Object.entries(this.currentMessages).sort((a, b) => (b[1].timestamp || 0) - (a[1].timestamp || 0)),
+            this.allParticipants,
+            this.selectedParticipantId // Pass selected participant for edit permissions
+        );
+        
+        // Force update the DOM (don't check for changes since we want to show/hide edit buttons)
+        window.uiComponents.updateHTML('messagesList', newMessagesList);
+        this.lastMessagesRender = newMessagesList;
+        
+        console.log('✅ Messages refreshed - edit buttons updated for participant:', this.selectedParticipantId);
     }
 
     // Add to global favorites (simplified)
@@ -1011,7 +1034,7 @@ class MeetupApp {
             // Only re-render messages if participants actually changed
             // This prevents duplicate rendering when messages update
             if (Object.keys(this.currentMessages).length > 0) {
-                this.renderMessages(this.currentMessages);
+                this.refreshMessagesDisplay();
             }
         });
         this.listeners.set('participants', participantsListener);
@@ -1238,8 +1261,4 @@ window.debugGlobalFavorites = function() {
     });
 };
 
-// Initialize app when DOM is loaded
-document.addEventListener('DOMContentLoaded', async () => {
-    window.app = new MeetupApp();
-    await window.app.init();
-});
+// NOTE: App initialization is now handled in emotes.js to ensure the enhanced version is used
