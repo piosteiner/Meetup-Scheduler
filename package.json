@@ -12,9 +12,11 @@
     "lint:fix": "npx eslint js/**/*.js --fix",
     "format": "npx prettier --write \"**/*.{js,html,css,md}\"",
     "test": "npx vitest",
+    "test:browser": "npx live-server --port=3000 --open=/browser-test.html",
     "serve": "npx live-server --port=3000",
     "clean": "rm -rf dist/",
-    "validate": "npm run lint && npm run test"
+    "validate": "npm run lint && npm run test",
+    "compatibility-check": "echo 'Open browser and run: window.debugBrowserSupport()'"
   },
   "keywords": [
     "meetup",

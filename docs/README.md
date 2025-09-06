@@ -121,11 +121,81 @@ const appConfig = {
 
 ## 📱 Browser Support
 
-- ✅ Chrome 80+
-- ✅ Firefox 75+
-- ✅ Safari 13+
-- ✅ Edge 80+
-- ✅ Mobile browsers (iOS Safari, Chrome Mobile)
+### ✅ **Excellent Support** (95%+ features)
+- **Chrome** 88+ (Desktop & Mobile) - Full feature support
+- **Brave** (Desktop & Mobile) - Excellent compatibility, privacy-focused
+- **Edge** 88+ (Chromium-based) - Full feature support
+- **Safari** 14+ (Desktop & Mobile) - Full feature support
+
+### 🟢 **Good Support** (85%+ features)
+- **Firefox** 85+ (Desktop) - Full functionality
+- **Firefox Mobile (Android)** 85+ - Excellent support on Android
+- **Samsung Internet** 15+ - Chromium-based, full support
+- **Opera** 74+ - Chromium-based, full support
+
+### 🟡 **Fair Support** (70%+ features)
+- **Firefox iOS** 14+ - Good support, some iOS WebKit limitations
+- **Safari** 13-13.x - Most features work, minor limitations
+- **Chrome/Brave** 80-87 - Older versions with good support
+
+### 🔴 **Limited/No Support**
+- **Internet Explorer** - Not supported (requires ES6+)
+- **Chrome/Firefox** < 80 - Missing critical features
+- **Very old mobile browsers** (3+ years old)
+
+### 📱 **Mobile-Specific Notes**
+
+#### **Brave Mobile** 🟢
+- **Android**: Excellent support, same as Chrome
+- **iOS**: Good support, WebKit limitations apply
+- **Privacy features**: Won't interfere with app functionality
+- **Performance**: Excellent (Chromium engine)
+
+#### **Firefox Mobile** 🟡
+- **Android**: Very good support, different engine (Gecko vs WebKit)
+- **iOS**: Fair support, limited by iOS WebKit restrictions
+- **Real-time features**: Good on Android, occasional issues on iOS
+- **Offline support**: Good across both platforms
+
+#### **General Mobile Considerations**
+- **iOS Safari/Firefox iOS**: WebKit restrictions may affect Firebase WebSockets
+- **Android browsers**: Generally excellent support across all major browsers
+- **PWA features**: Full support on Android, limited on iOS
+
+### 🔧 **Feature Detection**
+
+The app includes automatic browser compatibility detection:
+
+```javascript
+// Check your browser support
+window.debugBrowserSupport();
+
+// Get compatibility report
+const report = FeatureDetector.quickCheck();
+console.log(report);
+```
+
+**Detected features include:**
+- ES6+ JavaScript support
+- CSS Grid and Flexbox
+- Firebase compatibility
+- Real-time WebSocket support
+- Local storage capabilities
+
+### 🚀 **Recommended Browsers**
+
+For the **best experience**, we recommend:
+
+1. **Desktop**: Chrome, Brave, or Firefox (latest versions)
+2. **Android**: Chrome, Brave, Firefox, or Samsung Internet
+3. **iOS**: Safari or any Chromium-based browser
+
+### ⚠️ **Known Limitations**
+
+- **iOS browsers**: All use WebKit engine, which may have WebSocket limitations
+- **Older browsers**: Missing ES6+ features, CSS Grid support
+- **Private/Incognito mode**: Local storage limitations may affect some features
+- **Ad blockers**: Generally don't affect functionality (Firebase is whitelisted)
 
 ## 🔐 Privacy & Security
 

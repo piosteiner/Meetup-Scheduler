@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browser Compatibility Test - Piogino Meetup</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 800px; 
+            margin: 0 auto; 
+            padding: 20px; 
+            line-height: 1.6;
+        }
+        .result { 
+            padding: 15px; 
+            margin: 10px 0; 
+            border-radius: 5px; 
+            border: 1px solid #ddd;
+        }
+        .excellent { background: #e8f5e8; border-color: #4caf50; }
+        .good { background: #e8f4f8; border-color: #2196f3; }
+        .fair { background: #fff8e1; border-color: #ff9800; }
+        .poor { background: #ffebee; border-color: #f44336; }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .feature {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            text-align: center;
+        }
+        .supported { background: #e8f5e8; }
+        .unsupported { background: #ffebee; }
+        button {
+            background: #007cba;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #005a87; }
+        pre { 
+            background: #f5f5f5; 
+            padding: 15px; 
+            border-radius: 5px; 
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🌐 Browser Compatibility Test</h1>
+    <p>This page tests your browser's compatibility with the Piogino Meetup Scheduler.</p>
+
+    <div id="loading">
+        <p>⏳ Running compatibility tests...</p>
+    </div>
+
+    <div id="results" style="display: none;">
+        <h2>📊 Test Results</h2>
+        <div id="overall-result" class="result"></div>
+        
+        <h3>🔍 Browser Information</h3>
+        <div id="browser-info" class="result"></div>
+        
+        <h3>✅ Feature Support</h3>
+        <div id="features" class="feature-grid"></div>
+        
+        <h3>💡 Recommendations</h3>
+        <div id="recommendations" class="result"></div>
+        
+        <h3>🛠️ Technical Details</h3>
+        <button onclick="showTechnicalDetails()">Show Technical Report</button>
+        <button onclick="testRealTimeFeatures()">Test Real-time Features</button>
+        <button onclick="downloadReport()">Download Report</button>
+        
+        <pre id="technical-details" style="display: none;"></pre>
+    </div>
+
+    <!-- Load feature detection -->
+    <script src="js/utils/feature-detection.js"></script>
+    
+    <script>
+        let compatibilityReport = null;
+
+        // Run tests when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(runCompatibilityTests, 500);
+        });
+
+        function runCompatibilityTests() {
+            try {
+                // Get compatibility report
+                const detector = new FeatureDetector();
+                compatibilityReport = detector.getCompatibilityReport();
+                
+                // Display results
+                displayResults(compatibilityReport);
+                
+                // Hide loading, show results
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('results').style.display = 'block';
+                
+            } catch (error) {
+                console.error('Compatibility test failed:', error);
+                document.getElementById('loading').innerHTML = 
+                    '<p style="color: red;">❌ Compatibility test failed. Your browser may not support modern JavaScript features.</p>';
+            }
+        }
+
+        function displayResults(report) {
+            // Overall result
+            const overallEl = document.getElementById('overall-result');
+            overallEl.className = `result ${report.features.supportLevel}`;
+            overallEl.innerHTML = `
+                <h3>${report.message}</h3>
+                <p><strong>Support Score:</strong> ${report.features.supportPercentage}% of features supported</p>
+                <p><strong>Status:</strong> ${report.isSupported ? '✅ Fully supported' : '⚠️ Limited support'}</p>
+            `;
+
+            // Browser info
+            const browserEl = document.getElementById('browser-info');
+            browserEl.innerHTML = `
+                <p><strong>Browser:</strong> ${report.browser.name} ${report.browser.version}</p>
+                <p><strong>Platform:</strong> ${report.browser.isMobile ? 'Mobile' : 'Desktop'}
+                   ${report.browser.isIOS ? '(iOS)' : report.browser.isAndroid ? '(Android)' : ''}</p>
+                <p><strong>User Agent:</strong> <code style="font-size: 0.8em;">${report.browser.userAgent}</code></p>
+            `;
+
+            // Features
+            const featuresEl = document.getElementById('features');
+            featuresEl.innerHTML = Object.entries(report.features)
+                .filter(([key]) => !['supportLevel', 'supportPercentage'].includes(key))
+                .map(([feature, supported]) => `
+                    <div class="feature ${supported ? 'supported' : 'unsupported'}">
+                        <strong>${formatFeatureName(feature)}</strong><br>
+                        ${supported ? '✅ Supported' : '❌ Not supported'}
+                    </div>
+                `).join('');
+
+            // Recommendations
+            const recEl = document.getElementById('recommendations');
+            if (report.recommendations.length > 0) {
+                recEl.innerHTML = `
+                    <ul>
+                        ${report.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                    </ul>
+                `;
+            } else {
+                recEl.innerHTML = '<p>✅ No recommendations - your browser has excellent support!</p>';
+            }
+        }
+
+        function formatFeatureName(name) {
+            return name
+                .replace(/([A-Z])/g, ' $1')
+                .replace(/^./, str => str.toUpperCase())
+                .replace(/es6/i, 'ES6')
+                .replace(/css/i, 'CSS')
+                .replace(/api/i, 'API');
+        }
+
+        function showTechnicalDetails() {
+            const detailsEl = document.getElementById('technical-details');
+            if (detailsEl.style.display === 'none') {
+                detailsEl.style.display = 'block';
+                detailsEl.textContent = JSON.stringify(compatibilityReport, null, 2);
+            } else {
+                detailsEl.style.display = 'none';
+            }
+        }
+
+        function testRealTimeFeatures() {
+            const tests = [];
+            
+            // Test WebSocket
+            try {
+                const ws = new WebSocket('wss://echo.websocket.org');
+                ws.onopen = () => {
+                    tests.push('✅ WebSocket connection successful');
+                    ws.close();
+                };
+                ws.onerror = () => {
+                    tests.push('❌ WebSocket connection failed');
+                };
+            } catch (e) {
+                tests.push('❌ WebSocket not supported');
+            }
+
+            // Test Local Storage
+            try {
+                localStorage.setItem('test', 'value');
+                localStorage.removeItem('test');
+                tests.push('✅ Local Storage working');
+            } catch (e) {
+                tests.push('❌ Local Storage failed');
+            }
+
+            setTimeout(() => {
+                alert('Real-time feature tests:\n\n' + tests.join('\n'));
+            }, 1000);
+        }
+
+        function downloadReport() {
+            const reportText = `Browser Compatibility Report
+Generated: ${new Date().toISOString()}
+
+${compatibilityReport.message}
+Support Score: ${compatibilityReport.features.supportPercentage}%
+
+Browser: ${compatibilityReport.browser.name} ${compatibilityReport.browser.version}
+Platform: ${compatibilityReport.browser.isMobile ? 'Mobile' : 'Desktop'}
+
+Features:
+${Object.entries(compatibilityReport.features)
+    .filter(([key]) => !['supportLevel', 'supportPercentage'].includes(key))
+    .map(([feature, supported]) => `- ${formatFeatureName(feature)}: ${supported ? 'Supported' : 'Not supported'}`)
+    .join('\n')}
+
+Recommendations:
+${compatibilityReport.recommendations.map(rec => `- ${rec}`).join('\n')}
+
+Technical Details:
+${JSON.stringify(compatibilityReport, null, 2)}
+`;
+
+            const blob = new Blob([reportText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `browser-compatibility-report-${Date.now()}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>

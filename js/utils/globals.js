@@ -93,4 +93,29 @@ window.debugAppState = function() {
     console.log(window.appState.getDebugInfo());
 };
 
+// Browser compatibility debug function
+window.debugBrowserSupport = function() {
+    if (!window.FeatureDetector) {
+        console.log('❌ Feature detector not available');
+        return;
+    }
+    
+    const detector = new window.FeatureDetector();
+    const report = detector.getCompatibilityReport();
+    
+    console.log('🌐 BROWSER COMPATIBILITY REPORT:');
+    console.log('📱 Browser:', report.browser.name, report.browser.version);
+    console.log('📊 Support Level:', report.message);
+    console.table(report.features);
+    
+    if (report.recommendations.length > 0) {
+        console.log('💡 Recommendations:');
+        report.recommendations.forEach((rec, index) => {
+            console.log(`${index + 1}. ${rec}`);
+        });
+    }
+    
+    return report;
+};
+
 console.log('✅ Global functions loaded');
