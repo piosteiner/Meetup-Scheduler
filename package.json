@@ -1,0 +1,65 @@
+{
+  "name": "piogino-meetup-scheduler",
+  "version": "1.0.0",
+  "description": "A modern, real-time meetup scheduling application built with vanilla JavaScript and Firebase",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx live-server --port=3000 --open=/index.html",
+    "build": "npm run build:css && npm run minify:js",
+    "build:css": "npx tailwindcss -i ./css/styles.css -o ./dist/styles.min.css --minify",
+    "minify:js": "npx terser js/*.js --compress --mangle -o dist/app.min.js",
+    "lint": "npx eslint js/**/*.js",
+    "lint:fix": "npx eslint js/**/*.js --fix",
+    "format": "npx prettier --write \"**/*.{js,html,css,md}\"",
+    "test": "npx vitest",
+    "serve": "npx live-server --port=3000",
+    "clean": "rm -rf dist/",
+    "validate": "npm run lint && npm run test"
+  },
+  "keywords": [
+    "meetup",
+    "scheduler",
+    "calendar",
+    "collaboration",
+    "realtime",
+    "firebase",
+    "javascript",
+    "responsive"
+  ],
+  "author": "Piogino",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/piosteiner/Meetup-Scheduler.git"
+  },
+  "bugs": {
+    "url": "https://github.com/piosteiner/Meetup-Scheduler/issues"
+  },
+  "homepage": "https://github.com/piosteiner/Meetup-Scheduler#readme",
+  "devDependencies": {
+    "@tailwindcss/cli": "^0.1.2",
+    "eslint": "^8.57.0",
+    "live-server": "^1.2.2",
+    "prettier": "^3.0.0",
+    "terser": "^5.19.0",
+    "vitest": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead",
+    "not ie 11"
+  ],
+  "files": [
+    "index.html",
+    "css/",
+    "js/",
+    "fonts/",
+    "images/",
+    "docs/"
+  ]
+}
