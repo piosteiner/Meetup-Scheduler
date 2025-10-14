@@ -199,10 +199,28 @@ For the **best experience**, we recommend:
 
 ## 🔐 Privacy & Security
 
-- No personal data stored beyond participant names
-- Meetup keys are randomly generated and secure
-- Real-time data with automatic cleanup
-- No tracking or analytics by default
+- **🇨🇭 Swiss FADP Compliant**: Fully compliant with Swiss Federal Data Protection Act
+- **🍪 Cookie Consent System**: Granular cookie control with multilingual interface (DE/EN)
+- **🛡️ Data Minimization**: Only necessary data collected (participant names, availability)
+- **🔒 Automatic Cleanup**: Meetup data automatically deleted after 30 days of inactivity
+- **🚫 No Tracking**: No analytics or tracking cookies without explicit consent
+- **📱 Local Storage**: User preferences stored locally when permitted
+- **🔑 Secure Keys**: Randomly generated meetup keys with Firebase security
+
+### Cookie Categories
+- **Necessary**: Basic functionality (always enabled)
+- **Functional**: Theme preferences, language settings (optional)
+- **Preferences**: Participant name memory, last meetup key (optional)
+- **Analytics**: Usage statistics for improvements (optional, disabled by default)
+
+See our [Privacy Policy](privacy-policy.md) for complete details.
+
+### User Rights (Swiss FADP)
+- ✅ Right to information about data processing
+- ✅ Right to access your stored data
+- ✅ Right to correct inaccurate data
+- ✅ Right to delete your data
+- ✅ Right to withdraw consent anytime
 
 ## 📄 License
 

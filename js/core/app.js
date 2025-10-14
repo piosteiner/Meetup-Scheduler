@@ -9,6 +9,12 @@ class MeetupApp {
     // Initialize the application
     async init() {
         try {
+            // Wait for cookie consent to be loaded
+            if (typeof window.cookieConsent === 'undefined') {
+                setTimeout(() => this.init(), 100);
+                return;
+            }
+
             // Initialize Firebase
             await window.firebaseAPI.init();
             
@@ -27,6 +33,12 @@ class MeetupApp {
                 window.navigation.showMeetupScreen();
                 await window.meetupManager.loadMeetupData();
             }
+
+            // Load user preferences from cookies (if allowed)
+            this.loadUserPreferences();
+
+            // Set up cookie consent listeners
+            this.setupCookieConsentListeners();
 
             // Set up event listeners
             this.setupEventListeners();
@@ -267,6 +279,76 @@ class MeetupApp {
     // App status
     isInitialized() {
         return this.initialized;
+    }
+
+    // Cookie-aware user preference management
+    loadUserPreferences() {
+        if (!window.cookieConsent?.isCategoryAllowed('preferences')) {
+            return;
+        }
+
+        // Load participant name preference
+        const savedName = this.getCookie('participantName');
+        if (savedName) {
+            window.appState.setLastUsedName(savedName);
+        }
+
+        // Load last meetup key preference
+        const lastKey = this.getCookie('lastMeetupKey');
+        if (lastKey && !window.appState.getMeetupKey()) {
+            // Only auto-load if no meetup key already set
+            window.appState.setLastUsedMeetupKey(lastKey);
+        }
+    }
+
+    saveUserPreference(key, value) {
+        if (!window.cookieConsent?.isCategoryAllowed('preferences')) {
+            return false;
+        }
+        
+        this.setCookie(key, value, 30); // 30 days for preferences
+        return true;
+    }
+
+    saveParticipantName(name) {
+        return this.saveUserPreference('participantName', name);
+    }
+
+    saveMeetupKey(key) {
+        return this.saveUserPreference('lastMeetupKey', key);
+    }
+
+    // Cookie helper methods
+    setCookie(name, value, days) {
+        const expires = new Date();
+        expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+        document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Strict`;
+    }
+
+    getCookie(name) {
+        const nameEQ = name + "=";
+        const ca = document.cookie.split(';');
+        for (let i = 0; i < ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+            if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+        }
+        return null;
+    }
+
+    // Listen for cookie consent changes
+    setupCookieConsentListeners() {
+        window.addEventListener('cookieConsentGiven', (event) => {
+            const settings = event.detail;
+            
+            if (settings.preferences) {
+                this.loadUserPreferences();
+            } else {
+                // Clear preference-related state if consent withdrawn
+                window.appState.setLastUsedName('');
+                window.appState.setLastUsedMeetupKey('');
+            }
+        });
     }
 
     // Debug information

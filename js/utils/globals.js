@@ -118,4 +118,52 @@ window.debugBrowserSupport = function() {
     return report;
 };
 
-console.log('✅ Global functions loaded');
+// Cookie consent debug function (already defined in cookie-consent.js but added here for consistency)
+window.debugCookieConsent = function() {
+    if (!window.cookieConsent) {
+        console.log('❌ Cookie consent system not available');
+        return;
+    }
+    
+    console.log('🍪 COOKIE CONSENT DEBUG INFO:');
+    console.log('Consent Status:', window.cookieConsent.getConsentStatus());
+    console.log('Allowed Cookies:', window.cookieConsent.getAllowedCookies());
+    console.log('Current Cookies:', document.cookie.split(';').map(c => c.split('=')[0].trim()));
+    
+    // Show current consent settings
+    const status = window.cookieConsent.getConsentStatus();
+    console.log('📊 Consent Details:');
+    console.table(status.settings);
+    
+    return status;
+};
+
+// Privacy debug function
+window.debugPrivacy = function() {
+    console.log('🔐 PRIVACY & COMPLIANCE DEBUG INFO:');
+    
+    // Cookie consent status
+    const cookieStatus = window.debugCookieConsent();
+    
+    // Data retention info
+    console.log('📅 Data Retention:');
+    console.log('- Meetup data: 30 days of inactivity');
+    console.log('- Cookies: 365 days maximum');
+    console.log('- Consent: Until withdrawal');
+    
+    // User rights
+    console.log('⚖️ Swiss FADP Rights Available:');
+    console.log('- Right to information (Art. 25 DSG)');
+    console.log('- Right to rectification (Art. 32 DSG)');
+    console.log('- Right to erasure (Art. 32 DSG)');
+    console.log('- Right to object');
+    console.log('- Data portability');
+    
+    return {
+        cookieConsent: cookieStatus,
+        userRights: ['information', 'rectification', 'erasure', 'object', 'portability'],
+        contact: 'privacy@piogino-meetup.ch'
+    };
+};
+
+console.log('✅ Enhanced global functions loaded with privacy debug support');

@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="css/themes.css">
     <link rel="stylesheet" href="css/animations.css">
     <link rel="stylesheet" href="css/emotes.css">
+    <link rel="stylesheet" href="css/cookie-consent.css">
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
     <!-- Theme Switcher -->
@@ -350,6 +351,24 @@
         </div>
     </div>
 
+    <!-- Privacy Footer -->
+    <footer class="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-gray-200 py-2 z-40">
+        <div class="max-w-4xl mx-auto px-4 flex flex-wrap items-center justify-center gap-4 text-xs text-gray-600">
+            <a href="docs/privacy-policy.md" target="_blank" class="hover:text-indigo-600 transition-colors">
+                🇩🇪 Datenschutz / 🇬🇧 Privacy Policy
+            </a>
+            <span class="text-gray-400">|</span>
+            <button onclick="window.cookieConsent?.showSettings()" class="hover:text-indigo-600 transition-colors">
+                🍪 Cookie-Einstellungen / Cookie Settings
+            </button>
+            <span class="text-gray-400">|</span>
+            <span class="flex items-center gap-1">
+                <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                Swiss FADP compliant
+            </span>
+        </div>
+    </footer>
+
     <!-- JavaScript Files -->
     <script src="js/config.js"></script>
     <script src="js/utils.js"></script>
@@ -376,6 +395,10 @@
     
     <!-- Feature detection -->
     <script src="js/utils/feature-detection.js"></script>
+    
+    <!-- Cookie consent system (MUST load before main app) -->
+    <script src="js/utils/cookie-consent.js"></script>
+    <script src="js/utils/cookie-settings-button.js"></script>
     
     <!-- Main app -->
     <script src="js/core/app.js"></script>

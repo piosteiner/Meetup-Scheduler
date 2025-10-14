@@ -16,7 +16,9 @@
     "serve": "npx live-server --port=3000",
     "clean": "rm -rf dist/",
     "validate": "npm run lint && npm run test",
-    "compatibility-check": "echo 'Open browser and run: window.debugBrowserSupport()'"
+    "compatibility-check": "echo 'Open browser and run: window.debugBrowserSupport()'",
+    "privacy-check": "echo 'Open browser and run: window.debugPrivacy()'",
+    "cookie-audit": "echo 'Open browser and run: window.debugCookieConsent()'"
   },
   "keywords": [
     "meetup",
@@ -26,7 +28,11 @@
     "realtime",
     "firebase",
     "javascript",
-    "responsive"
+    "responsive",
+    "privacy",
+    "swiss-fadp",
+    "gdpr",
+    "cookie-consent"
   ],
   "author": "Piogino",
   "license": "MIT",
