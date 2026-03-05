@@ -56,25 +56,42 @@ class CookieConsentManager {
         }
     }
 
+    // Storage helpers — fall back to sessionStorage, then in-memory,
+    // so the banner works even when Firefox blocks localStorage entirely.
+    _storageGet(key) {
+        try { return localStorage.getItem(key); } catch (_) {}
+        try { return sessionStorage.getItem(key); } catch (_) {}
+        return this._memStore ? (this._memStore[key] ?? null) : null;
+    }
+
+    _storageSet(key, value) {
+        try { localStorage.setItem(key, value); return; } catch (_) {}
+        try { sessionStorage.setItem(key, value); return; } catch (_) {}
+        if (!this._memStore) this._memStore = {};
+        this._memStore[key] = value;
+    }
+
+    _storageRemove(key) {
+        try { localStorage.removeItem(key); } catch (_) {}
+        try { sessionStorage.removeItem(key); } catch (_) {}
+        if (this._memStore) delete this._memStore[key];
+    }
+
     loadConsentSettings() {
         try {
-            const savedConsent = localStorage.getItem('cookieConsent');
-            const savedSettings = localStorage.getItem('cookieSettings');
-            const savedTimestamp = localStorage.getItem('consentTimestamp');
-            const savedVersion = localStorage.getItem('consentVersion');
-            
+            const savedConsent  = this._storageGet('cookieConsent');
+            const savedSettings = this._storageGet('cookieSettings');
+            const savedTimestamp = this._storageGet('consentTimestamp');
+            const savedVersion  = this._storageGet('consentVersion');
+
             if (savedConsent === 'true' && savedVersion === this.consentVersion) {
                 this.consentGiven = true;
                 this.consentTimestamp = savedTimestamp;
-                
                 if (savedSettings) {
-                    this.cookieSettings = {
-                        ...this.cookieSettings,
-                        ...JSON.parse(savedSettings)
-                    };
+                    this.cookieSettings = { ...this.cookieSettings, ...JSON.parse(savedSettings) };
                 }
-            } else if (savedVersion !== this.consentVersion) {
-                // Privacy policy updated, need new consent
+            } else if (savedVersion && savedVersion !== this.consentVersion) {
+                // Privacy policy updated — ask again
                 this.clearOldConsent();
             }
         } catch (error) {
@@ -84,20 +101,20 @@ class CookieConsentManager {
 
     saveConsentSettings() {
         try {
-            localStorage.setItem('cookieConsent', 'true');
-            localStorage.setItem('cookieSettings', JSON.stringify(this.cookieSettings));
-            localStorage.setItem('consentTimestamp', new Date().toISOString());
-            localStorage.setItem('consentVersion', this.consentVersion);
+            this._storageSet('cookieConsent',    'true');
+            this._storageSet('cookieSettings',   JSON.stringify(this.cookieSettings));
+            this._storageSet('consentTimestamp', new Date().toISOString());
+            this._storageSet('consentVersion',   this.consentVersion);
         } catch (error) {
             console.warn('Error saving cookie consent settings:', error);
         }
     }
 
     clearOldConsent() {
-        localStorage.removeItem('cookieConsent');
-        localStorage.removeItem('cookieSettings');
-        localStorage.removeItem('consentTimestamp');
-        localStorage.removeItem('consentVersion');
+        this._storageRemove('cookieConsent');
+        this._storageRemove('cookieSettings');
+        this._storageRemove('consentTimestamp');
+        this._storageRemove('consentVersion');
         this.consentGiven = false;
     }
 
@@ -142,25 +159,42 @@ class CookieConsentManager {
     showConsentBanner() {
         try {
             console.log('🍪 Creating consent banner...');
-            
+
             // Ensure document.body is available
             if (!document.body) {
                 console.log('🍪 Document body not ready, waiting...');
                 setTimeout(() => this.showConsentBanner(), 100);
                 return;
             }
-            
+
+            // Remove any existing banner first
+            const existing = document.getElementById('cookie-consent-banner');
+            if (existing) existing.remove();
+
             const banner = this.createConsentBanner();
             document.body.appendChild(banner);
-            
-            // Add backdrop blur effect
-            document.body.style.filter = 'blur(2px)';
-            document.body.style.pointerEvents = 'none';
-            banner.style.pointerEvents = 'all';
-            
+
+            // IMPORTANT: Do NOT blur or disable document.body.
+            // Doing so causes a deadlock when privacy extensions (e.g. Firefox
+            // I Don't Care About Cookies) auto-dismiss the banner — the page
+            // stays blurred and non-interactive with no way to recover.
+            // The backdrop inside the banner handles the visual overlay instead.
+
+            // Safety fallback: if nothing is clicked within 4 seconds (banner
+            // was suppressed by an extension), silently accept necessary-only
+            // so the site remains fully usable.
+            this._fallbackTimer = setTimeout(() => {
+                if (!this.consentGiven) {
+                    console.log('🍪 Banner not interacted with — applying necessary-only fallback.');
+                    this.rejectAll();
+                }
+            }, 4000);
+
             console.log('✅ Consent banner displayed');
         } catch (error) {
             console.error('❌ Error showing consent banner:', error);
+            // Last resort: if the banner itself fails, still unblock the page
+            this.rejectAll();
         }
     }
 
@@ -395,14 +429,18 @@ class CookieConsentManager {
     }
 
     hideBanner() {
+        // Clear the safety fallback timer if the user acted themselves
+        if (this._fallbackTimer) {
+            clearTimeout(this._fallbackTimer);
+            this._fallbackTimer = null;
+        }
+
         const banner = document.getElementById('cookie-consent-banner');
         if (banner) {
             banner.remove();
         }
-        
-        // Remove blur effect
-        document.body.style.filter = '';
-        document.body.style.pointerEvents = '';
+
+        // Body blur was intentionally removed — nothing to undo here.
     }
 
     applyCookieSettings() {
