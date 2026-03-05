@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cookie Consent Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/cookie-consent.css">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="max-w-4xl mx-auto p-8">
+        <h1 class="text-3xl font-bold text-center mb-8">🍪 Cookie Consent System Test</h1>
+        
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Test Controls</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button onclick="testShowBanner()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                    Show Cookie Banner
+                </button>
+                <button onclick="testClearConsent()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                    Clear Consent (Reset)
+                </button>
+                <button onclick="testDebugInfo()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                    Debug Info
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">System Status</h2>
+            <div id="status-info" class="space-y-2 text-sm">
+                <p>Loading cookie system...</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-xl font-semibold mb-4">Console Log</h2>
+            <div id="console-output" class="bg-gray-900 text-green-400 p-4 rounded font-mono text-xs h-64 overflow-y-auto">
+                <!-- Console output will appear here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer with manual cookie settings -->
+    <footer class="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm border-t border-gray-200 py-2">
+        <div class="max-w-4xl mx-auto px-4 flex items-center justify-center gap-4 text-sm">
+            <button onclick="window.cookieConsent?.showSettings()" class="text-blue-600 hover:text-blue-800">
+                🍪 Cookie Settings
+            </button>
+        </div>
+    </footer>
+
+    <!-- Load cookie consent system -->
+    <script src="js/utils/cookie-consent.js"></script>
+
+    <script>
+        // Override console.log to show in our test interface
+        const originalLog = console.log;
+        const originalWarn = console.warn;
+        const originalError = console.error;
+        
+        function logToInterface(message, type = 'log') {
+            const output = document.getElementById('console-output');
+            const color = type === 'error' ? 'text-red-400' : type === 'warn' ? 'text-yellow-400' : 'text-green-400';
+            const timestamp = new Date().toLocaleTimeString();
+            output.innerHTML += `<div class="${color}">[${timestamp}] ${message}</div>`;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            logToInterface(args.join(' '), 'log');
+        };
+
+        console.warn = function(...args) {
+            originalWarn.apply(console, args);
+            logToInterface('WARN: ' + args.join(' '), 'warn');
+        };
+
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            logToInterface('ERROR: ' + args.join(' '), 'error');
+        };
+
+        // Test functions
+        function testShowBanner() {
+            if (window.cookieConsent) {
+                console.log('Manually showing cookie banner...');
+                window.cookieConsent.showConsentBanner();
+            } else {
+                console.error('Cookie consent system not loaded!');
+            }
+        }
+
+        function testClearConsent() {
+            console.log('Clearing all consent data...');
+            localStorage.removeItem('cookieConsent');
+            localStorage.removeItem('cookieSettings');
+            localStorage.removeItem('consentTimestamp');
+            localStorage.removeItem('consentVersion');
+            location.reload();
+        }
+
+        function testDebugInfo() {
+            if (window.debugCookieConsent) {
+                window.debugCookieConsent();
+            } else {
+                console.error('Debug function not available!');
+            }
+        }
+
+        // Status update function
+        function updateStatus() {
+            const statusDiv = document.getElementById('status-info');
+            
+            if (typeof window.cookieConsent === 'undefined') {
+                statusDiv.innerHTML = '<p class="text-red-600">❌ Cookie consent system not loaded</p>';
+                return;
+            }
+
+            const status = window.cookieConsent.getConsentStatus();
+            const html = `
+                <p><strong>System Status:</strong> <span class="text-green-600">✅ Loaded</span></p>
+                <p><strong>Consent Given:</strong> ${status.consentGiven ? '✅ Yes' : '❌ No'}</p>
+                <p><strong>Timestamp:</strong> ${status.timestamp || 'N/A'}</p>
+                <p><strong>Version:</strong> ${status.version}</p>
+                <p><strong>Settings:</strong></p>
+                <ul class="ml-4">
+                    <li>Necessary: ${status.settings.necessary ? '✅' : '❌'}</li>
+                    <li>Functional: ${status.settings.functional ? '✅' : '❌'}</li>
+                    <li>Analytics: ${status.settings.analytics ? '✅' : '❌'}</li>
+                    <li>Preferences: ${status.settings.preferences ? '✅' : '❌'}</li>
+                </ul>
+            `;
+            statusDiv.innerHTML = html;
+        }
+
+        // Check system every second
+        setInterval(updateStatus, 1000);
+        
+        // Initial status update
+        setTimeout(updateStatus, 500);
+
+        console.log('🧪 Cookie consent test page loaded');
+    </script>
+</body>
+</html>

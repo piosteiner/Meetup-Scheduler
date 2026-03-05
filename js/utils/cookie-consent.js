@@ -2,42 +2,58 @@
 
 class CookieConsentManager {
     constructor() {
-        this.cookieSettings = {
-            necessary: true, // Always true, cannot be disabled
-            analytics: false,
-            functional: false,
-            preferences: false
-        };
-        
-        this.consentGiven = false;
-        this.consentTimestamp = null;
-        this.consentVersion = '1.0'; // Update when privacy policy changes
-        
-        // Swiss law requirements
-        this.swissCompliance = {
-            requiresConsent: true,
-            allowsImpliedConsent: false, // Be explicit
-            dataRetentionPeriod: 365, // Days
-            requiresWithdrawal: true
-        };
-        
-        this.init();
+        try {
+            this.cookieSettings = {
+                necessary: true, // Always true, cannot be disabled
+                analytics: false,
+                functional: false,
+                preferences: false
+            };
+            
+            this.consentGiven = false;
+            this.consentTimestamp = null;
+            this.consentVersion = '1.0'; // Update when privacy policy changes
+            
+            // Swiss law requirements
+            this.swissCompliance = {
+                requiresConsent: true,
+                allowsImpliedConsent: false, // Be explicit
+                dataRetentionPeriod: 365, // Days
+                requiresWithdrawal: true
+            };
+            
+            console.log('🍪 Cookie consent manager initializing...');
+            this.init();
+        } catch (error) {
+            console.error('❌ Error in CookieConsentManager constructor:', error);
+        }
     }
 
     init() {
-        // Check if consent has been given before
-        this.loadConsentSettings();
-        
-        // Set up cookie monitoring
-        this.setupCookieMonitoring();
-        
-        // Show consent banner if needed
-        if (!this.consentGiven) {
-            this.showConsentBanner();
+        try {
+            console.log('🍪 Initializing cookie consent system...');
+            
+            // Check if consent has been given before
+            this.loadConsentSettings();
+            
+            // Set up cookie monitoring
+            this.setupCookieMonitoring();
+            
+            // Show consent banner if needed
+            if (!this.consentGiven) {
+                console.log('🍪 No consent found, showing banner...');
+                this.showConsentBanner();
+            } else {
+                console.log('🍪 Consent already given, applying settings...');
+            }
+            
+            // Apply current settings
+            this.applyCookieSettings();
+            
+            console.log('✅ Cookie consent system initialized successfully');
+        } catch (error) {
+            console.error('❌ Error initializing cookie consent system:', error);
         }
-        
-        // Apply current settings
-        this.applyCookieSettings();
     }
 
     loadConsentSettings() {
@@ -124,18 +140,35 @@ class CookieConsentManager {
     }
 
     showConsentBanner() {
-        const banner = this.createConsentBanner();
-        document.body.appendChild(banner);
-        
-        // Add backdrop blur effect
-        document.body.style.filter = 'blur(2px)';
-        document.body.style.pointerEvents = 'none';
-        banner.style.pointerEvents = 'all';
+        try {
+            console.log('🍪 Creating consent banner...');
+            
+            // Ensure document.body is available
+            if (!document.body) {
+                console.log('🍪 Document body not ready, waiting...');
+                setTimeout(() => this.showConsentBanner(), 100);
+                return;
+            }
+            
+            const banner = this.createConsentBanner();
+            document.body.appendChild(banner);
+            
+            // Add backdrop blur effect
+            document.body.style.filter = 'blur(2px)';
+            document.body.style.pointerEvents = 'none';
+            banner.style.pointerEvents = 'all';
+            
+            console.log('✅ Consent banner displayed');
+        } catch (error) {
+            console.error('❌ Error showing consent banner:', error);
+        }
     }
 
     createConsentBanner() {
-        const banner = document.createElement('div');
-        banner.id = 'cookie-consent-banner';
+        try {
+            console.log('🍪 Building consent banner HTML...');
+            const banner = document.createElement('div');
+            banner.id = 'cookie-consent-banner';
         banner.innerHTML = `
             <div class="cookie-consent-backdrop">
                 <div class="cookie-consent-modal">
@@ -261,16 +294,16 @@ class CookieConsentManager {
                     </div>
                     
                     <div class="cookie-consent-actions">
-                        <button class="btn-secondary" onclick="cookieConsent.rejectAll()">
+                        <button class="btn-secondary" onclick="window.cookieConsent.rejectAll()">
                             Alle ablehnen / Reject All
                         </button>
-                        <button class="btn-secondary" onclick="cookieConsent.showSettings()">
+                        <button class="btn-secondary" onclick="window.cookieConsent.showSettings()">
                             Einstellungen / Settings
                         </button>
-                        <button class="btn-primary" onclick="cookieConsent.acceptAll()">
+                        <button class="btn-primary" onclick="window.cookieConsent.acceptAll()">
                             Alle akzeptieren / Accept All
                         </button>
-                        <button class="btn-primary" onclick="cookieConsent.saveCurrentSelection()">
+                        <button class="btn-primary" onclick="window.cookieConsent.saveCurrentSelection()">
                             Auswahl speichern / Save Selection
                         </button>
                     </div>
@@ -285,7 +318,15 @@ class CookieConsentManager {
         // Add event listeners
         this.setupBannerEventListeners(banner);
         
+        console.log('✅ Banner HTML created successfully');
         return banner;
+        } catch (error) {
+            console.error('❌ Error creating consent banner:', error);
+            // Return a simple fallback banner
+            const fallback = document.createElement('div');
+            fallback.innerHTML = '<div>Cookie consent system error. Please refresh the page.</div>';
+            return fallback;
+        }
     }
 
     setupBannerEventListeners(banner) {
@@ -460,8 +501,16 @@ class CookieConsentManager {
     }
 }
 
-// Create global instance
-window.cookieConsent = new CookieConsentManager();
+// Create global instance when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('🍪 DOM loaded, creating cookie consent manager...');
+        window.cookieConsent = new CookieConsentManager();
+    });
+} else {
+    console.log('🍪 DOM already loaded, creating cookie consent manager immediately...');
+    window.cookieConsent = new CookieConsentManager();
+}
 
 // Add to global debug functions
 window.debugCookieConsent = function() {

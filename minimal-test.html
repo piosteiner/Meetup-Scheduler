@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Minimal Cookie Test</title>
+    <link rel="stylesheet" href="css/cookie-consent.css">
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        button { padding: 10px 20px; margin: 10px; }
+    </style>
+    <script>
+        console.log('=== Starting cookie test ===');
+        
+        // Test if basic JavaScript works
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded');
+            
+            // Check if localStorage works
+            try {
+                localStorage.setItem('test', 'value');
+                localStorage.removeItem('test');
+                console.log('✅ localStorage works');
+            } catch (e) {
+                console.error('❌ localStorage error:', e);
+            }
+            
+            // Load cookie consent
+            console.log('Loading cookie consent script...');
+        });
+    </script>
+</head>
+<body>
+    <h1>Minimal Cookie Test</h1>
+    <p>Check the browser console for output.</p>
+    <button onclick="testConsent()">Test Cookie Consent</button>
+    
+    <script src="js/utils/cookie-consent.js"></script>
+    
+    <script>
+        function testConsent() {
+            console.log('Testing cookie consent...');
+            console.log('window.cookieConsent:', window.cookieConsent);
+            if (window.cookieConsent) {
+                console.log('Consent status:', window.cookieConsent.getConsentStatus());
+            }
+        }
+        
+        // Check after a delay
+        setTimeout(() => {
+            console.log('=== After 2 seconds ===');
+            console.log('window.cookieConsent available:', !!window.cookieConsent);
+            if (window.cookieConsent) {
+                console.log('Consent given:', window.cookieConsent.consentGiven);
+            }
+        }, 2000);
+    </script>
+</body>
+</html>
