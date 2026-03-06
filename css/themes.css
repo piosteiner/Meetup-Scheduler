@@ -538,6 +538,38 @@
     background: rgba(52, 211, 153, 0.15) !important;
 }
 
+/* Proposal response buttons — scoped overrides matching calendar modal button style */
+[data-theme="dark"] .proposal-response-btn.response-available:not(.is-selected),
+.theme-dark .proposal-response-btn.response-available:not(.is-selected) {
+    background: rgba(0, 80, 60, 0.35) !important;
+    border-color: rgba(0, 139, 90, 0.5) !important;
+    color: #6ee7b7 !important;
+}
+[data-theme="dark"] .proposal-response-btn.response-available:not(.is-selected):hover,
+.theme-dark .proposal-response-btn.response-available:not(.is-selected):hover {
+    background: rgba(0, 100, 75, 0.5) !important;
+}
+[data-theme="dark"] .proposal-response-btn.response-maybe:not(.is-selected),
+.theme-dark .proposal-response-btn.response-maybe:not(.is-selected) {
+    background: rgba(80, 60, 0, 0.35) !important;
+    border-color: rgba(160, 120, 0, 0.5) !important;
+    color: #fcd34d !important;
+}
+[data-theme="dark"] .proposal-response-btn.response-maybe:not(.is-selected):hover,
+.theme-dark .proposal-response-btn.response-maybe:not(.is-selected):hover {
+    background: rgba(100, 80, 0, 0.5) !important;
+}
+[data-theme="dark"] .proposal-response-btn.response-unavailable:not(.is-selected),
+.theme-dark .proposal-response-btn.response-unavailable:not(.is-selected) {
+    background: rgba(80, 20, 20, 0.35) !important;
+    border-color: rgba(180, 40, 40, 0.5) !important;
+    color: #fca5a5 !important;
+}
+[data-theme="dark"] .proposal-response-btn.response-unavailable:not(.is-selected):hover,
+.theme-dark .proposal-response-btn.response-unavailable:not(.is-selected):hover {
+    background: rgba(100, 30, 30, 0.5) !important;
+}
+
 [data-theme="dark"] .bg-blue-50,
 .theme-dark .bg-blue-50 {
     background: rgba(129, 140, 248, 0.1) !important;

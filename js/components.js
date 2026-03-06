@@ -297,7 +297,8 @@ class UIComponents {
     // Render response button
     renderResponseButton(proposalId, responseType, label, currentResponse) {
         const isSelected = currentResponse === responseType;
-        const baseClasses = 'py-2 px-3 text-sm font-medium rounded-lg transition-colors duration-200 border';
+        const baseClasses = 'py-2 px-3 text-sm font-medium rounded-lg transition-colors duration-200 border proposal-response-btn';
+        const selectedClass = isSelected ? ' is-selected' : '';
         const colorClasses = {
             available:   isSelected ? 'bg-green-500  border-green-600  text-white'            : 'bg-green-100  border-green-200  text-green-700  hover:bg-green-200',
             maybe:       isSelected ? 'bg-yellow-400 border-yellow-500 text-yellow-900'       : 'bg-yellow-100 border-yellow-200 text-yellow-700 hover:bg-yellow-200',
@@ -308,7 +309,7 @@ class UIComponents {
 
         return `
             <button onclick="window.app.respondToProposal('${proposalId}', '${responseType}')" 
-                    class="${baseClasses} ${colorClasses[responseType]}">
+                    class="${baseClasses} response-${responseType}${selectedClass} ${colorClasses[responseType]}">
                 ${icons[responseType]} ${label}
             </button>
         `;
