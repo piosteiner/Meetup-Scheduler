@@ -30,6 +30,9 @@ class AvailabilityCalendar {
         
         // Setup event listeners
         this.setupEventListeners();
+
+        // Initial render with whatever state is already available
+        this.renderOverview();
     }
 
     // Update selected participant
@@ -55,6 +58,9 @@ class AvailabilityCalendar {
             this.calendarData = {};
             this.renderCalendar();
         }
+
+        // Refresh overview whenever the selected participant changes
+        this.renderOverview();
     }
 
     // Setup event listeners
