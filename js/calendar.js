@@ -564,7 +564,9 @@ class AvailabilityCalendar {
         grid.addEventListener('mouseover', (e) => {
             const dot = e.target.closest('.overview-dot');
             if (!dot || dot === pinnedDot) return;
-            show(dot.dataset.tip, e);
+            const comment = dot.dataset.comment;
+            const text = comment ? `${dot.dataset.tip}\n💬 "${comment}"` : dot.dataset.tip;
+            show(text, e);
         });
 
         grid.addEventListener('mousemove', (e) => {
