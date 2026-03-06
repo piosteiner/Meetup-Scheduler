@@ -1011,39 +1011,39 @@ body,
 /* ── Dark-mode overrides for day-modal availability & propose cards ── */
 
 /* Availability buttons: readable unselected states */
-[data-theme="dark"] #dayModal .availability-btn#availableBtn,
-.theme-dark #dayModal .availability-btn#availableBtn {
+[data-theme="dark"] #dayModal .availability-btn#availableBtn:not(.is-selected),
+.theme-dark #dayModal .availability-btn#availableBtn:not(.is-selected) {
     background: rgba(52, 211, 153, 0.2) !important;
     color: #6ee7b7 !important;
     border-color: rgba(52, 211, 153, 0.4) !important;
 }
 
-[data-theme="dark"] #dayModal .availability-btn#availableBtn:hover,
-.theme-dark #dayModal .availability-btn#availableBtn:hover {
+[data-theme="dark"] #dayModal .availability-btn#availableBtn:not(.is-selected):hover,
+.theme-dark #dayModal .availability-btn#availableBtn:not(.is-selected):hover {
     background: rgba(52, 211, 153, 0.3) !important;
 }
 
-[data-theme="dark"] #dayModal .availability-btn#checkingBtn,
-.theme-dark #dayModal .availability-btn#checkingBtn {
+[data-theme="dark"] #dayModal .availability-btn#checkingBtn:not(.is-selected),
+.theme-dark #dayModal .availability-btn#checkingBtn:not(.is-selected) {
     background: rgba(251, 191, 36, 0.15) !important;
     color: #fcd34d !important;
     border-color: rgba(251, 191, 36, 0.35) !important;
 }
 
-[data-theme="dark"] #dayModal .availability-btn#checkingBtn:hover,
-.theme-dark #dayModal .availability-btn#checkingBtn:hover {
+[data-theme="dark"] #dayModal .availability-btn#checkingBtn:not(.is-selected):hover,
+.theme-dark #dayModal .availability-btn#checkingBtn:not(.is-selected):hover {
     background: rgba(251, 191, 36, 0.25) !important;
 }
 
-[data-theme="dark"] #dayModal .availability-btn#unavailableBtn,
-.theme-dark #dayModal .availability-btn#unavailableBtn {
+[data-theme="dark"] #dayModal .availability-btn#unavailableBtn:not(.is-selected),
+.theme-dark #dayModal .availability-btn#unavailableBtn:not(.is-selected) {
     background: rgba(248, 113, 113, 0.15) !important;
     color: #fca5a5 !important;
     border-color: rgba(248, 113, 113, 0.35) !important;
 }
 
-[data-theme="dark"] #dayModal .availability-btn#unavailableBtn:hover,
-.theme-dark #dayModal .availability-btn#unavailableBtn:hover {
+[data-theme="dark"] #dayModal .availability-btn#unavailableBtn:not(.is-selected):hover,
+.theme-dark #dayModal .availability-btn#unavailableBtn:not(.is-selected):hover {
     background: rgba(248, 113, 113, 0.25) !important;
 }
 
