@@ -138,6 +138,16 @@ class FirebaseAPI {
         }
     }
 
+    async deleteParticipant(meetupKey, participantId) {
+        try {
+            await this.database.ref('meetups/' + meetupKey + '/participants/' + participantId).remove();
+            await this.database.ref('meetups/' + meetupKey + '/calendar/' + participantId).remove();
+        } catch (error) {
+            console.error('Error deleting participant:', error);
+            throw new Error('Error deleting participant. Please try again.');
+        }
+    }
+
     // Listen to participants changes
     onParticipantsChange(meetupKey, callback) {
         return this.database.ref('meetups/' + meetupKey + '/participants').on('value', (snapshot) => {

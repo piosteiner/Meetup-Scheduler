@@ -167,6 +167,44 @@ class ParticipantManager {
         }
     }
 
+    // Delete participant with DELETE confirmation
+    async deleteParticipant(participantId) {
+        try {
+            const participantName = window.appState.getParticipantName(participantId);
+            if (!participantName) {
+                await window.safeAlert('Participant not found', 'Error', { type: 'error', icon: '❌' });
+                return;
+            }
+
+            const confirmation = await window.safePrompt(
+                `⚠️ DANGEROUS ACTION\n\nYou are about to permanently delete "${participantName}" and all their availability data.\n\nTo confirm, type DELETE in capital letters:`,
+                'Delete Participant - Confirmation Required',
+                '',
+                { placeholder: 'Type DELETE to confirm', maxLength: 10 }
+            );
+
+            if (confirmation === null) return;
+            if (confirmation !== 'DELETE') {
+                await window.safeAlert('Deletion cancelled. You must type DELETE exactly.', 'Cancelled', { type: 'warning', icon: '⚠️' });
+                return;
+            }
+
+            const meetupKey = window.appState.getMeetupKey();
+            // Deselect if this participant was selected
+            if (window.appState.getSelectedParticipant() === participantId) {
+                window.appState.setSelectedParticipant(null);
+                window.uiComponents.setValue('participantSelect', '');
+                this.selectParticipant();
+            }
+
+            await window.firebaseAPI.deleteParticipant(meetupKey, participantId);
+            window.uiComponents.showNotification(`"${participantName}" has been deleted.`, 'success');
+        } catch (error) {
+            console.error('❌ Error deleting participant:', error);
+            await window.safeAlert('Error deleting participant: ' + error.message, 'Error', { type: 'error', icon: '❌' });
+        }
+    }
+
     // Update participants UI
     updateParticipantsUI(participants) {
         const count = Object.keys(participants).length;
