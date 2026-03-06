@@ -28,7 +28,8 @@ class CustomModalSystem {
                 background: white;
                 border-radius: 12px;
                 box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-                max-width: 90vw;
+                width: 100%;
+                max-width: 32rem;
                 max-height: 90vh;
                 overflow-y: auto;
             }
