@@ -153,10 +153,6 @@ class MeetupApp {
         return window.proposalManager.proposeDateTime(dateTimeValue);
     }
 
-    async proposeDateFromCalendar(date, time) {
-        return window.proposalManager.proposeDateFromCalendar(date, time);
-    }
-
     async respondToProposal(proposalId, response) {
         return window.proposalManager.respondToProposal(proposalId, response);
     }

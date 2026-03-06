@@ -185,9 +185,6 @@ class MessageManager {
         if (newMessagesList !== lastRender) {
             window.uiComponents.updateHTML('messagesList', newMessagesList);
             window.appState.setLastMessagesRender(newMessagesList);
-            console.log('Messages updated - DOM rendered');
-        } else {
-            console.log('Messages updated - no DOM change needed');
         }
     }
 
@@ -197,7 +194,6 @@ class MessageManager {
         if (!messages || Object.keys(messages).length === 0) return;
         
         const selectedParticipantId = window.appState.getSelectedParticipant();
-        console.log('🔄 Refreshing messages display for selected participant:', selectedParticipantId);
         
         // Re-render messages with current selected participant
         const participants = window.appState.getParticipants();
@@ -210,8 +206,6 @@ class MessageManager {
         // Force update the DOM (don't check for changes since we want to show/hide edit buttons)
         window.uiComponents.updateHTML('messagesList', newMessagesList);
         window.appState.setLastMessagesRender(newMessagesList);
-        
-        console.log('✅ Messages refreshed - edit buttons updated for participant:', selectedParticipantId);
     }
 }
 

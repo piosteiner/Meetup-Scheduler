@@ -38,7 +38,6 @@ class NavigationManager {
         window.uiComponents.hide('messageForm');
         window.uiComponents.show('noParticipantMessage');
         window.uiComponents.show('joinForm');
-        window.uiComponents.hide('proposeForm');
         
         // Reset meetup title and description
         document.getElementById('meetupTitle').textContent = 'Untitled Meetup';
@@ -48,7 +47,6 @@ class NavigationManager {
         window.uiComponents.setValue('keyInput', '');
         window.uiComponents.setValue('nameInput', '');
         window.uiComponents.setValue('messageInput', '');
-        window.uiComponents.setValue('dateTimeInput', '');
     }
 
     // Go back to home with full cleanup

@@ -1138,6 +1138,34 @@ body,
     color: #9ca3af !important;
 }
 
+/* Recommended dates section (overview area) */
+[data-theme="dark"] #dateRecommendations h4,
+.theme-dark #dateRecommendations h4 {
+    color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] #dateRecommendationsList .border-green-300,
+.theme-dark #dateRecommendationsList .border-green-300 {
+    background: rgba(20, 55, 30, 0.55) !important;
+    border-color: rgba(74, 222, 128, 0.35) !important;
+}
+
+[data-theme="dark"] #dateRecommendationsList .border-emerald-200,
+.theme-dark #dateRecommendationsList .border-emerald-200 {
+    background: rgba(20, 45, 35, 0.45) !important;
+    border-color: rgba(52, 211, 153, 0.3) !important;
+}
+
+[data-theme="dark"] #dateRecommendationsList .text-gray-800,
+.theme-dark #dateRecommendationsList .text-gray-800 {
+    color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] #dateRecommendationsList .text-gray-400,
+.theme-dark #dateRecommendationsList .text-gray-400 {
+    color: #64748b !important;
+}
+
 /* Focus styles for star and download buttons */
 .star-button:focus-visible,
 .btn-download:focus-visible,

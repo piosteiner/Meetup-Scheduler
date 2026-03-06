@@ -6,10 +6,6 @@ class ParticipantManager {
         window.appState.subscribe('participants', (participants) => {
             this.updateParticipantsUI(participants);
         });
-        
-        window.appState.subscribe('selectedParticipant', (participantId) => {
-            this.onSelectedParticipantChange(participantId);
-        });
     }
 
     // Join as participant
@@ -63,8 +59,6 @@ class ParticipantManager {
         const selectedParticipantId = window.appState.getSelectedParticipant();
         const selectedName = selectedParticipantId ? window.appState.getParticipantName(selectedParticipantId) : '';
         
-        console.log('Selected participant:', selectedParticipantId, selectedName);
-        
         if (selectedParticipantId && selectedName) {
             // Show message form
             window.uiComponents.show('messageForm');
@@ -103,13 +97,6 @@ class ParticipantManager {
         if (window.messageManager && window.messageManager.refreshMessagesDisplay) {
             window.messageManager.refreshMessagesDisplay();
         }
-    }
-
-    // Handle participant selection change
-    onSelectedParticipantChange(participantId) {
-        // This is called when the selected participant changes in state
-        // Trigger UI updates that depend on selected participant
-        console.log('Selected participant changed to:', participantId);
     }
 
     // Edit participant name with custom modal

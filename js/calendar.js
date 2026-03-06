@@ -14,7 +14,7 @@ class AvailabilityCalendar {
 
     // Initialize calendar when app loads
     init(meetupKey, participantId) {
-        console.log('Initializing calendar with:', meetupKey, participantId);
+
         
         this.currentMeetupKey = meetupKey;
         this.selectedParticipantId = participantId;
@@ -40,7 +40,7 @@ class AvailabilityCalendar {
 
     // Update selected participant
     updateSelectedParticipant(participantId) {
-        console.log('Updating calendar participant to:', participantId);
+
         
         // Clean up existing listener
         if (this.calendarListener && this.currentMeetupKey && this.selectedParticipantId) {
@@ -88,15 +88,11 @@ class AvailabilityCalendar {
         if (!this.currentMeetupKey || !this.selectedParticipantId) return;
 
         try {
-            console.log('Loading calendar data for:', this.currentMeetupKey, this.selectedParticipantId);
-            
             const snapshot = await window.firebaseAPI.database
                 .ref(`meetups/${this.currentMeetupKey}/calendar/${this.selectedParticipantId}`)
                 .once('value');
             
             const data = snapshot.val();
-            console.log('Loaded calendar data:', data);
-            
             this.calendarData = data || {};
             this.renderCalendar();
         } catch (error) {
@@ -112,13 +108,9 @@ class AvailabilityCalendar {
         }
 
         try {
-            console.log('Saving calendar data:', this.calendarData);
-            
             await window.firebaseAPI.database
                 .ref(`meetups/${this.currentMeetupKey}/calendar/${this.selectedParticipantId}`)
                 .set(this.calendarData);
-                
-            console.log('Calendar data saved successfully');
         } catch (error) {
             console.error('Error saving calendar data:', error);
             throw error;
@@ -141,8 +133,6 @@ class AvailabilityCalendar {
             .ref(`meetups/${this.currentMeetupKey}/calendar/${this.selectedParticipantId}`)
             .on('value', (snapshot) => {
                 const data = snapshot.val();
-                console.log('Calendar data updated from Firebase:', data);
-                
                 if (data) {
                     this.calendarData = data;
                     this.renderCalendar();
@@ -330,6 +320,8 @@ class AvailabilityCalendar {
         if (participantIds.length === 0) {
             grid.innerHTML = '<p class="text-gray-400 text-xs text-center col-span-7 py-4">No participants yet.</p>';
             if (legend) legend.innerHTML = '';
+            const section = document.getElementById('dateRecommendations');
+            if (section) section.classList.add('hidden');
             return;
         }
 
@@ -383,9 +375,99 @@ class AvailabilityCalendar {
                 return `<span class="inline-flex items-center gap-1 text-xs text-gray-600 bg-white border border-gray-200 rounded-full px-2 py-0.5"><span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-gray-300 text-white text-[8px] font-bold">${initials}</span>${this.escapeHtml(name)}</span>`;
             }).join('');
         }
+
+        this.renderRecommendations(participantIds, year, month);
     }
 
-    // Set up shared tooltip for overview dots (called once from init)
+    // Render suggested dates below the overview grid
+    renderRecommendations(participantIds, year, month) {
+        const section = document.getElementById('dateRecommendations');
+        const list = document.getElementById('dateRecommendationsList');
+        if (!section || !list) return;
+
+        const total = participantIds.length;
+        if (total === 0) { section.classList.add('hidden'); return; }
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        const monthNames = ['January','February','March','April','May','June',
+                            'July','August','September','October','November','December'];
+        const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+        const perfect = [];   // all participants available
+        const good = [];      // some available, rest not set, none blocking
+
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            const date = new Date(year, month, d);
+            if (date < today) continue;
+
+            let available = 0, blocking = 0;
+            for (const pid of participantIds) {
+                const a = this.allCalendarData[pid]?.[dateKey]?.availability;
+                if (a === 'available') available++;
+                else if (a === 'unavailable' || a === 'checking') blocking++;
+            }
+
+            if (blocking > 0 || available === 0) continue;
+
+            const dayLabel = `${dayNames[date.getDay()]} ${d} ${monthNames[month]}`;
+            const entry = { dateKey, dayLabel, available, total };
+
+            if (available === total) perfect.push(entry);
+            else good.push(entry);
+        }
+
+        // Sort good dates by number available descending
+        good.sort((a, b) => b.available - a.available);
+
+        const items = [...perfect, ...good].slice(0, 8);
+
+        if (items.length === 0) {
+            section.classList.add('hidden');
+            return;
+        }
+
+        section.classList.remove('hidden');
+        list.innerHTML = items.map(item => {
+            const isPerfect = item.available === item.total;
+            const unknown = item.total - item.available;
+            const badge = isPerfect
+                ? `<span class="text-xs bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded-full">All available</span>`
+                : `<span class="text-xs bg-emerald-50 text-emerald-700 font-semibold px-2 py-0.5 rounded-full">${item.available}/${item.total} available</span>
+                   <span class="text-xs text-gray-400">${unknown} not set</span>`;
+            const borderColor = isPerfect ? 'border-green-300 bg-green-50' : 'border-emerald-200 bg-white';
+            return `
+                <div class="flex items-center justify-between border ${borderColor} rounded-lg px-3 py-2">
+                    <div class="flex items-center gap-2">
+                        <span class="text-base">${isPerfect ? '🟢' : '🟡'}</span>
+                        <span class="text-sm font-medium text-gray-800">${this.escapeHtml(item.dayLabel)}</span>
+                    </div>
+                    <div class="flex items-center gap-2">${badge}
+                        <button onclick="window.calendar.proposeRecommendedDate('${item.dateKey}')"
+                                class="text-xs bg-purple-600 hover:bg-purple-700 text-white px-2 py-1 rounded-lg transition-colors duration-150 whitespace-nowrap">
+                            📅 Propose
+                        </button>
+                    </div>
+                </div>`;
+        }).join('');
+    }
+
+    // Propose a date directly from the recommendations list
+    async proposeRecommendedDate(dateKey) {
+        if (!this.selectedParticipantId) {
+            window.uiComponents.showNotification('Please select a participant first', 'warning');
+            return;
+        }
+        const defaultTime = '18:00';
+        try {
+            await window.proposalManager.proposeDateTime(`${dateKey}T${defaultTime}`);
+        } catch (error) {
+            window.uiComponents.showNotification('Error proposing date: ' + error.message, 'error');
+        }
+    }
     setupOverviewTooltip() {
         let tip = document.getElementById('overviewDotTooltip');
         if (!tip) {
@@ -465,7 +547,7 @@ class AvailabilityCalendar {
             .replace(/'/g, '&#39;');
     }
 
-    // NEW: Update modal to include propose date functionality
+    // Update modal to include propose date functionality
     updateModalWithProposeDate(dateKey) {
         const proposeSection = document.getElementById('proposeDateSection');
         
@@ -508,7 +590,7 @@ class AvailabilityCalendar {
         }
     }
 
-    // NEW: Propose date from modal
+    // Propose date from modal
     async proposeDateFromModal(dateKey) {
         try {
             const timeInput = document.getElementById('proposeTimeInput');
@@ -528,8 +610,7 @@ class AvailabilityCalendar {
             // Create the datetime string
             const dateTimeString = `${dateKey}T${time}`;
             
-            // Call the app's propose function
-            await window.app.proposeDateTime(dateTimeString);
+            await window.proposalManager.proposeDateTime(dateTimeString);
             
             // Close the modal
             this.closeDayModal();
@@ -599,8 +680,6 @@ class AvailabilityCalendar {
             const commentInput = document.getElementById('dayComment');
             const comment = commentInput ? commentInput.value.trim() : '';
             
-            console.log('Saving day data:', this.currentSelectedDay, 'availability:', availability, 'comment:', comment);
-            
             // Save data locally
             if (!this.calendarData[this.currentSelectedDay]) {
                 this.calendarData[this.currentSelectedDay] = {};
@@ -636,8 +715,6 @@ class AvailabilityCalendar {
         }
         
         try {
-            console.log('Clearing day data for:', this.currentSelectedDay);
-            
             delete this.calendarData[this.currentSelectedDay];
             
             // Save to Firebase
@@ -658,8 +735,6 @@ class AvailabilityCalendar {
 
     // Reset calendar data (when switching participants or going home)
     reset() {
-        console.log('Resetting calendar');
-        
         // Clean up listener
         if (this.calendarListener && this.currentMeetupKey && this.selectedParticipantId) {
             window.firebaseAPI.database
@@ -695,54 +770,6 @@ class AvailabilityCalendar {
         this.closeDayModal();
     }
 
-    // Get all available days for a month (useful for suggesting dates)
-    getAvailableDays(year, month) {
-        const availableDays = [];
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-        
-        for (let day = 1; day <= daysInMonth; day++) {
-            const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            const dayData = this.calendarData[dateKey];
-            
-            if (dayData && dayData.availability === 'available') {
-                availableDays.push({
-                    date: new Date(year, month, day),
-                    comment: dayData.comment || ''
-                });
-            }
-        }
-        
-        return availableDays;
-    }
-
-    // Get summary of availability for current month
-    getMonthSummary() {
-        const year = this.currentDate.getFullYear();
-        const month = this.currentDate.getMonth();
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-        
-        let available = 0;
-        let checking = 0;
-        let unavailable = 0;
-        let notSet = 0;
-        
-        for (let day = 1; day <= daysInMonth; day++) {
-            const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            const dayData = this.calendarData[dateKey];
-            
-            if (dayData && dayData.availability) {
-                switch (dayData.availability) {
-                    case 'available': available++; break;
-                    case 'checking': checking++; break;
-                    case 'unavailable': unavailable++; break;
-                }
-            } else {
-                notSet++;
-            }
-        }
-        
-        return { available, checking, unavailable, notSet, total: daysInMonth };
-    }
 }
 
 // Create singleton instance

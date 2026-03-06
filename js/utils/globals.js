@@ -25,7 +25,6 @@ window.editParticipantName = (participantId) => window.participantManager?.editP
 
 // Meetup management functions
 window.editMeetupName = () => window.meetupManager?.editMeetupName();
-window.proposeDateFromCalendar = (date, time) => window.proposalManager?.proposeDateFromCalendar(date, time);
 
 // Favorites functions
 window.addToFavorites = (proposalId, proposerName, proposalDate) => window.proposalManager?.addToFavorites(proposalId, proposerName, proposalDate);

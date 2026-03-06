@@ -22,7 +22,7 @@ class ProposalManager {
                 return;
             }
 
-            const dateTime = dateTimeValue || window.uiComponents.getValue('dateTimeInput');
+            const dateTime = dateTimeValue;
             if (!dateTime) {
                 window.uiComponents.showNotification('Please select a date and time', 'warning');
                 return;
@@ -41,28 +41,10 @@ class ProposalManager {
                 dateTime: dateTime
             });
             
-            window.uiComponents.setValue('dateTimeInput', '');
             window.uiComponents.showNotification('Date proposed successfully!', 'success');
         } catch (error) {
             console.error('Error proposing date:', error);
             window.uiComponents.showNotification(error.message, 'error');
-        }
-    }
-
-    // Propose date from calendar
-    async proposeDateFromCalendar(date, time = '18:00') {
-        try {
-            const selectedParticipantId = window.appState.getSelectedParticipant();
-            if (!selectedParticipantId) {
-                window.uiComponents.showNotification('Please select a participant first to propose a date', 'warning');
-                return;
-            }
-
-            const dateTimeString = `${date}T${time}`;
-            await this.proposeDateTime(dateTimeString);
-        } catch (error) {
-            console.error('Error proposing date from calendar:', error);
-            window.uiComponents.showNotification('Error proposing date: ' + error.message, 'error');
         }
     }
 
@@ -80,8 +62,6 @@ class ProposalManager {
                 window.uiComponents.showNotification('No meetup selected', 'error');
                 return;
             }
-            
-            console.log('Setting response for participant:', selectedParticipantId, 'to proposal:', proposalId, 'response:', response);
             
             await window.firebaseAPI.respondToProposal(meetupKey, proposalId, selectedParticipantId, response);
             
