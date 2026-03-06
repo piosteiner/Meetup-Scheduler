@@ -251,9 +251,9 @@ class UIComponents {
     renderResponseSummary(availableCount, maybeCount, unavailableCount) {
         return `
             <div class="grid grid-cols-3 gap-2 mb-4 text-sm">
-                <div class="text-center bg-green-50 rounded-lg py-2">
-                    <span class="text-green-600 font-bold text-base">✓ ${availableCount}</span>
-                    <div class="text-green-700 text-xs mt-0.5">available</div>
+                <div class="text-center bg-green-500 rounded-lg py-2">
+                    <span class="text-white font-bold text-base">✓ ${availableCount}</span>
+                    <div class="text-green-100 text-xs mt-0.5">available</div>
                 </div>
                 <div class="text-center bg-yellow-50 rounded-lg py-2">
                     <span class="text-yellow-600 font-bold text-base">? ${maybeCount}</span>
