@@ -45,6 +45,14 @@ class ParticipantManager {
 
     // Select participant by ID (new method for clickable cards)
     selectParticipantById(participantId) {
+        // Clicking the already-selected participant deselects them
+        if (window.appState.getSelectedParticipant() === participantId) {
+            window.appState.setSelectedParticipant(null);
+            window.uiComponents.setValue('participantSelect', '');
+            this.selectParticipant();
+            return;
+        }
+
         window.appState.setSelectedParticipant(participantId);
         
         // Update the hidden select for backwards compatibility

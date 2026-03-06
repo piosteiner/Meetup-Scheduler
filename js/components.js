@@ -101,7 +101,7 @@ class UIComponents {
                      title="Double-click to edit name" class="hover:text-indigo-600 transition-colors">
                     ${participant.name}
                 </div>
-                ${isSelected ? '<div class="text-xs text-indigo-600 mt-1">Selected</div>' : ''}
+                ${isSelected ? '<div class="text-xs text-indigo-500 mt-1">Selected · click to deselect</div>' : ''}
                 <div class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button onclick="event.stopPropagation(); window.editParticipantName('${participantId}')" 
                             class="text-xs text-gray-400 hover:text-indigo-600 transition-colors"
