@@ -286,27 +286,9 @@ class AvailabilityCalendar {
 
     // NEW: Update modal to include propose date functionality
     updateModalWithProposeDate(dateKey) {
-        // Find the modal content container
-        const modal = document.getElementById('dayModal');
-        const modalContent = modal?.querySelector('.bg-white');
+        const proposeSection = document.getElementById('proposeDateSection');
         
-        if (!modalContent) return;
-        
-        // Check if we already have the propose section
-        let proposeSection = modalContent.querySelector('#proposeDateSection');
-        
-        if (!proposeSection) {
-            // Create propose date section
-            proposeSection = document.createElement('div');
-            proposeSection.id = 'proposeDateSection';
-            proposeSection.className = 'mb-6 border-t pt-4';
-            
-            // Insert before the action buttons
-            const actionButtons = modalContent.querySelector('.flex.gap-3');
-            if (actionButtons) {
-                modalContent.insertBefore(proposeSection, actionButtons);
-            }
-        }
+        if (!proposeSection) return;
         
         // Check if the selected date is in the past
         const selectedDate = new Date(dateKey);
@@ -409,6 +391,11 @@ class AvailabilityCalendar {
             // Get selected availability
             const availabilityBtn = document.querySelector('.availability-btn.border-indigo-500');
             const availability = availabilityBtn ? availabilityBtn.id.replace('Btn', '') : null;
+
+            if (!availability) {
+                window.uiComponents.showNotification('Please select your availability before saving', 'warning');
+                return;
+            }
             
             // Get comment
             const commentInput = document.getElementById('dayComment');
