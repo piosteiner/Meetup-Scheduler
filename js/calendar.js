@@ -3,6 +3,7 @@
 class AvailabilityCalendar {
     constructor() {
         this.currentDate = new Date();
+        this.overviewDate = new Date();
         this.currentSelectedDay = null;
         this.calendarData = {}; // Store availability and comments for each day
         this.allCalendarData = {}; // Store all participants' calendar data for overview
@@ -272,6 +273,18 @@ class AvailabilityCalendar {
         this.renderCalendar();
     }
 
+    // Navigate overview to previous month
+    previousOverviewMonth() {
+        this.overviewDate.setMonth(this.overviewDate.getMonth() - 1);
+        this.renderOverview();
+    }
+
+    // Navigate overview to next month
+    nextOverviewMonth() {
+        this.overviewDate.setMonth(this.overviewDate.getMonth() + 1);
+        this.renderOverview();
+    }
+
     // Open day detail modal
     openDayModal(dateKey, year, month, day) {
         if (!this.selectedParticipantId) {
@@ -358,8 +371,13 @@ class AvailabilityCalendar {
             return;
         }
 
-        const year = this.currentDate.getFullYear();
-        const month = this.currentDate.getMonth();
+        const monthNames = ['January','February','March','April','May','June',
+                             'July','August','September','October','November','December'];
+        const year = this.overviewDate.getFullYear();
+        const month = this.overviewDate.getMonth();
+
+        const titleEl = document.getElementById('overviewTitle');
+        if (titleEl) titleEl.textContent = `${monthNames[month]} ${year}`;
 
         const firstDay = new Date(year, month, 1);
         const lastDay = new Date(year, month + 1, 0);
@@ -393,7 +411,10 @@ class AvailabilityCalendar {
                     const colorClass = colorMap[availability] || 'bg-gray-300';
                     const label = availability === 'unavailable' ? 'not available' : availability;
                     const tooltip = this.escapeHtml(`${name}: ${label}`);
-                    return `<span class="overview-dot inline-flex items-center justify-center w-4 h-4 rounded-full text-white text-[8px] font-bold ${colorClass} cursor-pointer relative" data-tip="${tooltip}">${initials}</span>`;
+                    const comment = this.allCalendarData[pid]?.[dateKey]?.comment?.trim() || '';
+                    const commentAttr = comment ? ` data-comment="${this.escapeHtml(comment)}"` : '';
+                    const commentRing = comment ? ' ring-2 ring-white ring-offset-1 ring-offset-transparent' : '';
+                    return `<span class="overview-dot inline-flex items-center justify-center w-4 h-4 rounded-full text-white text-[8px] font-bold ${colorClass}${commentRing} cursor-pointer relative" data-tip="${tooltip}"${commentAttr}>${initials}</span>`;
                 })
                 .filter(Boolean)
                 .join('');
@@ -514,7 +535,7 @@ class AvailabilityCalendar {
         if (!tip) {
             tip = document.createElement('div');
             tip.id = 'overviewDotTooltip';
-            tip.style.cssText = 'position:fixed;z-index:9999;padding:3px 8px;font-size:12px;color:#fff;background:#1f2937;border-radius:4px;box-shadow:0 2px 6px rgba(0,0,0,.35);pointer-events:none;opacity:0;transition:opacity .1s;white-space:nowrap;';
+            tip.style.cssText = 'position:fixed;z-index:9999;padding:4px 10px;font-size:12px;line-height:1.5;color:#fff;background:#1f2937;border-radius:4px;box-shadow:0 2px 6px rgba(0,0,0,.35);pointer-events:none;opacity:0;transition:opacity .1s;white-space:pre-wrap;max-width:240px;';
             document.body.appendChild(tip);
         }
 
@@ -566,7 +587,9 @@ class AvailabilityCalendar {
                 hide();
             } else {
                 pinnedDot = dot;
-                show(dot.dataset.tip, e);
+                const comment = dot.dataset.comment;
+                const text = comment ? `${dot.dataset.tip}\n💬 "${comment}"` : dot.dataset.tip;
+                show(text, e);
             }
         });
 
@@ -789,6 +812,7 @@ class AvailabilityCalendar {
         this.calendarData = {};
         this.currentSelectedDay = null;
         this.currentDate = new Date();
+        this.overviewDate = new Date();
         
         // Clear calendar grid
         const calendarGrid = document.getElementById('calendarGrid');

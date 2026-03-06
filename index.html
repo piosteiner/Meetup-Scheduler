@@ -266,8 +266,22 @@
 
                 <!-- Group Availability Overview Section -->
                 <div class="bg-gray-50 rounded-xl p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-1">Group Availability Overview</h3>
-                    <p class="text-sm text-gray-500 mb-4">Everyone's availability for the current month at a glance. Follows the calendar above.</p>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">Group Availability Overview</h3>
+
+                    <!-- Overview Header with Navigation -->
+                    <div class="flex items-center justify-between mb-4">
+                        <button onclick="window.calendar.previousOverviewMonth()" class="p-2 rounded-lg bg-white hover:bg-gray-100 transition-colors duration-200 shadow-sm">
+                            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                        </button>
+                        <h4 id="overviewTitle" class="text-xl font-semibold text-gray-800">Loading…</h4>
+                        <button onclick="window.calendar.nextOverviewMonth()" class="p-2 rounded-lg bg-white hover:bg-gray-100 transition-colors duration-200 shadow-sm">
+                            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
+                    </div>
 
                     <!-- Legend -->
                     <div class="flex flex-wrap items-center gap-3 mb-3 text-xs">
@@ -283,7 +297,7 @@
                             <div class="w-3 h-3 bg-red-400 rounded-full"></div>
                             <span>Not Available</span>
                         </div>
-                        <span class="text-gray-400">· Hover a dot to see who it is</span>
+                        <span class="text-gray-400">· Hover for name/status · click to see comment</span>
                     </div>
 
                     <!-- Overview Grid -->
