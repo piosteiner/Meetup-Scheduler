@@ -198,7 +198,7 @@
 
                 <!-- Availability Calendar Section -->
                 <div class="bg-gray-50 rounded-xl p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Availability Calendar</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Availability & Proposition Calendar</h3>
                     
                     <!-- Calendar Header with Navigation -->
                     <div class="flex items-center justify-between mb-4">
@@ -354,44 +354,49 @@
                 </button>
             </div>
             
-            <!-- Availability Selection -->
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-3">Your availability:</label>
-                <div class="grid grid-cols-3 gap-2">
-                    <button onclick="window.calendar.setAvailability('available')" id="availableBtn" 
-                            class="availability-btn py-2 px-3 text-sm rounded-lg border-2 bg-green-100 text-green-700 hover:bg-green-200 transition-colors">
-                        ✓ Available
+            <!-- Availability card -->
+            <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-3">
+
+                <!-- Availability Selection -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-blue-900 mb-3">Your availability:</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="window.calendar.setAvailability('available')" id="availableBtn" 
+                                class="availability-btn py-2 px-3 text-sm rounded-lg border-2 bg-green-100 text-green-700 hover:bg-green-200 transition-colors">
+                            ✓ Available
+                        </button>
+                        <button onclick="window.calendar.setAvailability('checking')" id="checkingBtn" 
+                                class="availability-btn py-2 px-3 text-sm rounded-lg border-2 bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition-colors">
+                            ? Checking
+                        </button>
+                        <button onclick="window.calendar.setAvailability('unavailable')" id="unavailableBtn" 
+                                class="availability-btn py-2 px-3 text-sm rounded-lg border-2 bg-red-100 text-red-700 hover:bg-red-200 transition-colors">
+                            ✗ Not Available
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Comment Section -->
+                <div class="mb-4">
+                    <label for="dayComment" class="block text-sm font-medium text-blue-900 mb-2">Comment (optional):</label>
+                    <textarea id="dayComment" rows="3" placeholder="Add a note about this day..." 
+                             class="w-full px-3 py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none text-sm resize-none bg-white"></textarea>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex gap-3">
+                    <button onclick="window.calendar.saveDayData()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg transition-colors duration-200 font-medium">
+                        Save
                     </button>
-                    <button onclick="window.calendar.setAvailability('checking')" id="checkingBtn" 
-                            class="availability-btn py-2 px-3 text-sm rounded-lg border-2 bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition-colors">
-                        ? Checking
-                    </button>
-                    <button onclick="window.calendar.setAvailability('unavailable')" id="unavailableBtn" 
-                            class="availability-btn py-2 px-3 text-sm rounded-lg border-2 bg-red-100 text-red-700 hover:bg-red-200 transition-colors">
-                        ✗ Not Available
+                    <button onclick="window.calendar.clearDayData()" class="px-4 py-2 border border-blue-200 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors duration-200">
+                        Clear
                     </button>
                 </div>
-            </div>
-            
-            <!-- Comment Section -->
-            <div class="mb-4">
-                <label for="dayComment" class="block text-sm font-medium text-gray-700 mb-2">Comment (optional):</label>
-                <textarea id="dayComment" rows="3" placeholder="Add a note about this day..." 
-                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm resize-none"></textarea>
-            </div>
 
-            <!-- Action Buttons -->
-            <div class="flex gap-3 mb-4">
-                <button onclick="window.calendar.saveDayData()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg transition-colors duration-200 font-medium">
-                    Save
-                </button>
-                <button onclick="window.calendar.clearDayData()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200">
-                    Clear
-                </button>
             </div>
 
             <!-- Propose Date Section (populated dynamically) -->
-            <div id="proposeDateSection" class="border-t pt-4"></div>
+            <div id="proposeDateSection"></div>
         </div>
     </div>
 

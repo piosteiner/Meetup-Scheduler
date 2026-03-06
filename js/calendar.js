@@ -481,25 +481,27 @@ class AvailabilityCalendar {
         
         if (isPastDate) {
             proposeSection.innerHTML = `
-                <div class="text-center text-gray-500 text-sm italic">
+                <div class="bg-gray-50 border border-gray-200 rounded-xl p-4 text-center text-gray-400 text-sm italic">
                     Cannot propose dates in the past
                 </div>
             `;
         } else {
             proposeSection.innerHTML = `
-                <label class="block text-sm font-medium text-gray-700 mb-3">Propose this date for the meetup:</label>
-                <div class="flex flex-col gap-3">
-                    <div class="flex items-center gap-2">
-                        <input type="time" id="proposeTimeInput" 
-                               class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
-                               value="18:00">
-                        <button onclick="window.calendar.proposeDateFromModal('${dateKey}')" 
-                                class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 text-sm whitespace-nowrap">
-                            📅 Propose Date
-                        </button>
-                    </div>
-                    <div class="text-xs text-gray-500">
-                        Select a time and click "Propose Date" to add this date/time to the proposals list
+                <div class="bg-purple-50 border border-purple-100 rounded-xl p-4">
+                    <label class="block text-sm font-medium text-purple-900 mb-3">Propose this date for the meetup:</label>
+                    <div class="flex flex-col gap-3">
+                        <div class="flex items-center gap-2">
+                            <input type="time" id="proposeTimeInput" 
+                                   class="px-3 py-2 border border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-purple-400 outline-none text-sm bg-white"
+                                   value="18:00">
+                            <button onclick="window.calendar.proposeDateFromModal('${dateKey}')" 
+                                    class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 text-sm whitespace-nowrap">
+                                📅 Propose Date
+                            </button>
+                        </div>
+                        <div class="text-xs text-purple-500">
+                            Select a time and click "Propose Date" to add this date/time to the proposals list
+                        </div>
                     </div>
                 </div>
             `;
