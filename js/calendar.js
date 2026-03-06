@@ -368,12 +368,15 @@ class AvailabilityCalendar {
                     const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
                     const colorClass = colorMap[availability] || 'bg-gray-300';
                     const label = availability === 'unavailable' ? 'not available' : availability;
-                    return `<span class="inline-flex items-center justify-center w-4 h-4 rounded-full text-white text-[8px] font-bold ${colorClass} cursor-default" title="${this.escapeHtml(name)}: ${label}">${initials}</span>`;
+                    const tooltip = this.escapeHtml(`${name}: ${label}`);
+                    return `<span class="overview-dot inline-flex items-center justify-center w-4 h-4 rounded-full text-white text-[8px] font-bold ${colorClass} cursor-pointer relative" data-tip="${tooltip}">${initials}</span>`;
                 })
                 .filter(Boolean)
                 .join('');
             return `<div class="min-h-[2.5rem] p-0.5 bg-white rounded m-0.5"><div class="text-xs text-gray-600 font-medium leading-tight">${cell.day}</div><div class="flex flex-wrap gap-0.5 mt-0.5">${dots}</div></div>`;
         }).join('');
+
+        this.setupOverviewTooltip();
 
         // Participant legend below grid
         if (legend) {
@@ -383,6 +386,67 @@ class AvailabilityCalendar {
                 return `<span class="inline-flex items-center gap-1 text-xs text-gray-600 bg-white border border-gray-200 rounded-full px-2 py-0.5"><span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-gray-300 text-white text-[8px] font-bold">${initials}</span>${this.escapeHtml(name)}</span>`;
             }).join('');
         }
+    }
+
+    // Set up shared tooltip for overview dots
+    setupOverviewTooltip() {
+        // Create tooltip element once
+        let tip = document.getElementById('overviewDotTooltip');
+        if (!tip) {
+            tip = document.createElement('div');
+            tip.id = 'overviewDotTooltip';
+            tip.className = 'fixed z-50 px-2 py-1 text-xs text-white bg-gray-800 rounded shadow-lg pointer-events-none opacity-0 transition-opacity duration-100 whitespace-nowrap';
+            document.body.appendChild(tip);
+        }
+
+        let pinnedDot = null;
+
+        const showTip = (dot, text) => {
+            tip.textContent = text;
+            tip.style.opacity = '1';
+            const rect = dot.getBoundingClientRect();
+            const tipRect = tip.getBoundingClientRect();
+            let left = rect.left + rect.width / 2 - tipRect.width / 2;
+            let top = rect.top - tipRect.height - 6 + window.scrollY;
+            // Keep inside viewport
+            left = Math.max(4, Math.min(left, window.innerWidth - tipRect.width - 4));
+            tip.style.left = left + 'px';
+            tip.style.top = top + 'px';
+        };
+
+        const hideTip = () => {
+            tip.style.opacity = '0';
+        };
+
+        document.querySelectorAll('.overview-dot').forEach(dot => {
+            // Remove old listeners by replacing the node clone
+            const fresh = dot.cloneNode(true);
+            dot.parentNode.replaceChild(fresh, dot);
+
+            fresh.addEventListener('mouseenter', () => {
+                if (fresh !== pinnedDot) showTip(fresh, fresh.dataset.tip);
+            });
+            fresh.addEventListener('mouseleave', () => {
+                if (fresh !== pinnedDot) hideTip();
+            });
+            fresh.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (pinnedDot === fresh) {
+                    // Unpin
+                    pinnedDot = null;
+                    hideTip();
+                } else {
+                    pinnedDot = fresh;
+                    showTip(fresh, fresh.dataset.tip);
+                }
+            });
+        });
+
+        // Click anywhere else unpins
+        const unpin = () => { pinnedDot = null; hideTip(); };
+        document.removeEventListener('click', this._unpinTip);
+        this._unpinTip = unpin;
+        document.addEventListener('click', this._unpinTip);
     }
 
     // Escape HTML for use in attributes
