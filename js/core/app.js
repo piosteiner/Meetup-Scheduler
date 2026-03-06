@@ -68,11 +68,6 @@ class MeetupApp {
 
         // Make app available globally for onclick handlers
         window.app = this;
-        
-        // Make datetime input fully clickable
-        document.getElementById('dateTimeInput')?.addEventListener('click', (e) => {
-            e.target.showPicker?.();
-        });
     }
 
     // Legacy compatibility methods - delegate to appropriate managers

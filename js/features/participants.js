@@ -72,9 +72,6 @@ class ParticipantManager {
             window.uiComponents.updateText('messageParticipantName', selectedName);
             window.uiComponents.hide('noParticipantMessage');
             
-            // Show propose form
-            window.uiComponents.show('proposeForm');
-            
             // Update calendar for selected participant
             if (window.calendar && window.calendar.updateSelectedParticipant) {
                 window.calendar.updateSelectedParticipant(selectedParticipantId);
@@ -84,9 +81,6 @@ class ParticipantManager {
             window.uiComponents.hide('messageForm');
             window.uiComponents.hide('messageAsParticipant');
             window.uiComponents.show('noParticipantMessage');
-            
-            // Hide propose form when no participant selected
-            window.uiComponents.hide('proposeForm');
             
             // Reset calendar
             if (window.calendar && window.calendar.updateSelectedParticipant) {
@@ -192,12 +186,6 @@ class ParticipantManager {
         const participantOptions = window.uiComponents.renderParticipantOptions(participants);
         window.uiComponents.updateHTML('participantSelect', participantOptions);
 
-        // Show propose form only if there are participants AND one is selected
-        if (count > 0 && selectedParticipantId) {
-            window.uiComponents.show('proposeForm');
-        } else {
-            window.uiComponents.hide('proposeForm');
-        }
     }
 }
 

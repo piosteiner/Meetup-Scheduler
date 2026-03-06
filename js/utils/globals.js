@@ -6,7 +6,6 @@ window.joinMeetup = () => window.meetupManager?.joinMeetup();
 window.joinAsMember = () => window.participantManager?.joinAsMember();
 window.selectParticipant = () => window.participantManager?.selectParticipant();
 window.updateDuration = () => window.meetupManager?.updateDuration();
-window.proposeDateTime = () => window.proposalManager?.proposeDateTime();
 window.sendMessage = () => window.messageManager?.sendMessage();
 window.copyLink = () => window.meetupManager?.copyLink();
 window.goToMeetup = () => window.meetupManager?.goToMeetup();
