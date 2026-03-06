@@ -5,9 +5,11 @@ class AvailabilityCalendar {
         this.currentDate = new Date();
         this.currentSelectedDay = null;
         this.calendarData = {}; // Store availability and comments for each day
+        this.allCalendarData = {}; // Store all participants' calendar data for overview
         this.currentMeetupKey = '';
         this.selectedParticipantId = null;
         this.calendarListener = null; // Track Firebase listener
+        this.overviewListener = null; // Track Firebase listener for group overview
     }
 
     // Initialize calendar when app loads
@@ -19,6 +21,12 @@ class AvailabilityCalendar {
         
         // Load calendar data and render
         this.loadCalendarData();
+        
+        // Setup real-time listener for group overview
+        this.setupOverviewListener();
+
+        // Re-render overview whenever participants list changes (e.g. someone joins)
+        window.appState.subscribe('participants', () => this.renderOverview());
         
         // Setup event listeners
         this.setupEventListeners();
@@ -190,6 +198,9 @@ class AvailabilityCalendar {
             const dayElement = this.createDayElement(day, 'other-month', year, month + 1);
             calendarGrid.appendChild(dayElement);
         }
+
+        // Keep group overview in sync with navigation
+        this.renderOverview();
     }
 
     // Create a day element
@@ -282,6 +293,100 @@ class AvailabilityCalendar {
         if (modal) {
             modal.classList.remove('hidden');
         }
+    }
+
+    // Set up real-time listener for all participants' calendar data (group overview)
+    setupOverviewListener() {
+        if (!this.currentMeetupKey) return;
+
+        if (this.overviewListener) {
+            window.firebaseAPI.database
+                .ref(`meetups/${this.currentMeetupKey}/calendar`)
+                .off('value', this.overviewListener);
+        }
+
+        this.overviewListener = window.firebaseAPI.database
+            .ref(`meetups/${this.currentMeetupKey}/calendar`)
+            .on('value', (snapshot) => {
+                this.allCalendarData = snapshot.val() || {};
+                this.renderOverview();
+            });
+    }
+
+    // Render the group availability overview grid
+    renderOverview() {
+        const grid = document.getElementById('overviewGrid');
+        const legend = document.getElementById('overviewParticipantLegend');
+        if (!grid) return;
+
+        const participants = window.appState ? window.appState.getParticipants() : {};
+        const participantIds = Object.keys(participants);
+
+        if (participantIds.length === 0) {
+            grid.innerHTML = '<p class="text-gray-400 text-xs text-center col-span-7 py-4">No participants yet.</p>';
+            if (legend) legend.innerHTML = '';
+            return;
+        }
+
+        const year = this.currentDate.getFullYear();
+        const month = this.currentDate.getMonth();
+
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const daysInMonth = lastDay.getDate();
+        const startDay = (firstDay.getDay() + 6) % 7; // Mon = 0
+        const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+        const colorMap = {
+            available: 'bg-green-500',
+            checking: 'bg-yellow-400',
+            unavailable: 'bg-red-400'
+        };
+
+        const cells = [];
+        for (let i = startDay - 1; i >= 0; i--) cells.push({ day: daysInPrevMonth - i, isOther: true });
+        for (let d = 1; d <= daysInMonth; d++) cells.push({ day: d, isOther: false });
+        const remaining = 42 - cells.length;
+        for (let d = 1; d <= remaining && remaining < 15; d++) cells.push({ day: d, isOther: true });
+
+        grid.innerHTML = cells.map(cell => {
+            if (cell.isOther) {
+                return `<div class="min-h-[2.5rem] p-0.5 bg-white rounded m-0.5 text-gray-300 text-xs font-medium pt-1 pl-1">${cell.day}</div>`;
+            }
+            const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(cell.day).padStart(2, '0')}`;
+            const dots = participantIds
+                .map(pid => {
+                    const availability = this.allCalendarData[pid]?.[dateKey]?.availability;
+                    if (!availability) return null;
+                    const name = participants[pid]?.name || '?';
+                    const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+                    const colorClass = colorMap[availability] || 'bg-gray-300';
+                    const label = availability === 'unavailable' ? 'not available' : availability;
+                    return `<span class="inline-flex items-center justify-center w-4 h-4 rounded-full text-white text-[8px] font-bold ${colorClass} cursor-default" title="${this.escapeHtml(name)}: ${label}">${initials}</span>`;
+                })
+                .filter(Boolean)
+                .join('');
+            return `<div class="min-h-[2.5rem] p-0.5 bg-white rounded m-0.5"><div class="text-xs text-gray-600 font-medium leading-tight">${cell.day}</div><div class="flex flex-wrap gap-0.5 mt-0.5">${dots}</div></div>`;
+        }).join('');
+
+        // Participant legend below grid
+        if (legend) {
+            legend.innerHTML = participantIds.map(pid => {
+                const name = participants[pid]?.name || '?';
+                const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+                return `<span class="inline-flex items-center gap-1 text-xs text-gray-600 bg-white border border-gray-200 rounded-full px-2 py-0.5"><span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-gray-300 text-white text-[8px] font-bold">${initials}</span>${this.escapeHtml(name)}</span>`;
+            }).join('');
+        }
+    }
+
+    // Escape HTML for use in attributes
+    escapeHtml(str) {
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 
     // NEW: Update modal to include propose date functionality
