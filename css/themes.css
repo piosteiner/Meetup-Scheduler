@@ -1166,6 +1166,13 @@ body,
     color: #64748b !important;
 }
 
+[data-theme="dark"] #dateRecommendationsList input[type="time"],
+.theme-dark #dateRecommendationsList input[type="time"] {
+    background: #1e1b2e !important;
+    border-color: rgba(109, 40, 217, 0.4) !important;
+    color: #e2e8f0 !important;
+}
+
 /* Focus styles for star and download buttons */
 .star-button:focus-visible,
 .btn-download:focus-visible,

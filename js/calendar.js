@@ -439,14 +439,17 @@ class AvailabilityCalendar {
                 : `<span class="text-xs bg-emerald-50 text-emerald-700 font-semibold px-2 py-0.5 rounded-full">${item.available}/${item.total} available</span>
                    <span class="text-xs text-gray-400">${unknown} not set</span>`;
             const borderColor = isPerfect ? 'border-green-300 bg-green-50' : 'border-emerald-200 bg-white';
+            const timeId = `recTime_${item.dateKey}`;
             return `
-                <div class="flex items-center justify-between border ${borderColor} rounded-lg px-3 py-2">
+                <div class="flex items-center justify-between border ${borderColor} rounded-lg px-3 py-2 gap-2 flex-wrap">
                     <div class="flex items-center gap-2">
                         <span class="text-base">${isPerfect ? '🟢' : '🟡'}</span>
                         <span class="text-sm font-medium text-gray-800">${this.escapeHtml(item.dayLabel)}</span>
                     </div>
-                    <div class="flex items-center gap-2">${badge}
-                        <button onclick="window.calendar.proposeRecommendedDate('${item.dateKey}')"
+                    <div class="flex items-center gap-2 flex-wrap">${badge}
+                        <input type="time" id="${timeId}" value="18:00"
+                               class="px-2 py-1 border border-purple-200 rounded-lg text-xs bg-white focus:ring-2 focus:ring-purple-400 focus:border-purple-400 outline-none">
+                        <button onclick="window.calendar.proposeRecommendedDate('${item.dateKey}', '${timeId}')"
                                 class="text-xs bg-purple-600 hover:bg-purple-700 text-white px-2 py-1 rounded-lg transition-colors duration-150 whitespace-nowrap">
                             📅 Propose
                         </button>
@@ -456,14 +459,19 @@ class AvailabilityCalendar {
     }
 
     // Propose a date directly from the recommendations list
-    async proposeRecommendedDate(dateKey) {
+    async proposeRecommendedDate(dateKey, timeInputId) {
         if (!this.selectedParticipantId) {
             window.uiComponents.showNotification('Please select a participant first', 'warning');
             return;
         }
-        const defaultTime = '18:00';
+        const timeEl = timeInputId ? document.getElementById(timeInputId) : null;
+        const time = timeEl?.value || '18:00';
+        if (!time) {
+            window.uiComponents.showNotification('Please select a start time', 'warning');
+            return;
+        }
         try {
-            await window.proposalManager.proposeDateTime(`${dateKey}T${defaultTime}`);
+            await window.proposalManager.proposeDateTime(`${dateKey}T${time}`);
         } catch (error) {
             window.uiComponents.showNotification('Error proposing date: ' + error.message, 'error');
         }
