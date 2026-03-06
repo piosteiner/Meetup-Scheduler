@@ -1138,6 +1138,25 @@ body,
     color: #9ca3af !important;
 }
 
+/* Calendar no-participant banner */
+[data-theme="dark"] #calendarNoParticipantBanner,
+.theme-dark #calendarNoParticipantBanner {
+    background: rgba(127, 29, 29, 0.35) !important;
+    border-color: rgba(220, 38, 38, 0.4) !important;
+}
+
+[data-theme="dark"] #calendarNoParticipantBanner p,
+.theme-dark #calendarNoParticipantBanner p {
+    color: #fca5a5 !important;
+}
+
+[data-theme="dark"] #calendarParticipantQuickSelect,
+.theme-dark #calendarParticipantQuickSelect {
+    background: #1e2537 !important;
+    border-color: rgba(220, 38, 38, 0.4) !important;
+    color: #e2e8f0 !important;
+}
+
 /* Recommended dates section (overview area) */
 [data-theme="dark"] #dateRecommendations h4,
 .theme-dark #dateRecommendations h4 {

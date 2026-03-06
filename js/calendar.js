@@ -26,7 +26,14 @@ class AvailabilityCalendar {
         this.setupOverviewListener();
 
         // Re-render overview whenever participants list changes (e.g. someone joins)
-        window.appState.subscribe('participants', () => this.renderOverview());
+        window.appState.subscribe('participants', (participants) => {
+            this.renderOverview();
+            this.updateCalendarBanner();
+            this.updateQuickSelectOptions(participants);
+        });
+
+        // Update banner when selected participant changes
+        window.appState.subscribe('selectedParticipant', () => this.updateCalendarBanner());
 
         // Setup overview tooltip once (uses event delegation, survives re-renders)
         this.setupOverviewTooltip();
@@ -36,6 +43,8 @@ class AvailabilityCalendar {
 
         // Initial render with whatever state is already available
         this.renderOverview();
+        this.updateCalendarBanner();
+        this.updateQuickSelectOptions(window.appState.getParticipants());
     }
 
     // Update selected participant
@@ -64,9 +73,33 @@ class AvailabilityCalendar {
 
         // Refresh overview whenever the selected participant changes
         this.renderOverview();
+        this.updateCalendarBanner();
     }
 
     // Setup event listeners
+    // Show/hide the no-participant banner on the calendar
+    updateCalendarBanner() {
+        const banner = document.getElementById('calendarNoParticipantBanner');
+        if (!banner) return;
+        const hasParticipant = !!window.appState?.getSelectedParticipant();
+        banner.classList.toggle('hidden', hasParticipant);
+        // Keep the dropdown value in sync with current selection
+        const sel = document.getElementById('calendarParticipantQuickSelect');
+        if (sel) sel.value = window.appState?.getSelectedParticipant() || '';
+    }
+
+    // Populate the quick-select dropdown with current participants
+    updateQuickSelectOptions(participants) {
+        const sel = document.getElementById('calendarParticipantQuickSelect');
+        if (!sel) return;
+        const current = sel.value;
+        const options = Object.entries(participants || {})
+            .map(([id, p]) => `<option value="${id}">${this.escapeHtml(p?.name || id)}</option>`)
+            .join('');
+        sel.innerHTML = '<option value="">Choose participant…</option>' + options;
+        sel.value = current || window.appState?.getSelectedParticipant() || '';
+    }
+
     setupEventListeners() {
         // Close modal when clicking outside
         document.getElementById('dayModal')?.addEventListener('click', (e) => {

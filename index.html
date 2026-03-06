@@ -185,7 +185,20 @@
 
                 <!-- Availability Calendar Section -->
                 <div class="bg-gray-50 rounded-xl p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Availability & Proposition Calendar</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">Availability & Proposition Calendar</h3>
+
+                    <!-- No-participant notice (shown when no participant is selected) -->
+                    <div id="calendarNoParticipantBanner" class="hidden mb-4 flex items-center gap-3 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+                        <span class="text-red-500 text-lg flex-shrink-0">⚠️</span>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-red-700">Select a participant to set availability or propose dates.</p>
+                        </div>
+                        <select id="calendarParticipantQuickSelect"
+                                onchange="window.participantManager.selectParticipantById(this.value)"
+                                class="ml-2 text-sm border border-red-300 rounded-lg px-2 py-1.5 bg-white text-gray-700 focus:ring-2 focus:ring-red-400 focus:border-red-400 outline-none flex-shrink-0">
+                            <option value="">Choose participant…</option>
+                        </select>
+                    </div>
                     
                     <!-- Calendar Header with Navigation -->
                     <div class="flex items-center justify-between mb-4">
