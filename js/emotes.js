@@ -405,12 +405,17 @@ class EmoteEnabledUIComponents extends UIComponents {
                      title="Double-click to edit name" class="hover:text-indigo-600 transition-colors">
                     ${processedName}
                 </div>
-                ${isSelected ? '<div class="text-xs text-indigo-600 mt-1">Selected</div>' : ''}
-                <div class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                ${isSelected ? '<div class="text-xs text-indigo-500 mt-1">Selected · click to deselect</div>' : ''}
+                <div class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
                     <button onclick="event.stopPropagation(); window.editParticipantName('${participantId}')" 
                             class="text-xs text-gray-400 hover:text-indigo-600 transition-colors"
                             title="Edit name">
                         ✏️
+                    </button>
+                    <button onclick="event.stopPropagation(); window.participantManager.deleteParticipant('${participantId}')" 
+                            class="text-xs text-gray-400 hover:text-red-600 transition-colors"
+                            title="Delete participant">
+                        🗑️
                     </button>
                 </div>
             </div>
