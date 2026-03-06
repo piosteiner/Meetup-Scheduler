@@ -1008,6 +1008,99 @@ body,
     outline-offset: 2px;
 }
 
+/* ── Dark-mode overrides for day-modal availability & propose cards ── */
+
+/* Availability card: deep slate-blue tint */
+[data-theme="dark"] #dayModal .bg-blue-50,
+.theme-dark #dayModal .bg-blue-50 {
+    background: rgba(30, 64, 100, 0.55) !important;
+    border-color: rgba(56, 112, 171, 0.45) !important;
+    color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] #dayModal .text-blue-900,
+.theme-dark #dayModal .text-blue-900 {
+    color: #93c5fd !important;
+}
+
+[data-theme="dark"] #dayModal .border-blue-200,
+.theme-dark #dayModal .border-blue-200 {
+    border-color: rgba(56, 112, 171, 0.4) !important;
+}
+
+[data-theme="dark"] #dayModal .border-blue-100,
+.theme-dark #dayModal .border-blue-100 {
+    border-color: rgba(56, 112, 171, 0.3) !important;
+}
+
+/* Comment textarea inside availability card */
+[data-theme="dark"] #dayModal .bg-blue-50 textarea,
+.theme-dark #dayModal .bg-blue-50 textarea {
+    background: #1e2d3d !important;
+    border-color: rgba(56, 112, 171, 0.4) !important;
+    color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] #dayModal .bg-blue-50 textarea::placeholder,
+.theme-dark #dayModal .bg-blue-50 textarea::placeholder {
+    color: #64748b !important;
+}
+
+/* Clear button inside availability card */
+[data-theme="dark"] #dayModal .bg-blue-50 .text-blue-700,
+.theme-dark #dayModal .bg-blue-50 .text-blue-700 {
+    color: #93c5fd !important;
+}
+
+[data-theme="dark"] #dayModal .bg-blue-50 .border-blue-200,
+.theme-dark #dayModal .bg-blue-50 .border-blue-200 {
+    border-color: rgba(56, 112, 171, 0.5) !important;
+}
+
+[data-theme="dark"] #dayModal .bg-blue-50 .hover\:bg-blue-100:hover,
+.theme-dark #dayModal .bg-blue-50 .hover\:bg-blue-100:hover {
+    background: rgba(56, 112, 171, 0.25) !important;
+}
+
+/* Propose card: deep indigo/purple tint */
+[data-theme="dark"] #dayModal .bg-purple-50,
+.theme-dark #dayModal .bg-purple-50 {
+    background: rgba(49, 27, 80, 0.55) !important;
+    border-color: rgba(109, 40, 217, 0.4) !important;
+    color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] #dayModal .text-purple-900,
+.theme-dark #dayModal .text-purple-900 {
+    color: #c4b5fd !important;
+}
+
+[data-theme="dark"] #dayModal .text-purple-500,
+.theme-dark #dayModal .text-purple-500 {
+    color: #a78bfa !important;
+}
+
+[data-theme="dark"] #dayModal .border-purple-100,
+.theme-dark #dayModal .border-purple-100 {
+    border-color: rgba(109, 40, 217, 0.3) !important;
+}
+
+/* Time input inside propose card */
+[data-theme="dark"] #dayModal .bg-purple-50 input[type="time"],
+.theme-dark #dayModal .bg-purple-50 input[type="time"] {
+    background: #1e1730 !important;
+    border-color: rgba(109, 40, 217, 0.4) !important;
+    color: #e2e8f0 !important;
+}
+
+/* Past-date message card */
+[data-theme="dark"] #dayModal .bg-gray-50,
+.theme-dark #dayModal .bg-gray-50 {
+    background: rgba(55, 65, 81, 0.5) !important;
+    border-color: rgba(75, 85, 99, 0.5) !important;
+    color: #9ca3af !important;
+}
+
 /* Focus styles for star and download buttons */
 .star-button:focus-visible,
 .btn-download:focus-visible,
