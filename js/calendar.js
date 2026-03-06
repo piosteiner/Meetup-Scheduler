@@ -27,6 +27,9 @@ class AvailabilityCalendar {
 
         // Re-render overview whenever participants list changes (e.g. someone joins)
         window.appState.subscribe('participants', () => this.renderOverview());
+
+        // Setup overview tooltip once (uses event delegation, survives re-renders)
+        this.setupOverviewTooltip();
         
         // Setup event listeners
         this.setupEventListeners();
@@ -376,8 +379,6 @@ class AvailabilityCalendar {
             return `<div class="min-h-[2.5rem] p-0.5 bg-white rounded m-0.5"><div class="text-xs text-gray-600 font-medium leading-tight">${cell.day}</div><div class="flex flex-wrap gap-0.5 mt-0.5">${dots}</div></div>`;
         }).join('');
 
-        this.setupOverviewTooltip();
-
         // Participant legend below grid
         if (legend) {
             legend.innerHTML = participantIds.map(pid => {
@@ -388,65 +389,74 @@ class AvailabilityCalendar {
         }
     }
 
-    // Set up shared tooltip for overview dots
+    // Set up shared tooltip for overview dots (called once from init)
     setupOverviewTooltip() {
-        // Create tooltip element once
         let tip = document.getElementById('overviewDotTooltip');
         if (!tip) {
             tip = document.createElement('div');
             tip.id = 'overviewDotTooltip';
-            tip.className = 'fixed z-50 px-2 py-1 text-xs text-white bg-gray-800 rounded shadow-lg pointer-events-none opacity-0 transition-opacity duration-100 whitespace-nowrap';
+            tip.style.cssText = 'position:fixed;z-index:9999;padding:3px 8px;font-size:12px;color:#fff;background:#1f2937;border-radius:4px;box-shadow:0 2px 6px rgba(0,0,0,.35);pointer-events:none;opacity:0;transition:opacity .1s;white-space:nowrap;';
             document.body.appendChild(tip);
         }
 
+        const grid = document.getElementById('overviewGrid');
+        if (!grid) return;
+
         let pinnedDot = null;
 
-        const showTip = (dot, text) => {
+        const show = (text, e) => {
             tip.textContent = text;
             tip.style.opacity = '1';
-            const rect = dot.getBoundingClientRect();
-            const tipRect = tip.getBoundingClientRect();
-            let left = rect.left + rect.width / 2 - tipRect.width / 2;
-            let top = rect.top - tipRect.height - 6 + window.scrollY;
-            // Keep inside viewport
-            left = Math.max(4, Math.min(left, window.innerWidth - tipRect.width - 4));
-            tip.style.left = left + 'px';
-            tip.style.top = top + 'px';
+            position(e);
         };
 
-        const hideTip = () => {
-            tip.style.opacity = '0';
+        const hide = () => { tip.style.opacity = '0'; };
+
+        const position = (e) => {
+            let x = e.clientX + 12;
+            let y = e.clientY - 30;
+            if (x + 160 > window.innerWidth) x = e.clientX - 170;
+            if (y < 4) y = e.clientY + 16;
+            tip.style.left = x + 'px';
+            tip.style.top = y + 'px';
         };
 
-        document.querySelectorAll('.overview-dot').forEach(dot => {
-            // Remove old listeners by replacing the node clone
-            const fresh = dot.cloneNode(true);
-            dot.parentNode.replaceChild(fresh, dot);
-
-            fresh.addEventListener('mouseenter', () => {
-                if (fresh !== pinnedDot) showTip(fresh, fresh.dataset.tip);
-            });
-            fresh.addEventListener('mouseleave', () => {
-                if (fresh !== pinnedDot) hideTip();
-            });
-            fresh.addEventListener('click', (e) => {
-                e.stopPropagation();
-                if (pinnedDot === fresh) {
-                    // Unpin
-                    pinnedDot = null;
-                    hideTip();
-                } else {
-                    pinnedDot = fresh;
-                    showTip(fresh, fresh.dataset.tip);
-                }
-            });
+        grid.addEventListener('mouseover', (e) => {
+            const dot = e.target.closest('.overview-dot');
+            if (!dot || dot === pinnedDot) return;
+            show(dot.dataset.tip, e);
         });
 
-        // Click anywhere else unpins
-        const unpin = () => { pinnedDot = null; hideTip(); };
-        document.removeEventListener('click', this._unpinTip);
-        this._unpinTip = unpin;
-        document.addEventListener('click', this._unpinTip);
+        grid.addEventListener('mousemove', (e) => {
+            const dot = e.target.closest('.overview-dot');
+            if (dot && dot !== pinnedDot) position(e);
+        });
+
+        grid.addEventListener('mouseout', (e) => {
+            const dot = e.target.closest('.overview-dot');
+            if (!dot || dot === pinnedDot) return;
+            hide();
+        });
+
+        grid.addEventListener('click', (e) => {
+            const dot = e.target.closest('.overview-dot');
+            if (!dot) return;
+            e.stopPropagation();
+            if (pinnedDot === dot) {
+                pinnedDot = null;
+                hide();
+            } else {
+                pinnedDot = dot;
+                show(dot.dataset.tip, e);
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.overview-dot')) {
+                pinnedDot = null;
+                hide();
+            }
+        });
     }
 
     // Escape HTML for use in attributes
