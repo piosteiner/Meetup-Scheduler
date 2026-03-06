@@ -275,17 +275,13 @@ class AvailabilityCalendar {
         // Load existing data
         const dayData = this.calendarData[dateKey] || {};
         
-        // Reset availability buttons
-        document.querySelectorAll('.availability-btn').forEach(btn => {
-            btn.classList.remove('border-indigo-500', 'bg-indigo-50');
-        });
-        
-        // Highlight current availability
-        if (dayData.availability) {
-            const activeBtn = document.getElementById(dayData.availability + 'Btn');
-            if (activeBtn) {
-                activeBtn.classList.add('border-indigo-500', 'bg-indigo-50');
-            }
+        // Reset availability buttons and highlight current selection
+        this.setAvailability(dayData.availability || null);
+        if (!dayData.availability) {
+            // No saved value — ensure all buttons are in their plain base state
+            document.querySelectorAll('.availability-btn').forEach(btn => {
+                btn.classList.remove('is-selected');
+            });
         }
         
         // Load comment
@@ -553,15 +549,30 @@ class AvailabilityCalendar {
 
     // Set availability for current day
     setAvailability(availability) {
-        // Reset all buttons
+        const styles = {
+            available:   { base: ['bg-green-100', 'text-green-700'],  selected: ['bg-green-500',  'border-green-600',  'text-white'] },
+            checking:    { base: ['bg-yellow-100', 'text-yellow-700'], selected: ['bg-yellow-400', 'border-yellow-500', 'text-yellow-900'] },
+            unavailable: { base: ['bg-red-100',   'text-red-700'],    selected: ['bg-red-500',    'border-red-600',    'text-white'] },
+        };
+
+        // Reset all buttons to their base state
         document.querySelectorAll('.availability-btn').forEach(btn => {
-            btn.classList.remove('border-indigo-500', 'bg-indigo-50');
+            const key = btn.id.replace('Btn', '');
+            const s = styles[key];
+            if (s) {
+                btn.classList.remove('is-selected', ...s.selected);
+                btn.classList.add(...s.base);
+            }
         });
-        
-        // Highlight selected button
+
+        // Apply saturated selected style to the chosen button
         const selectedBtn = document.getElementById(availability + 'Btn');
         if (selectedBtn) {
-            selectedBtn.classList.add('border-indigo-500', 'bg-indigo-50');
+            const s = styles[availability];
+            if (s) {
+                selectedBtn.classList.remove(...s.base);
+                selectedBtn.classList.add('is-selected', ...s.selected);
+            }
         }
     }
 
@@ -574,7 +585,7 @@ class AvailabilityCalendar {
         
         try {
             // Get selected availability
-            const availabilityBtn = document.querySelector('.availability-btn.border-indigo-500');
+            const availabilityBtn = document.querySelector('.availability-btn.is-selected');
             const availability = availabilityBtn ? availabilityBtn.id.replace('Btn', '') : null;
 
             if (!availability) {
