@@ -251,17 +251,17 @@ class UIComponents {
     renderResponseSummary(availableCount, maybeCount, unavailableCount) {
         return `
             <div class="grid grid-cols-3 gap-2 mb-4 text-sm">
-                <div class="text-center">
-                    <span class="text-green-600 font-semibold">✓ ${availableCount}</span>
-                    <div class="text-gray-500 text-xs">available</div>
+                <div class="text-center bg-green-50 rounded-lg py-2">
+                    <span class="text-green-600 font-bold text-base">✓ ${availableCount}</span>
+                    <div class="text-green-700 text-xs mt-0.5">available</div>
                 </div>
-                <div class="text-center">
-                    <span class="text-yellow-600 font-semibold">? ${maybeCount}</span>
-                    <div class="text-gray-500 text-xs">maybe</div>
+                <div class="text-center bg-yellow-50 rounded-lg py-2">
+                    <span class="text-yellow-600 font-bold text-base">? ${maybeCount}</span>
+                    <div class="text-yellow-700 text-xs mt-0.5">maybe</div>
                 </div>
-                <div class="text-center">
-                    <span class="text-red-600 font-semibold">✗ ${unavailableCount}</span>
-                    <div class="text-gray-500 text-xs">unavailable</div>
+                <div class="text-center bg-red-50 rounded-lg py-2">
+                    <span class="text-red-600 font-bold text-base">✗ ${unavailableCount}</span>
+                    <div class="text-red-700 text-xs mt-0.5">unavailable</div>
                 </div>
             </div>
         `;
@@ -297,17 +297,19 @@ class UIComponents {
     // Render response button
     renderResponseButton(proposalId, responseType, label, currentResponse) {
         const isSelected = currentResponse === responseType;
-        const baseClasses = 'py-2 px-3 text-sm rounded transition-colors duration-200';
+        const baseClasses = 'py-2 px-3 text-sm font-medium rounded-lg transition-colors duration-200 border';
         const colorClasses = {
-            available: isSelected ? 'bg-green-600 text-white' : 'bg-green-100 text-green-700 hover:bg-green-200',
-            maybe: isSelected ? 'bg-yellow-600 text-white' : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200',
-            unavailable: isSelected ? 'bg-red-600 text-white' : 'bg-red-100 text-red-700 hover:bg-red-200'
+            available:   isSelected ? 'bg-green-500  border-green-600  text-white'            : 'bg-green-100  border-green-200  text-green-700  hover:bg-green-200',
+            maybe:       isSelected ? 'bg-yellow-400 border-yellow-500 text-yellow-900'       : 'bg-yellow-100 border-yellow-200 text-yellow-700 hover:bg-yellow-200',
+            unavailable: isSelected ? 'bg-red-500    border-red-600    text-white'            : 'bg-red-100    border-red-200    text-red-700    hover:bg-red-200'
         };
+
+        const icons = { available: '✓', maybe: '?', unavailable: '✗' };
 
         return `
             <button onclick="window.app.respondToProposal('${proposalId}', '${responseType}')" 
                     class="${baseClasses} ${colorClasses[responseType]}">
-                ${label}
+                ${icons[responseType]} ${label}
             </button>
         `;
     }
@@ -320,9 +322,9 @@ class UIComponents {
     // Get response badge class
     getResponseBadgeClass(response) {
         const classes = {
-            available: 'bg-green-100 text-green-700',
-            maybe: 'bg-yellow-100 text-yellow-700',
-            unavailable: 'bg-red-100 text-red-700'
+            available:   'bg-green-500  text-white      font-semibold',
+            maybe:       'bg-yellow-400 text-yellow-900 font-semibold',
+            unavailable: 'bg-red-500    text-white      font-semibold'
         };
         return classes[response] || 'bg-gray-100 text-gray-700';
     }
