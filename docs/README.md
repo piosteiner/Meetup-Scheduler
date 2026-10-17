@@ -213,7 +213,7 @@ For the **best experience**, we recommend:
 - **Preferences**: Participant name memory, last meetup key (optional)
 - **Analytics**: Usage statistics for improvements (optional, disabled by default)
 
-See our [Privacy Policy](privacy-policy.md) for complete details.
+See the [privacy statement](../privacy.html) for complete details.
 
 ### User Rights (Swiss FADP)
 - ✅ Right to information about data processing

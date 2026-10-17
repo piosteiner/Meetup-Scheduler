@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy · Piogino Meetup</title>
+    <meta name="description" content="Privacy statement of Piogino Meetup: no analytics, no advertising, no tracking.">
+    <style>
+        :root { --bg: #eef2ff; --card: #ffffff; --ink: #111827; --muted: #6b7280; --rule: #e5e7eb; --accent: #4f46e5; --code: #f3f4f6; color-scheme: light; }
+        @media (prefers-color-scheme: dark) {
+            :root { --bg: #111827; --card: #1f2937; --ink: #f3f4f6; --muted: #9ca3af; --rule: #374151; --accent: #a5b4fc; --code: #374151; color-scheme: dark; }
+        }
+        * { box-sizing: border-box; }
+        body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+        main { max-width: 720px; margin: 24px auto 48px; padding: 28px 20px; background: var(--card); border: 1px solid var(--rule); border-radius: 14px; }
+        @media (max-width: 760px) { main { margin: 0; border: 0; border-radius: 0; padding: 24px 16px 40px; } }
+        a { color: var(--accent); }
+        h1 { font-size: 28px; line-height: 1.2; margin: 16px 0 4px; }
+        h2 { font-size: 18px; margin: 28px 0 8px; }
+        p, ul { margin: 0 0 12px; }
+        ul { padding-left: 20px; }
+        code { font: 0.88em ui-monospace, Menlo, Consolas, monospace; background: var(--code); padding: 1px 4px; border-radius: 4px; }
+        .updated { font-size: 13px; color: var(--muted); }
+        .table-wrap { overflow-x: auto; margin: 0 0 12px; }
+        table { border-collapse: collapse; width: 100%; font-size: 14px; }
+        th, td { text-align: left; vertical-align: top; padding: 9px 12px 9px 0; border-bottom: 1px solid var(--rule); min-width: 9em; }
+        th { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+    </style>
+</head>
+<body>
+    <!-- Privacy statement (Swiss FADP / nDSG Art. 19, Telecommunications Act Art. 45c). Keep it in step with reality:
+         when a service, a stored value or what is saved for a meetup changes, update this page and its date. -->
+    <main>
+        <a href="/">← Piogino Meetup</a>
+        <h1>Privacy</h1>
+        <p class="updated">Last updated 17 October 2026</p>
+
+        <h2>In short</h2>
+        <p>No analytics, no advertising, no tracking, no accounts. Whatever you enter into a meetup (names, dates,
+            availability, messages) is stored in a Google Firebase database in Belgium, and everyone who has the meetup's
+            link can see it.</p>
+
+        <h2>Who is responsible</h2>
+        <p>Pio Gino Steiner, Switzerland · <a href="mailto:info@piogino.ch">info@piogino.ch</a><br>
+            Piogino Meetup is a private, non-commercial hobby project.</p>
+
+        <h2>What is stored for a meetup</h2>
+        <ul>
+            <li>the meetup's name and the date proposals</li>
+            <li>the names of the participants, as typed in (a first name or nickname is enough)</li>
+            <li>each participant's availability, calendar entries and favourite dates</li>
+            <li>messages written in the meetup</li>
+        </ul>
+        <p>The meetup's link is its only key: anyone who has it can read and change the meetup, so share it only with the
+            people invited. Entries stay until someone deletes them in the meetup; to have a whole meetup deleted, write to
+            us.</p>
+
+        <h2>Services involved</h2>
+        <div class="table-wrap"><table>
+            <thead><tr><th>What</th><th>Provider and location</th><th>What it receives</th></tr></thead>
+            <tbody>
+                <tr><td>The website itself, including its scripts and styles</td>
+                    <td>GitHub Pages: GitHub, Inc., USA (<a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener">privacy statement</a>)</td>
+                    <td>Your IP address, the page requested, browser details. GitHub logs these for operation and security.</td></tr>
+                <tr><td>The meetup data</td>
+                    <td>Firebase Realtime Database: Google, data stored in Belgium (europe-west1) (<a href="https://firebase.google.com/support/privacy" target="_blank" rel="noopener">privacy information</a>)</td>
+                    <td>Everything listed above, plus your IP address and browser details while the meetup is open.</td></tr>
+                <tr><td>Emotes in messages</td>
+                    <td>7TV, an emote service for Twitch, outside Switzerland (<a href="https://7tv.app/legal/privacy" target="_blank" rel="noopener">privacy policy</a>)</td>
+                    <td>Your IP address and which emotes are loaded. Without cookies.</td></tr>
+            </tbody>
+        </table></div>
+
+        <h2>Cookies and browser storage</h2>
+        <p>The site sets <strong>no cookies</strong> and uses no analytics; the cookie settings only control what is kept in
+            your browser's local storage:</p>
+        <ul>
+            <li><code>cookieConsent</code>, <code>cookieSettings</code>, <code>consentTimestamp</code>, <code>consentVersion</code>:
+                your choice in the cookie banner, so it isn't shown again</li>
+            <li><code>piogino-theme-preference</code>: the colour theme, if you changed it</li>
+        </ul>
+        <p>These values stay on your device. You can change them in the cookie settings at the bottom of the page or delete
+            them by clearing the site data in your browser's settings.</p>
+
+        <h2>Data abroad</h2>
+        <p>The meetup data is stored in Belgium, which Switzerland recognises as providing adequate data protection. GitHub
+            and Google are based in the USA and may access data from there; both state that they participate in the
+            Swiss-U.S. Data Privacy Framework. 7TV is outside Switzerland and the EU.</p>
+
+        <h2>Your rights</h2>
+        <p>Under the Swiss Federal Act on Data Protection (FADP) you can ask what personal data about you is processed, and
+            have it corrected or deleted. Write to <a href="mailto:info@piogino.ch">info@piogino.ch</a>, ideally with the
+            meetup's link. You can also contact the Federal Data Protection and Information Commissioner
+            (<a href="https://www.edoeb.admin.ch" target="_blank" rel="noopener">FDPIC</a>).</p>
+
+        <h2>Changes</h2>
+        <p>This statement is updated when the site changes; the date at the top shows the current version.</p>
+    </main>
+</body>
+</html>
