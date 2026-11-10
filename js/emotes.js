@@ -7,13 +7,12 @@ class EmoteSystem {
         this.isLoading = false;
         this.loadPromise = null;
         
-        // 7TV Global Emote Set ID
-        this.globalEmoteSetId = '01EX2NCGX0000171FB842R1TPP';
-        this.fallbackEmoteSetIds = [
-            '01K1BPC2WFZB8QA3T04MPBTSS9',
-            '01F7B8YG000004DHQX8H81YQXF',
-            'global'
-        ];
+        // The emotes follow the 7TV account piogino (2026-11-10): its active emote set is looked up on every visit, so
+        // emotes added or removed on 7TV — or a switch to another set — show up here. Without an answer from the
+        // account: the set last seen (cache), then 7TV's global set.
+        this.sevenTvUserId = '01K1BPAZKW3EXHDMHP9GVS6J90';
+        this.platformOrder = ['TWITCH', 'YOUTUBE', 'DISCORD', 'KICK'];
+        this.lastFetch = 0;
         
         // Cache configuration
         this.cacheKey = 'piogino_emotes_cache';
@@ -35,6 +34,12 @@ class EmoteSystem {
             }
             
             this.fetchEmotes().catch(console.warn);
+            // back to an open tab after 10 minutes: fetch again, so changes on 7TV arrive without a reload
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible' && Date.now() - this.lastFetch > 10 * 60 * 1000) {
+                    this.fetchEmotes().catch(console.warn);
+                }
+            });
         } catch (error) {
             console.warn('Failed to initialize emote system:', error);
         }
@@ -60,10 +65,11 @@ class EmoteSystem {
         }
     }
 
-    saveToCache(emotes) {
+    saveToCache(emotes, setId = null) {
         try {
             const data = {
                 emotes: emotes,
+                setId: setId,          // the set they came from: tried again if the account is not reachable
                 timestamp: Date.now()
             };
             localStorage.setItem(this.cacheKey, JSON.stringify(data));
@@ -127,24 +133,30 @@ class EmoteSystem {
         try {
             console.log('🔄 Fetching fresh emotes from 7TV...');
             
+            this.lastFetch = Date.now();
+            const getJson = async (url) => {
+                const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
+                if (!response.ok) throw new Error(`${response.status} ${url}`);
+                return response.json();
+            };
+            // the account's active set; else the set last seen, else 7TV's global set
+            let activeSetId = null;
+            try {
+                const user = await getJson(`https://7tv.io/v3/users/${this.sevenTvUserId}`);
+                const rank = (c) => { const i = this.platformOrder.indexOf(c.platform); return i < 0 ? 99 : i; };
+                const conn = (user.connections || []).filter((c) => c.emote_set_id).sort((a, b) => rank(a) - rank(b))[0];
+                activeSetId = conn ? conn.emote_set_id : null;
+            } catch (error) {
+                console.warn('7TV account not reachable:', error.message);
+            }
+            const setsToTry = [activeSetId, this.loadFromCache()?.setId, 'global'].filter(Boolean);
             let data = null;
-            const setsToTry = [this.globalEmoteSetId, ...this.fallbackEmoteSetIds];
-            
-            for (const setId of setsToTry) {
+            let usedSetId = null;
+            for (const setId of [...new Set(setsToTry)]) {
                 try {
-                    const url = setId === 'global' 
-                        ? 'https://7tv.io/v3/emote-sets/global'
-                        : `https://7tv.io/v3/emote-sets/${setId}`;
-                    
-                    const response = await fetch(url, {
-                        method: 'GET',
-                        headers: { 'Accept': 'application/json' }
-                    });
-                    
-                    if (response.ok) {
-                        data = await response.json();
-                        break;
-                    }
+                    data = await getJson(`https://7tv.io/v3/emote-sets/${setId}`);
+                    usedSetId = setId;
+                    break;
                 } catch (error) {
                     continue;
                 }
@@ -185,7 +197,7 @@ class EmoteSystem {
             });
             
             this.loadEmotes(emotesData);
-            this.saveToCache(emotesData);
+            this.saveToCache(emotesData, usedSetId);
             
             console.log('✅ Successfully loaded', Object.keys(emotesData).length, 'emotes from 7TV');
             
