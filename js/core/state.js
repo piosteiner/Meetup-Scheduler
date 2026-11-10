@@ -117,6 +117,24 @@ class AppState {
         return this.currentMessages;
     }
 
+    // the last name and meetup key (cookie preferences, restored in app.js loadUserPreferences) — called there since
+    // 2025-10-14 but never defined, which stopped the restore with an error (2026-11-10)
+    setLastUsedName(name) {
+        this.lastUsedName = name || '';
+    }
+
+    getLastUsedName() {
+        return this.lastUsedName || '';
+    }
+
+    setLastUsedMeetupKey(key) {
+        this.lastUsedMeetupKey = key || '';
+    }
+
+    getLastUsedMeetupKey() {
+        return this.lastUsedMeetupKey || '';
+    }
+
     setLastMessagesRender(html) {
         this.lastMessagesRender = html;
     }

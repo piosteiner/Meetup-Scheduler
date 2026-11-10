@@ -1,11 +1,17 @@
 // utils.js - Utility functions for Piogino Meetup App
 
 // String utilities
-function generateMeetupKey(length = 8) {
+// A meetup's key is the only thing protecting it (the database rules let anyone read a meetup whose key they know),
+// so new keys have 12 characters (36^12 ≈ 4.7 × 10^18) from the browser's cryptographic random source; bytes of 252
+// and above are skipped so every character is equally likely (252 = 7 × 36). Old 8-character keys keep working.
+function generateMeetupKey(length = 12) {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let result = '';
-    for (let i = 0; i < length; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    while (result.length < length) {
+        const bytes = crypto.getRandomValues(new Uint8Array(length * 2));
+        for (const b of bytes) {
+            if (b < 252 && result.length < length) result += chars[b % 36];
+        }
     }
     return result;
 }
@@ -20,7 +26,7 @@ function sanitizeString(str) {
 }
 
 function validateMeetupKey(key) {
-    return /^[A-Z0-9]{8}$/.test(key);
+    return /^[A-Z0-9]{8}(?:[A-Z0-9]{4})?$/.test(key);   // 8 (before 2026-11-10) or 12 characters
 }
 
 // Date and time utilities

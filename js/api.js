@@ -45,7 +45,8 @@ class FirebaseAPI {
     // Test Firebase connection
     async testConnection() {
         try {
-            await this.database.ref('test').once('value');
+            // .info/connected is always readable; /test is not since the database rules allow only meetups by key (2026-11-10)
+            await this.database.ref('.info/connected').once('value');
             console.log('✅ Firebase test successful');
             return true;
         } catch (error) {
